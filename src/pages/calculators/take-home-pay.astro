@@ -1,0 +1,77 @@
+---
+import { getYear, resolve, PLAN_LABEL, NATION_LABEL, MARGINAL_STEP } from '@money-resilience-hub/rules';
+import { money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Calculator from '../../layouts/Calculator.astro';
+import { liveAmounts } from '../../lib/pages';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const pa = resolve(year.incomeTax.personalAllowance, 'pa', asAt).value;
+const taperStart = resolve(year.incomeTax.taperStart, 'taper', asAt).value;
+const taperRate = resolve(year.incomeTax.taperRate, 'taperRate', asAt).value;
+const taperEnd = taperStart + pa / taperRate;
+const taperWords = `${money(1, 0)} for every ${money(1 / taperRate, 0)}`;
+const step = money(MARGINAL_STEP, 0);
+const eni = year.incomeTax.bands['england-ni'];
+const sco = year.incomeTax.bands.scotland;
+const ni = year.nationalInsurance.employee;
+const pt = resolve(ni.primaryThreshold, 'pt', asAt).value;
+const uel = resolve(ni.upperEarningsLimit, 'uel', asAt).value;
+const mainRate = resolve(ni.mainRate, 'main', asAt).value;
+const upperRate = resolve(ni.upperRate, 'upper', asAt).value;
+const plan2 = resolve(year.studentLoans.plan2.threshold, 'p2', asAt).value;
+const plan5 = resolve(year.studentLoans.plan5.threshold, 'p5', asAt).value;
+const live = liveAmounts('salary');
+
+const faqs = [
+	{
+		q: 'Why is my take-home different from this calculator?',
+		a: `This result assumes a steady salary paid over a full year, the standard tax code unless you enter another, and no benefits in kind. A payslip can differ because PAYE works month by month, your tax code carries adjustments, or your employer uses a different pension scheme. The ledger shows each line so you can see which one differs.`,
+	},
+	{
+		q: 'Does the calculator cover Scotland and Wales?',
+		a: `Yes. Choose where you live and the income tax bands change: Scotland has ${sco.length} bands in ${year.label} and Wales uses the Welsh rate, which currently gives the same figures as England and Northern Ireland. National Insurance and student loans are the same across the UK.`,
+	},
+	{
+		q: 'Which student loan plan do I have?',
+		a: `${Object.values(PLAN_LABEL).join(', ')}. The plan depends on where you lived and when you started your course, and it is on your Student Loans Company statement. Each plan repays a share of pay above its own threshold: in ${year.label}, Plan 2 starts at ${money(plan2, 0)} and Plan 5 at ${money(plan5, 0)}.`,
+	},
+	{
+		q: 'What does the pension type change?',
+		a: `A salary sacrifice contribution comes off pay before tax and National Insurance, so it saves both. A net pay contribution comes off before tax only. A relief at source contribution is paid from net pay and your provider adds basic rate relief. The ledger shows the National Insurance line for each, which is where the three differ.`,
+	},
+	{
+		q: `What happens to the personal allowance above ${money(taperStart, 0)}?`,
+		a: `It falls by ${taperWords} of adjusted net income above ${money(taperStart, 0)} and reaches zero at ${money(taperEnd, 0)}. Between those two points each extra pound is taxed and also removes part of the allowance, which the ruler marks and the marginal rate line (the next ${step}) shows.`,
+	},
+];
+---
+
+<Calculator
+	title={`Take-home pay calculator ${year.label}: UK salary after tax`}
+	description={`Work out take-home pay from a salary for ${year.label}, for England, Northern Ireland, Scotland and Wales, with every deduction shown with its rate, slice and gov.uk source.`}
+	h1="Take-home pay calculator"
+	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. Every line shows its rate, the slice of pay it applied to and the gov.uk page it came from.`}
+	breadcrumb="Take-home pay calculator"
+	faqs={faqs}
+	limits="It does not model benefits in kind, more than one job, a tax code with a cumulative adjustment, National Insurance category letters other than A, the pension annual allowance, or Scottish and Welsh interactions beyond the income tax bands. It never suggests what to do with the result."
+	related={[
+		{ title: `What ${money(live[2] ?? live[0], 0)} looks like after tax`, href: `/salary/${live[2] ?? live[0]}/`, desc: 'A worked result for a round number, with the student loan row for every plan.' },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'Every figure this tool uses, with its source and the date it was checked.' },
+		{ title: 'Budget 2026: what changes on 6 April 2027', href: '/budget/2026-autumn/', desc: 'The measures that touch pay, savings and property, with worked examples.' },
+	]}
+>
+	<Fragment slot="how">
+		<ol>
+			<li><strong>Allowance.</strong> Your tax code sets the allowance: the standard code gives {money(pa, 0)}. Above {money(taperStart, 0)} of adjusted net income it falls by {taperWords}, reaching zero at {money(taperEnd, 0)}. A K code adds to taxable pay instead.</li>
+			<li><strong>Income tax.</strong> Pay above the allowance is taxed band by band. In England, Northern Ireland and Wales for {year.label}: {eni.map((b) => `${b.name.toLowerCase()} at ${pct(b.rate ?? 0)}${b.upTo ? ` on the first ${money(b.upTo, 0)}` : ' above that'}`).join('; ')}. Taxable income is rounded down to the pound.</li>
+			<li><strong>National Insurance.</strong> {pct(mainRate)} on earnings between {money(pt, 0)} and {money(uel, 0)}, then {pct(upperRate)} above, using the annual thresholds.</li>
+			<li><strong>Student loan.</strong> The plan rate on pay above the plan threshold, rounded down to the pound. Several plans can run at once.</li>
+			<li><strong>Pension.</strong> Salary sacrifice reduces pay before tax and National Insurance. Net pay reduces taxable pay only. Relief at source leaves pay alone and widens the basic rate band by the gross contribution.</li>
+			<li><strong>Take-home.</strong> Salary less each deduction. Monthly, weekly and daily figures divide the annual result by 12, 52 and 260.</li>
+		</ol>
+		<p><strong>Scotland.</strong> Scottish taxpayers use the Scottish bands instead: {sco.map((b) => `${b.name.toLowerCase()} at ${pct(b.rate ?? 0)}`).join(', ')}, applied to the same allowance. The higher rate starts at a lower income than in the rest of the UK, so the ruler moves. National Insurance and student loans do not change.</p>
+		<p>The rounding conventions are listed in the <a href="/methodology/">methodology</a>, and the formulas run from the open rules file for {year.label}.</p>
+	</Fragment>
+</Calculator>

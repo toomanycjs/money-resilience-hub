@@ -1,0 +1,9 @@
+{
+  "framework": "astro",
+  "trailingSlash": true,
+  "redirects": [
+    { "source": "/salary/:amount(\d+)k/", "destination": "/salary/:amount000/", "permanent": true },
+    { "source": "/salary/:a(\d+)-:b(\d{3})/", "destination": "/salary/:a:b/", "permanent": true },
+    { "source": "/salary/:a(\d+),:b(\d{3})/", "destination": "/salary/:a:b/", "permanent": true }
+  ]
+}

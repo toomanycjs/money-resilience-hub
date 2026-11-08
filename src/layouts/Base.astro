@@ -1,0 +1,61 @@
+---
+// The shell every page uses: head, header, main, footer and the structured
+// data (breadcrumb everywhere, WebSite and Organization on the home page,
+// FAQPage only when the questions are on the page).
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import JsonLd from '../components/JsonLd.astro';
+import { ANALYTICS_ENDPOINT, BUILD_DATE } from '../config/site';
+import { breadcrumbList, crumbsFor, faqPage, organisation, webPage, websiteNode, type FaqPair } from '../lib/schema';
+
+interface Props {
+	title: string;
+	description: string;
+	breadcrumb?: string;
+	faqs?: FaqPair[];
+	ogImage?: string;
+	ogType?: 'website' | 'article';
+	noindex?: boolean;
+	extraNodes?: Record<string, unknown>[];
+	/** Tax years this page renders figures from, for the sitemap's lastmod. */
+	taxYears?: string[];
+}
+
+const { title, description, breadcrumb, faqs, ogImage, ogType, noindex = false, extraNodes = [], taxYears = [] } = Astro.props;
+const slug = Astro.url.pathname.replace(/^\/|\/$/g, '') || 'home';
+const resolvedOg = ogImage ?? new URL(`/og/${slug}.png`, Astro.site).href;
+const crumbs = crumbsFor(Astro.url.pathname, breadcrumb ?? title.split(':')[0].trim());
+const nodes = noindex
+	? []
+	: [
+			organisation,
+			crumbs.length === 1 ? websiteNode() : breadcrumbList(crumbs),
+			webPage({ url: new URL(Astro.url.pathname, Astro.site).href, title, description, modified: BUILD_DATE }),
+			...(faqs?.length ? [faqPage(faqs)] : []),
+			...extraNodes,
+		];
+---
+
+<!doctype html>
+<html lang="en-GB">
+	<head>
+		<BaseHead title={title} description={description} ogImage={resolvedOg} ogType={ogType} noindex={noindex} />
+		<JsonLd nodes={nodes} />
+		<slot name="head" />
+	</head>
+	<body>
+		<Header />
+		<main id="main" class="frame">
+			{taxYears.map((y) => <span data-tax-year={y} hidden></span>)}
+			<slot />
+		</main>
+		<Footer />
+		{ANALYTICS_ENDPOINT && (
+			<script>
+				import { trackPage } from '../scripts/analytics';
+				trackPage(import.meta.env.PUBLIC_ANALYTICS_ENDPOINT ?? '');
+			</script>
+		)}
+	</body>
+</html>

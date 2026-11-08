@@ -1,0 +1,17 @@
+---
+import type { FaqPair } from '../lib/schema';
+
+interface Props {
+	faqs: FaqPair[];
+}
+const { faqs } = Astro.props;
+---
+
+<dl class="faq">
+	{faqs.map((f) => (
+		<>
+			<dt>{f.q}</dt>
+			<dd>{f.a}</dd>
+		</>
+	))}
+</dl>

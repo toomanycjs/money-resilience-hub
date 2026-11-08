@@ -1,0 +1,32 @@
+---
+import { takeHome } from '@money-resilience-hub/rules';
+import { money } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Base from '../../layouts/Base.astro';
+import { liveAmounts } from '../../lib/pages';
+
+const rows = liveAmounts('salary').map((amount) => {
+	const b = takeHome({ gross: amount, nation: 'england-ni', asAt: BUILD_DATE }, { withMarginal: false });
+	return { amount, monthly: b.periods.monthly, annual: b.takeHome };
+});
+---
+
+<Base title={`Salary after tax ${CURRENT_YEAR.label}: take-home by salary`} description={`Take-home pay for round-number UK salaries in ${CURRENT_YEAR.label}, each with the ruler, the ledger and the student loan row for every plan.`} breadcrumb="Salary pages" taxYears={[CURRENT_YEAR.taxYear]}>
+	<div class="page-head">
+		<h1>Salary after tax</h1>
+		<p class="subtitle">One page per salary, computed from the {CURRENT_YEAR.label} rules for England and Northern Ireland, with Scotland and Wales a tap away. More salaries are added as each wave is indexed.</p>
+	</div>
+	<table>
+		<thead><tr><th scope="col">Salary</th><th scope="col" class="num">A month</th><th scope="col" class="num">A year</th></tr></thead>
+		<tbody>
+			{rows.map((r) => (
+				<tr>
+					<th scope="row"><a href={`/salary/${r.amount}/`}>{money(r.amount, 0)} after tax</a></th>
+					<td class="num">{money(r.monthly, 0)}</td>
+					<td class="num">{money(r.annual, 0)}</td>
+				</tr>
+			))}
+		</tbody>
+	</table>
+	<p class="small quiet">Standard tax code, no student loan, no pension. Use the <a href="/calculators/take-home-pay/">take-home pay calculator</a> for any salary and any combination of inputs.</p>
+</Base>

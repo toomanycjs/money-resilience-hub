@@ -1,0 +1,429 @@
+/*
+  The Money Resilience Hub: global styles.
+
+  A ledger kept by someone with taste. White page, a warm stone tone for the
+  ledger and the rules used box, deep blue-black ink, one grey for
+  secondary text (hairlines are a tint of it), one red for deductions, one
+  amber for threshold marks. Two typefaces: Newsreader, a formal serif, for
+  headings and the figure, Public Sans with tabular figures for everything
+  else. Space and one rule weight instead of boxes. No monospace anywhere.
+*/
+
+:root {
+	--page: #ffffff;
+	--ledger: #f1f0ec;
+	--ink: #14213d;
+	--quiet: #5b6473;
+	--deduction: #8c2f28;
+	--threshold: #c27c0e;
+	--hairline: rgba(91, 100, 115, 0.35);
+	--rule: 1px solid var(--hairline);
+	--focus: #1f5fbf;
+
+	--font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+	--font-body: 'Public Sans', 'Helvetica Neue', Arial, sans-serif;
+
+	--measure: 66ch;
+	--wide: 1080px;
+	--gutter: 16px;
+}
+
+@font-face {
+	font-family: 'Newsreader';
+	src: url('/fonts/newsreader-600.woff2') format('woff2');
+	font-weight: 600;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Public Sans';
+	src: url('/fonts/public-sans-400.woff2') format('woff2');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'Public Sans';
+	src: url('/fonts/public-sans-600.woff2') format('woff2');
+	font-weight: 600;
+	font-style: normal;
+	font-display: swap;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+	margin: 0;
+	background: var(--page);
+	color: var(--ink);
+	font-family: var(--font-body);
+	font-size: 17px;
+	line-height: 1.5;
+	font-variant-numeric: lining-nums tabular-nums;
+	font-feature-settings: 'tnum' 1, 'lnum' 1;
+	overflow-wrap: break-word;
+}
+
+h1, h2, h3, h4 {
+	font-family: var(--font-display);
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	line-height: 1.1;
+	margin: 0 0 0.5rem;
+	color: var(--ink);
+	text-wrap: balance;
+}
+h1 { font-size: 2.6rem; }
+h2 { font-size: 1.6rem; margin-top: 2.5rem; }
+h3 { font-size: 1.2rem; margin-top: 1.75rem; }
+
+p, ul, ol, dl { margin: 0 0 1rem; }
+.prose { max-width: var(--measure); }
+.prose > * + h2 { margin-top: 2.5rem; }
+li { margin-bottom: 0.3rem; }
+
+a {
+	color: var(--ink);
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 0.15em;
+	text-decoration-color: var(--quiet);
+}
+a:hover { text-decoration-color: var(--ink); }
+
+:focus-visible {
+	outline: 2px solid var(--focus);
+	outline-offset: 2px;
+}
+
+.skip-link {
+	position: absolute;
+	left: var(--gutter);
+	top: -3rem;
+	background: var(--page);
+	padding: 0.5rem 0.75rem;
+	z-index: 10;
+}
+.skip-link:focus { top: 0.5rem; }
+
+.visually-hidden {
+	position: absolute !important;
+	width: 1px; height: 1px;
+	padding: 0; margin: -1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.quiet { color: var(--quiet); }
+.small { font-size: 0.9rem; }
+
+/* Page frame */
+.frame {
+	max-width: var(--wide);
+	margin: 0 auto;
+	padding: 0 var(--gutter);
+}
+main { padding: 1.5rem 0 3rem; }
+@media (min-width: 900px) { main { padding: 2.5rem 0 4rem; } }
+
+/* Header and footer: a name, a short nav, one rule */
+.site-header { border-bottom: var(--rule); }
+.site-header .frame {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 1rem 1.5rem;
+	flex-wrap: wrap;
+	padding-top: 0.9rem;
+	padding-bottom: 0.9rem;
+}
+.site-name {
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: 1.15rem;
+	letter-spacing: -0.01em;
+	text-decoration: none;
+	white-space: nowrap;
+}
+.site-nav { display: flex; gap: 0.25rem 1.1rem; flex-wrap: wrap; }
+.site-nav a { text-decoration: none; color: var(--quiet); font-size: 0.95rem; }
+.site-nav a:hover, .site-nav a[aria-current='page'] { color: var(--ink); text-decoration: underline; }
+
+.site-footer { border-top: var(--rule); margin-top: 3rem; padding: 2rem 0 2.5rem; color: var(--quiet); font-size: 0.9rem; }
+.site-footer .frame { display: grid; gap: 1rem; }
+.site-footer nav { display: flex; flex-wrap: wrap; gap: 0.25rem 1.1rem; }
+.site-footer a { color: var(--quiet); }
+.site-footer p { margin: 0; max-width: var(--measure); }
+
+/* Page headers */
+.page-head { max-width: var(--measure); margin-bottom: 1.5rem; }
+.page-head .subtitle { font-size: 1.05rem; margin: 0.35rem 0 0; }
+.kicker { color: var(--quiet); font-size: 0.9rem; margin: 0 0 0.5rem; }
+.kicker a { color: var(--quiet); }
+
+/* Tables: hairlines between rows, figures tabular and right-aligned */
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 0.55rem 0.6rem 0.55rem 0; border-bottom: var(--rule); vertical-align: top; }
+th { font-weight: 600; }
+thead th { border-bottom: 1px solid var(--ink); font-size: 0.85rem; font-weight: 600; }
+.num { text-align: right; white-space: nowrap; }
+td.num, th.num { padding-left: 0.75rem; }
+
+/* Forms: plain controls, visible focus, one rule under each */
+label { display: block; font-weight: 600; margin-bottom: 0.25rem; }
+.field { margin-bottom: 1.1rem; }
+.field .help { color: var(--quiet); font-size: 0.85rem; margin: 0.25rem 0 0; }
+input[type='text'], input[type='number'], select {
+	font: inherit;
+	font-variant-numeric: tabular-nums;
+	color: var(--ink);
+	background: var(--page);
+	border: 1px solid var(--quiet);
+	border-radius: 2px;
+	padding: 0.5rem 0.6rem;
+	width: 100%;
+	max-width: 22rem;
+}
+input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.money-input { display: flex; align-items: center; gap: 0.4rem; max-width: 22rem; }
+.money-input .prefix { color: var(--quiet); }
+.money-input input { flex: 1; }
+.money-input .unit { color: var(--quiet); white-space: nowrap; font-size: 0.9rem; }
+.checks { display: grid; gap: 0.35rem; }
+.checks label { font-weight: 400; display: flex; gap: 0.5rem; align-items: center; margin: 0; }
+input[type='checkbox'] { width: 1.1rem; height: 1.1rem; accent-color: var(--ink); margin: 0; }
+
+button, .button {
+	font: inherit;
+	color: var(--ink);
+	background: var(--page);
+	border: 1px solid var(--ink);
+	border-radius: 2px;
+	padding: 0.5rem 0.9rem;
+	cursor: pointer;
+	text-decoration: none;
+}
+button:hover, .button:hover { background: var(--ledger); }
+button.link {
+	border: 0;
+	padding: 0;
+	background: none;
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 0.15em;
+	text-decoration-color: var(--quiet);
+	text-align: left;
+	cursor: pointer;
+}
+
+/* Calculator grid: inputs left, result right on a laptop; result first on a phone */
+.calc {
+	display: grid;
+	gap: 2rem;
+	grid-template-columns: 1fr;
+}
+.calc-inputs { order: 2; }
+.calc-result { order: 1; }
+@media (min-width: 900px) {
+	.calc { grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 3rem; align-items: start; }
+	.calc-inputs { order: 1; }
+	.calc-result { order: 2; }
+}
+
+/* The figure: pinned on a phone while the breakdown scrolls */
+.figure-block {
+	background: var(--page);
+	padding: 0.25rem 0 0.75rem;
+	border-bottom: var(--rule);
+	margin-bottom: 1.5rem;
+}
+@media (max-width: 899px) {
+	.figure-block { position: sticky; top: 0; z-index: 5; }
+}
+.figure-label { color: var(--quiet); margin: 0; font-size: 0.95rem; }
+.figure { margin: 0; display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+.figure-amount {
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: clamp(2.6rem, 8vw, 4.4rem);
+	letter-spacing: -0.02em;
+	line-height: 1;
+	font-variant-numeric: lining-nums tabular-nums;
+}
+.figure-period { color: var(--quiet); font-size: 1.1rem; }
+.figure-periods { display: flex; gap: 1.5rem; margin: 0.6rem 0 0; flex-wrap: wrap; }
+.figure-periods div { display: flex; gap: 0.4rem; align-items: baseline; }
+.figure-periods dt { color: var(--quiet); font-size: 0.9rem; }
+.figure-periods dd { margin: 0; font-weight: 600; }
+.figure-rates { margin: 0.5rem 0 0; color: var(--quiet); font-size: 0.9rem; }
+.what-changed { margin: 0.75rem 0 0; font-size: 0.95rem; max-width: var(--measure); }
+
+/* The ruler: a row of labels above, the line, the person's pay, a row of labels below */
+.ruler { position: relative; height: 196px; margin: 1.25rem 0 0.5rem; }
+.ruler-labels { list-style: none; margin: 0; padding: 0; }
+.ruler-label {
+	position: absolute;
+	transform: translateX(-50%);
+	text-align: center;
+	font-size: 0.78rem;
+	line-height: 1.2;
+	width: 8.5em;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+}
+.ruler-label.above { top: 0; height: 56px; }
+.ruler-label.below { top: 142px; justify-content: flex-start; }
+.ruler-label.edge-left { transform: none; text-align: left; align-items: flex-start; }
+.ruler-label.edge-right { transform: translateX(-100%); text-align: right; align-items: flex-end; }
+.ruler-name { color: var(--quiet); }
+.ruler-value { color: var(--threshold); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ruler-line { position: absolute; left: 0; top: 62px; width: 100%; height: 48px; overflow: visible; }
+.ruler-axis { stroke: var(--ink); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.ruler-tick { stroke: var(--threshold); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.ruler-you-tick { stroke: var(--ink); stroke-width: 3; vector-effect: non-scaling-stroke; }
+.ruler-you {
+	position: absolute;
+	top: 112px;
+	margin: 0;
+	transform: translateX(-50%);
+	font-size: 0.85rem;
+	font-weight: 600;
+	white-space: nowrap;
+	pointer-events: none;
+}
+.ruler-you.edge-left { transform: none; }
+.ruler-you.edge-right { transform: translateX(-100%); }
+.ruler-sentence { font-weight: 600; margin: 0.25rem 0 0.75rem; max-width: var(--measure); }
+.ruler-list { font-size: 0.9rem; color: var(--quiet); columns: 2; column-gap: 2rem; }
+@media (min-width: 900px) { .ruler-list { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
+@media (max-width: 899px) {
+	.ruler { height: 84px; }
+	.ruler-labels { display: none; }
+	.ruler-line { top: 8px; }
+	.ruler-you { top: 58px; }
+}
+
+/* The ledger */
+.ledger-wrap { background: var(--ledger); padding: 1rem 1.1rem 0.5rem; margin: 0 calc(-1 * var(--gutter)); }
+@media (min-width: 900px) { .ledger-wrap { margin: 0; padding: 1.25rem 1.5rem 0.75rem; } }
+.ledger th, .ledger td { border-bottom: 1px solid var(--hairline); }
+.ledger thead th { border-bottom-color: var(--ink); }
+.ledger-row th { font-weight: 400; }
+.ledger-row.total th, .ledger-row.total td { border-top: 2px solid var(--ink); border-bottom: 0; font-weight: 600; padding-top: 0.7rem; }
+.ledger-row.deduction .amount { color: var(--deduction); }
+.ledger-row.info .amount { color: var(--quiet); }
+.ledger .src { text-align: right; width: 4.5rem; }
+.source-chip { font-size: 0.85rem; color: var(--quiet); }
+.ledger-toggle { font: inherit; color: inherit; border: 0; background: none; padding: 0; text-align: left; cursor: pointer; }
+.ledger-toggle:hover { text-decoration: underline; text-decoration-color: var(--quiet); }
+.ledger-toggle::after { content: ' +'; color: var(--quiet); }
+.ledger-toggle[aria-expanded='true']::after { content: ' −'; }
+.ledger-arith td { font-size: 0.9rem; color: var(--quiet); padding: 0.4rem 0 0.8rem 1rem; border-bottom: 1px solid var(--hairline); }
+.ledger-arith[hidden] { display: none; }
+.arith-meta { color: var(--quiet); }
+.ledger-notes { font-size: 0.9rem; color: var(--quiet); margin: 0.75rem 0 0.5rem; padding-left: 1.1rem; }
+@media (max-width: 599px) {
+	/* Two lines per row: the label and the amount, then the rate, the slice and the source. */
+	.ledger thead { display: none; }
+	.ledger-row {
+		display: grid;
+		grid-template-columns: max-content max-content 1fr;
+		grid-template-areas: 'label label amount' 'rate on src';
+		column-gap: 0.75rem;
+		border-bottom: 1px solid var(--hairline);
+		padding: 0.5rem 0;
+	}
+	.ledger-row th, .ledger-row td { border-bottom: 0; padding: 0; }
+	.ledger-row th { grid-area: label; }
+	.ledger-row td.amount { grid-area: amount; align-self: start; }
+	.ledger-row td.num:nth-child(2) { grid-area: rate; }
+	.ledger-row td.num:nth-child(3) { grid-area: on; }
+	.ledger-row td.src { grid-area: src; }
+	.ledger-row td.num:nth-child(2), .ledger-row td.num:nth-child(3) { text-align: left; font-size: 0.85rem; color: var(--quiet); padding-top: 0.15rem; }
+	.ledger-row td.num:nth-child(2):not(:empty)::before { content: 'Rate '; }
+	.ledger-row td.num:nth-child(3):not(:empty)::before { content: 'on '; }
+	.ledger-row.total { border-top: 2px solid var(--ink); border-bottom: 0; padding-top: 0.7rem; }
+	.ledger-row.total th, .ledger-row.total td { border-top: 0; padding-top: 0; }
+	.ledger-arith td { padding-left: 0; }
+	.ruler-list { columns: 1; }
+}
+@media (max-width: 899px) {
+	/* The pinned figure stays short so the breakdown has room beneath it. */
+	.figure-block { padding: 0.35rem 0 0.5rem; margin-bottom: 1rem; }
+	.figure-label { font-size: 0.85rem; }
+	.figure-amount { font-size: 2.4rem; }
+	.figure-period { font-size: 0.95rem; }
+	.figure-periods { gap: 0.9rem; margin-top: 0.3rem; font-size: 0.9rem; }
+	.figure-rates { font-size: 0.8rem; margin-top: 0.25rem; }
+}
+
+/* Where each pound goes */
+.bar { width: 100%; height: 22px; display: block; }
+.bar-keep { fill: var(--ink); }
+.bar-ded { fill: var(--deduction); }
+.bar-legend { list-style: none; padding: 0; margin: 0.6rem 0 0; display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; font-size: 0.9rem; }
+.swatch { display: inline-block; width: 0.7rem; height: 0.7rem; margin-right: 0.4rem; vertical-align: -1px; }
+.swatch-keep { background: var(--ink); }
+.swatch-ded { background: var(--deduction); }
+
+/* Rules used */
+.rules-used { background: var(--ledger); padding: 1rem 1.25rem; max-width: var(--measure); }
+.rules-used h2 { margin-top: 0; font-size: 1.1rem; }
+.rules-used-list { margin: 0; display: grid; gap: 0.5rem; }
+.rules-used-list div { display: grid; grid-template-columns: 9rem 1fr; gap: 0.5rem; }
+.rules-used-list dt { color: var(--quiet); }
+.rules-used-list dd { margin: 0; }
+@media (max-width: 599px) { .rules-used-list div { grid-template-columns: 1fr; gap: 0; } }
+
+/* Status wording and notes */
+.status-note { border-left: 2px solid var(--threshold); padding: 0.4rem 0.9rem; margin: 1rem 0; max-width: var(--measure); font-size: 0.95rem; }
+.unavailable { border-left: 2px solid var(--deduction); padding: 0.4rem 0.9rem; margin: 1rem 0; max-width: var(--measure); }
+
+/* Sections of the calculator page */
+.calc-section { margin-top: 2.5rem; max-width: var(--measure); }
+.calc-section h2 { margin-top: 0; }
+.calc-section.wide { max-width: none; }
+.actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+.actions .note { flex-basis: 100%; color: var(--quiet); font-size: 0.85rem; margin: 0; }
+
+/* FAQ and related */
+.faq dt { font-weight: 600; margin-top: 1rem; }
+.faq dd { margin: 0.25rem 0 0; }
+.related ul { padding-left: 1.1rem; }
+
+/* Ad slots: reserved size, labelled, never styled like content */
+.ad-slot { margin: 2.5rem 0; }
+.ad-slot .ad-label { display: block; font-size: 0.75rem; color: var(--quiet); margin-bottom: 0.25rem; }
+.ad-slot .ad-box { border: 1px solid var(--hairline); display: grid; place-items: center; color: var(--quiet); font-size: 0.8rem; }
+
+/* Rates pages */
+.rates-table td.src { white-space: nowrap; }
+.status-in-force { color: var(--ink); }
+.status-legislated, .status-announced { color: var(--threshold); }
+.status-unset { color: var(--deduction); }
+
+/* Lists of links */
+.link-list { list-style: none; padding: 0; }
+.link-list li { margin-bottom: 0.6rem; }
+.link-list .desc { color: var(--quiet); display: block; font-size: 0.95rem; }
+
+/* Long-form pages with a contents list */
+.toc { border-bottom: var(--rule); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+.toc ol { margin: 0; padding-left: 1.2rem; }
+
+@media (prefers-reduced-motion: no-preference) {
+	.ledger-arith td { transition: none; }
+}
+
+@media print {
+	.site-header, .site-footer, .calc-inputs, .actions, .ad-slot, .ledger-toggle::after { display: none !important; }
+	.ledger-arith[hidden] { display: table-row; }
+	.figure-block { position: static; }
+	main { padding: 0; }
+}

@@ -1,0 +1,30 @@
+---
+import { SITE_NAME } from '../config/site';
+import Plain from '../layouts/Plain.astro';
+
+const contents = [
+	{ id: 'figures', label: 'Figures' },
+	{ id: 'guides', label: 'Guides and pages' },
+	{ id: 'tools', label: 'How software is used' },
+	{ id: 'corrections', label: 'Corrections' },
+	{ id: 'independence', label: 'Independence' },
+];
+---
+
+<Plain title={`Editorial policy: ${SITE_NAME}`} description="How figures are sourced and verified, how pages are checked before they go live, how software is used, and how corrections are handled." h1="Editorial policy" contents={contents}>
+	<h2 id="figures">Figures</h2>
+	<p>Every figure on the site is either computed by the rules engine from a value with a primary source and a verified date, or cited to a named external table with a link and the date it was retrieved. No figure is typed into a page from memory. A rule that cannot be traced to a source is left empty and shown as not set.</p>
+	<p>Values are re-verified against their source pages before each tax year, after each fiscal event, and whenever a weekly check finds that a source page has changed. The verified date on each value is updated only when a person has read the source again.</p>
+
+	<h2 id="guides">Guides and pages</h2>
+	<p>A guide answers one question, with the number in its first two sentences. It describes and compares; it does not advise. Every guide names its author and shows when it was last reviewed. Each is read by a person before it goes live and after any rule it depends on changes.</p>
+
+	<h2 id="tools">How software is used</h2>
+	<p>Software, including AI coding tools, is used to build the site and to draft text. It is never used to supply a figure: figures come from the rules file, which a person verifies against gov.uk. Draft text is checked for accuracy by a person before publication, and a build check blocks words that would turn a fact into advice.</p>
+
+	<h2 id="corrections">Corrections</h2>
+	<p>A wrong figure is fixed within a day of being confirmed, a test fixture is added so it cannot recur, and the change is recorded on the <a href="/corrections/">corrections page</a> with the dates it was wrong and who it affected.</p>
+
+	<h2 id="independence">Independence</h2>
+	<p>Advertising, once it starts, is sold through an ad network and never influences a figure, a page or the choice of what to build. No affiliate or paid link appears inside any result, ledger or rules used box. There are no reviews, ratings or testimonials anywhere on the site.</p>
+</Plain>

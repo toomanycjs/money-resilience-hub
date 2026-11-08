@@ -1,0 +1,24 @@
+---
+import { SITE_NAME } from '../config/site';
+
+const NAV = [
+	{ href: '/calculators/', label: 'Calculators' },
+	{ href: '/salary/', label: 'Salary pages' },
+	{ href: '/rates/', label: 'Rates' },
+	{ href: '/budget/2026-autumn/', label: 'Budget 2026' },
+	{ href: '/methodology/', label: 'Methodology' },
+	{ href: '/about/', label: 'About' },
+];
+const here = Astro.url.pathname;
+const current = (href: string) => (href === '/' ? here === '/' : here.startsWith(href));
+---
+
+<header class="site-header">
+	<a href="#main" class="skip-link">Skip to content</a>
+	<div class="frame">
+		<a href="/" class="site-name">{SITE_NAME}</a>
+		<nav class="site-nav" aria-label="Main">
+			{NAV.map((n) => <a href={n.href} aria-current={current(n.href) ? 'page' : undefined}>{n.label}</a>)}
+		</nav>
+	</div>
+</header>

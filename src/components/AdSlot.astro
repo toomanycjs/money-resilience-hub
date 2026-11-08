@@ -1,0 +1,24 @@
+---
+// A reserved, labelled ad slot. It renders nothing until ads are switched on;
+// then it keeps a fixed size so nothing shifts when an ad loads. Slots sit
+// outside the calculator: never above or inside the result, the ruler or the
+// ledger, and never beside an input or a button.
+import { ADS_ENABLED } from '../config/site';
+
+interface Props {
+	id: string;
+	width?: number;
+	height?: number;
+	/** Set on the style tile to show the reserved box. */
+	preview?: boolean;
+}
+const { id, width = 300, height = 250, preview = false } = Astro.props;
+const show = ADS_ENABLED || preview;
+---
+
+{show && (
+	<aside class="ad-slot" data-ad-slot={id} data-width={width} data-height={height} aria-label="Advertisement">
+		<span class="ad-label">Advertisement</span>
+		<div class="ad-box" style={`width:${width}px;height:${height}px;max-width:100%`}>{preview && 'Reserved space'}</div>
+	</aside>
+)}

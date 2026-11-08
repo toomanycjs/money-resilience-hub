@@ -1,0 +1,10 @@
+{
+  "name": "@money-resilience-hub/calculators",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Input schemas, formatting and the breakdown model each calculator page renders. No arithmetic of its own.",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "@money-resilience-hub/rules": "workspace:*" }
+}

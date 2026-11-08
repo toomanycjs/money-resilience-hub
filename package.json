@@ -1,0 +1,39 @@
+{
+  "name": "money-resilience-hub",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@12.18.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "node packages/rules/scripts/check-config.mjs && astro build && node scripts/check.mjs",
+    "preview": "astro preview",
+    "astro": "astro",
+    "test": "node packages/rules/scripts/check-config.mjs && vitest run",
+    "check": "node scripts/check.mjs",
+    "rules:check": "node packages/rules/scripts/check-config.mjs",
+    "rates:new": "node packages/rules/scripts/new-year.mjs",
+    "pages:gen": "node scripts/pages-gen.mjs",
+    "sources:archive": "node packages/rules/scripts/archive-sources.mjs",
+    "sources:watch": "node packages/rules/scripts/source-watch.mjs",
+    "lastmod": "node scripts/lastmod.mjs",
+    "lighthouse": "node scripts/lighthouse.mjs",
+    "fonts:subset": "python scripts/subset-fonts.py"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^5.0.2",
+    "@astrojs/rss": "^4.0.17",
+    "@astrojs/sitemap": "^3.7.1",
+    "@money-resilience-hub/calculators": "workspace:*",
+    "@money-resilience-hub/rules": "workspace:*",
+    "astro": "^6.0.8",
+    "satori": "^0.26.0",
+    "sharp": "^0.34.3"
+  },
+  "devDependencies": {
+    "vitest": "^5.0.3"
+  }
+}

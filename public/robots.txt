@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /design/
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+Sitemap: https://www.moneyresiliencehub.co.uk/sitemap-index.xml

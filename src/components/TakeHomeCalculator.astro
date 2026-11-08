@@ -1,0 +1,125 @@
+---
+// The take-home calculator: a short form and a result that is rendered at
+// build time with the default inputs, then re-rendered in the browser as the
+// inputs change. The markup comes from packages/calculators so both match.
+import { listYears, takeHome, yearOnYear } from '@money-resilience-hub/rules';
+import { DEFAULT_FORM, TAKE_HOME_FIELDS, parseForm, renderBar, renderFigure, renderLedger, renderRuler, type TakeHomeForm } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR, SITE_URL } from '../config/site';
+
+interface Props {
+	form?: Partial<TakeHomeForm>;
+	/** Salary pages lock the salary into the heading. */
+	lockedGross?: number;
+	/** Open every arithmetic row by default. */
+	expanded?: boolean;
+}
+
+const { form = {}, lockedGross, expanded = false } = Astro.props;
+const values: TakeHomeForm = { ...DEFAULT_FORM, ...form, taxYear: form.taxYear ?? CURRENT_YEAR.taxYear };
+if (lockedGross != null) values.gross = String(lockedGross);
+const input = parseForm(values, BUILD_DATE);
+const breakdown = takeHome(input);
+const yoy = yearOnYear(input);
+const ratesPath = `/rates/${breakdown.taxYear}/`;
+const years = listYears();
+const fieldId = (id: string) => `f-${id}`;
+---
+
+<div class="calc" data-calculator data-as-at={BUILD_DATE} data-locked-gross={lockedGross} data-expanded={String(expanded)} data-site-url={SITE_URL} data-tax-year={breakdown.taxYear}>
+	<div class="calc-inputs">
+		<form novalidate aria-label="Your pay">
+			{TAKE_HOME_FIELDS.map((f) => (
+				<div class="field" data-field={f.id} hidden={f.id === 'pensionPercent' && !values.pensionType}>
+					{f.type === 'money' && lockedGross != null ? (
+						<>
+							<span class="field-label">{f.label}</span>
+							<p class="locked">£{lockedGross.toLocaleString('en-GB')} {f.unit} <a href="/calculators/take-home-pay/">Change</a></p>
+							<input type="hidden" name="gross" value={String(lockedGross)} />
+						</>
+					) : f.type === 'money' ? (
+						<>
+							<label for={fieldId(f.id)}>{f.label}</label>
+							<div class="money-input">
+								<span class="prefix" aria-hidden="true">£</span>
+								<input type="text" inputmode="numeric" id={fieldId(f.id)} name={f.id} value={values.gross} placeholder={f.placeholder} autocomplete="off" />
+								<span class="unit">{f.unit}</span>
+							</div>
+						</>
+					) : f.type === 'percent' ? (
+						<>
+							<label for={fieldId(f.id)}>{f.label}</label>
+							<div class="money-input">
+								<input type="text" inputmode="decimal" id={fieldId(f.id)} name={f.id} value={values.pensionPercent} autocomplete="off" />
+								<span class="unit">{f.unit}</span>
+							</div>
+						</>
+					) : f.type === 'text' ? (
+						<>
+							<label for={fieldId(f.id)}>{f.label}</label>
+							<input type="text" id={fieldId(f.id)} name={f.id} value={values.taxCode} placeholder={f.placeholder} autocomplete="off" autocapitalize="characters" />
+						</>
+					) : f.type === 'select' ? (
+						<>
+							<label for={fieldId(f.id)}>{f.label}</label>
+							<select id={fieldId(f.id)} name={f.id}>
+								{f.options!.map((o) => <option value={o.value} selected={(values as Record<string, unknown>)[f.id] === o.value}>{o.label}</option>)}
+							</select>
+						</>
+					) : (
+						<fieldset class="checks-wrap">
+							<legend>{f.label}</legend>
+							<div class="checks">
+								{f.options!.map((o) => (
+									<label><input type="checkbox" name={f.id} value={o.value} checked={values.studentLoanPlans.includes(o.value)} /> {o.label}</label>
+								))}
+							</div>
+						</fieldset>
+					)}
+					{f.help && <p class="help">{f.help}</p>}
+				</div>
+			))}
+			<div class="field">
+				<label for={fieldId('taxYear')}>Tax year</label>
+				<select id={fieldId('taxYear')} name="taxYear">
+					{years.map((y) => <option value={y.taxYear} selected={y.taxYear === values.taxYear}>{y.label}{y.taxYear === CURRENT_YEAR.taxYear ? ' (current)' : ''}</option>)}
+				</select>
+			</div>
+		</form>
+		<p class="small quiet">Results update as you type. Your inputs are kept in this browser so other pages can pre-fill them, and are never sent anywhere.</p>
+	</div>
+
+	<div class="calc-result" data-calculator-core>
+		<div class="figure-block" data-figure aria-live="polite" set:html={renderFigure(breakdown)} />
+		<p class="what-changed" data-what-changed hidden={!yoy}>{yoy?.sentence}</p>
+		<div class="unavailable" data-unavailable hidden></div>
+
+		<section aria-labelledby="ruler-heading">
+			<h2 id="ruler-heading">Where your pay sits</h2>
+			<div data-ruler set:html={renderRuler(breakdown)} />
+		</section>
+
+		<section class="ledger-wrap" aria-labelledby="ledger-heading">
+			<h2 id="ledger-heading">The breakdown</h2>
+			<div data-ledger set:html={renderLedger(breakdown, { ratesPath, expanded })} />
+		</section>
+
+		<section aria-labelledby="bar-heading">
+			<h2 id="bar-heading">Where each pound goes</h2>
+			<div data-bar set:html={renderBar(breakdown)} />
+		</section>
+	</div>
+</div>
+
+<style>
+	fieldset { border: 0; padding: 0; margin: 0; }
+	legend { font-weight: 600; margin-bottom: 0.35rem; padding: 0; }
+	.field-label { font-weight: 600; display: block; margin-bottom: 0.25rem; }
+	.locked { margin: 0; }
+	.locked a { font-size: 0.9rem; margin-left: 0.5rem; }
+	.calc-result section { margin-top: 1.5rem; }
+	.calc-result section h2 { margin-top: 0; font-size: 1.15rem; }
+</style>
+
+<script>
+	import '../scripts/calculator';
+</script>

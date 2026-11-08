@@ -1,0 +1,71 @@
+---
+import { NATION_LABEL, MARGINAL_STEP } from '@money-resilience-hub/rules';
+import { money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Calculator from '../../layouts/Calculator.astro';
+import { liveAmounts, neighbours } from '../../lib/pages';
+import { salaryPage } from '../../lib/salaryPage';
+
+export async function getStaticPaths() {
+	const { BUILD_DATE } = await import('../../config/site');
+	const { liveAmounts } = await import('../../lib/pages');
+	const { pagesPassingGuard } = await import('../../lib/salaryPage');
+	return pagesPassingGuard(liveAmounts('salary'), BUILD_DATE).map((amount) => ({ params: { amount: String(amount) } }));
+}
+
+const amount = Number(Astro.params.amount);
+const page = salaryPage(amount, BUILD_DATE);
+const b = page.breakdown;
+const { below, above } = neighbours('salary', amount);
+const label = money(amount, 0);
+const year = CURRENT_YEAR;
+
+const related = [
+	...(below ? [{ title: `${money(below, 0)} after tax`, href: `/salary/${below}/` }] : []),
+	...(above ? [{ title: `${money(above, 0)} after tax`, href: `/salary/${above}/` }] : []),
+	{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'Change the salary, add a pension or a tax code.' },
+	{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'Every figure on this page, with its source and the date it was checked.' },
+];
+---
+
+<Calculator
+	title={`${label} after tax ${year.label}: monthly and weekly take-home`}
+	description={`${label} a year is ${money(b.periods.monthly, 0)} a month after tax and National Insurance in ${year.label}, ${money(b.periods.weekly, 0)} a week. See each deduction with its rate and source, and what each student loan plan repays.`}
+	h1={`${label} after tax`}
+	subtitle={`${money(b.periods.monthly, 0)} a month in ${year.label} for ${NATION_LABEL['england-ni']}, before any pension or student loan. Change the nation, tax code or loan plan and the page updates.`}
+	breadcrumb={`${label} after tax`}
+	lockedGross={amount}
+	expanded
+	faqs={page.faqs}
+	limits="It assumes a steady salary over a full tax year with no benefits in kind, one job and National Insurance category A. The student loan rows show what someone on each plan would repay at this salary; your own plan is on your Student Loans Company statement."
+	related={related}
+>
+	<Fragment slot="how">
+		{page.whatChanged && <p>{page.whatChanged}</p>}
+		<h3>By nation</h3>
+		<table>
+			<thead><tr><th scope="col">Where you live</th><th scope="col" class="num">A month</th><th scope="col" class="num">A year</th><th scope="col" class="num">Income tax</th></tr></thead>
+			<tbody>
+				{(Object.keys(page.byNation) as (keyof typeof page.byNation)[]).map((n) => {
+					const r = page.byNation[n];
+					return r ? (
+						<tr><th scope="row">{NATION_LABEL[n]}</th><td class="num">{money(r.periods.monthly, 0)}</td><td class="num">{money(r.takeHome, 0)}</td><td class="num">{money(r.incomeTax.total, 0)}</td></tr>
+					) : (
+						<tr><th scope="row">{NATION_LABEL[n]}</th><td colspan="3">Not yet set for {year.label}</td></tr>
+					);
+				})}
+			</tbody>
+		</table>
+		<h3>Student loan repayments at {label}</h3>
+		<table>
+			<thead><tr><th scope="col">Plan</th><th scope="col" class="num">Threshold</th><th scope="col" class="num">A year</th><th scope="col" class="num">A month</th></tr></thead>
+			<tbody>
+				{page.loanRows.map((r) => (
+					<tr><th scope="row">{r.label}</th><td class="num">{money(r.threshold, 0)}</td><td class="num">{money(r.amount, 0)}</td><td class="num">{money(r.monthly, 0)}</td></tr>
+				))}
+			</tbody>
+		</table>
+		<p>The marginal rate on the next {money(MARGINAL_STEP, 0)} is {pct(b.marginalRate ?? 0)}. {b.nextThreshold?.sentence}</p>
+		<p>Each line in the breakdown above is worked out as the <a href="/calculators/take-home-pay/#how">take-home pay calculator</a> describes: the allowance from the tax code, income tax band by band on pay above it, National Insurance between the annual thresholds, and each loan plan on pay above its threshold.</p>
+	</Fragment>
+</Calculator>

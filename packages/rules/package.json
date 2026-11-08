@@ -1,0 +1,13 @@
+{
+  "name": "@money-resilience-hub/rules",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "UK tax year rules, each value with its source and verified date, and the pure functions that compute from them.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./config/*": "./config/*"
+  },
+  "files": ["src", "config", "fixtures", "ROUNDING.md"]
+}

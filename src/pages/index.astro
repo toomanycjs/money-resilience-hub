@@ -1,0 +1,51 @@
+---
+import { money, parseForm, renderRulesUsed, DEFAULT_FORM } from '@money-resilience-hub/calculators';
+import { takeHome } from '@money-resilience-hub/rules';
+import TakeHomeCalculator from '../components/TakeHomeCalculator.astro';
+import { BUILD_DATE, CURRENT_YEAR, SITE_DESCRIPTION, SITE_NAME } from '../config/site';
+import Base from '../layouts/Base.astro';
+import { liveAmounts } from '../lib/pages';
+
+const live = liveAmounts('salary');
+const defaultBreakdown = takeHome(parseForm({ ...DEFAULT_FORM, taxYear: CURRENT_YEAR.taxYear }, BUILD_DATE));
+const pick = (n: number) => (live.includes(n) ? n : live[0]);
+
+// Hand-edited each month: the six questions people are asking.
+const asking = [
+	{ title: `What is ${money(pick(30000), 0)} after tax?`, href: `/salary/${pick(30000)}/` },
+	{ title: `How much do you keep of ${money(pick(50000), 0)}?`, href: `/salary/${pick(50000)}/` },
+	{ title: 'What changes on 6 April 2027', href: '/budget/2026-autumn/' },
+	{ title: `Every rate and threshold for ${CURRENT_YEAR.label}`, href: `/rates/${CURRENT_YEAR.taxYear}/` },
+	{ title: 'Take-home pay in Scotland and Wales', href: '/calculators/take-home-pay/' },
+	{ title: 'How the figures are checked', href: '/methodology/' },
+];
+---
+
+<Base title="UK take-home pay calculators that show their working" description={SITE_DESCRIPTION} taxYears={[CURRENT_YEAR.taxYear]}>
+	<div class="page-head">
+		<h1>Take-home pay, with the working shown</h1>
+		<p class="subtitle">UK tax calculators where every deduction sits on its own line with the rate it used, the slice it applied to and the gov.uk page it came from. Facts, not advice.</p>
+	</div>
+
+	<TakeHomeCalculator />
+
+	<p class="small quiet" style="margin-top:1rem">The full <a href="/calculators/take-home-pay/">take-home pay calculator</a> adds how the figures are worked out and what changes next April.</p>
+
+	<section class="rules-used" data-rules-used aria-labelledby="rules-heading" style="margin-top:1.5rem">
+		<h2 id="rules-heading">Rules used</h2>
+		<div set:html={renderRulesUsed(defaultBreakdown, { ratesPath: `/rates/${defaultBreakdown.taxYear}/` })} />
+	</section>
+
+	<section class="calc-section" aria-labelledby="asking-heading">
+		<h2 id="asking-heading">Questions people are asking this month</h2>
+		<ul class="link-list">
+			{asking.map((q) => <li><a href={q.href}>{q.title}</a></li>)}
+		</ul>
+	</section>
+
+	<section class="calc-section" aria-labelledby="how-heading">
+		<h2 id="how-heading">How this site works</h2>
+		<p>One rules file per tax year holds every rate, threshold and allowance with the gov.uk page it came from and the date it was checked. The calculators and the <a href="/rates/">rates pages</a> read from the same file, so a figure cannot drift between them. The test suite runs HMRC's worked examples on every build, and the <a href="/methodology/">methodology</a> lists them.</p>
+		<p>Nothing you type leaves your browser. There is no sign-up and no email list. Our <a href="/privacy/">privacy page</a> says what is counted and how to opt out.</p>
+	</section>
+</Base>

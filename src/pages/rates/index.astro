@@ -1,0 +1,24 @@
+---
+import { listYears } from '@money-resilience-hub/rules';
+import { longDate } from '@money-resilience-hub/calculators';
+import { CURRENT_YEAR } from '../../config/site';
+import Base from '../../layouts/Base.astro';
+
+const years = listYears();
+---
+
+<Base title="UK tax rates and allowances by year, with sources" description="Income tax, National Insurance, student loan, child benefit and statutory pay figures for each tax year, each with its gov.uk source, the date it was checked and its status." breadcrumb="Rates">
+	<div class="page-head">
+		<h1>Rates and allowances</h1>
+		<p class="subtitle">One page per tax year, rendered from the same rules file the calculators use. Every row shows its source, the date it was checked and whether it is in force, legislated or only announced.</p>
+	</div>
+	<ul class="link-list">
+		{years.map((y) => (
+			<li>
+				<a href={`/rates/${y.taxYear}/`}>Rates and allowances {y.label}{y.taxYear === CURRENT_YEAR.taxYear ? ' (current)' : ''}</a>
+				<span class="desc">{longDate(y.starts)} to {longDate(y.ends)}. Next scheduled change: {longDate(y.nextScheduledChange.date)}.</span>
+			</li>
+		))}
+	</ul>
+	<p>The rules files are open data under CC BY 4.0: <a href="/rules/2026-27.json">2026/27 as JSON</a>, with the other years alongside it. The <a href="/methodology/">methodology</a> explains how each value is verified and what the status words mean.</p>
+</Base>

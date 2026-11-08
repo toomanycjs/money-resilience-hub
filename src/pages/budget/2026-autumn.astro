@@ -1,0 +1,103 @@
+---
+import { compareYears, getYear, resolve, takeHome } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE } from '../../config/site';
+import Base from '../../layouts/Base.astro';
+import { liveAmounts } from '../../lib/pages';
+
+const live = liveAmounts('salary');
+const y26 = getYear('2026-27');
+const y27 = getYear('2027-28');
+const changes = compareYears(y26, y27).filter((c) => c.to !== null);
+const v = (leaf: Parameters<typeof resolve>[0], path: string, asAt = y27.starts) => resolve(leaf, path, asAt).value;
+
+const savings = { basic: v(y27.incomeTax.savings.rates.basic, 's'), higher: v(y27.incomeTax.savings.rates.higher, 's'), additional: v(y27.incomeTax.savings.rates.additional, 's') };
+const savingsNow = { basic: v(y26.incomeTax.savings.rates.basic, 's', y26.starts), higher: v(y26.incomeTax.savings.rates.higher, 's', y26.starts), additional: v(y26.incomeTax.savings.rates.additional, 's', y26.starts) };
+const trading = { now: v(y26.incomeTax.tradingAllowance, 't', y26.starts), next: v(y27.incomeTax.tradingAllowance, 't') };
+const mileage = { now: v(y26.mileage!.carAfterRate, 'm', y26.starts), next: v(y27.mileage!.carAfterRate, 'm'), miles: v(y27.mileage!.carFirstMiles, 'm') };
+const pta = y27.pensionTaxAllowance!;
+const nsp = v(pta.fullNewStatePension, 'p');
+const pa = v(y27.incomeTax.personalAllowance, 'pa');
+const ptaMax = Math.ceil(v(pta.rate, 'p') * (nsp - pa));
+const lisa = { over: v(y26.isa!.lifetimeIsa!.firstHomeOverCapCharge, 'l', BUILD_DATE), std: v(y26.isa!.lifetimeIsa!.withdrawalCharge, 'l', BUILD_DATE), cap: v(y26.isa!.lifetimeIsa!.propertyCap, 'l', BUILD_DATE), from: y26.isa!.lifetimeIsa!.firstHomeOverCapCharge.effectiveFrom! };
+const lel = { now: v(y26.nationalInsurance.employee.lowerEarningsLimit, 'l', y26.starts), next: v(y27.nationalInsurance.employee.lowerEarningsLimit, 'l') };
+const frozen = {
+	pa,
+	brl: y27.incomeTax.bands['england-ni'][0].upTo as number,
+	hrt: pa + (y27.incomeTax.bands['england-ni'][0].upTo as number),
+	art: y27.incomeTax.bands['england-ni'][1].upTo as number,
+	pt: v(y27.nationalInsurance.employee.primaryThreshold, 'n'),
+	uel: v(y27.nationalInsurance.employee.upperEarningsLimit, 'n'),
+};
+
+const examples = [30000, 50000, 80000].map((gross) => {
+	const now = takeHome({ gross, nation: 'england-ni', taxYear: '2026-27', asAt: y26.starts }, { withMarginal: false });
+	const next = takeHome({ gross, nation: 'england-ni', taxYear: '2027-28', asAt: y27.starts }, { withMarginal: false });
+	return { gross, now: now.takeHome, next: next.takeHome, diff: Math.round((next.takeHome - now.takeHome) * 100) / 100 };
+});
+
+const measures = [
+	{ measure: 'Savings income rates', from: `${pct(savingsNow.basic)}, ${pct(savingsNow.higher)}, ${pct(savingsNow.additional)}`, to: `${pct(savings.basic)}, ${pct(savings.higher)}, ${pct(savings.additional)}`, effective: y27.starts, tool: 'Savings tax (coming)', status: y27.incomeTax.savings.rates.basic.status },
+	{ measure: 'Property income rates (England, Wales and Northern Ireland)', from: 'Main rates', to: `${pct(savings.basic)}, ${pct(savings.higher)}, ${pct(savings.additional)}`, effective: y27.starts, tool: 'Landlord tax (coming)', status: y27.incomeTax.property.rates.basic.status },
+	{ measure: 'Trading allowance', from: money(trading.now, 0), to: money(trading.next, 0), effective: y27.starts, tool: 'Side hustle tax (coming)', status: y27.incomeTax.tradingAllowance.status },
+	{ measure: 'Pension Tax Allowance', from: 'None', to: `Up to ${money(ptaMax, 0)} for people over State Pension age with income up to ${money(nsp, 2)}`, effective: y27.starts, tool: 'State pension tax (coming)', status: pta.rate.status },
+	{ measure: `Mileage rate above ${mileage.miles.toLocaleString('en-GB')} miles`, from: `${Math.round(mileage.now * 100)}p`, to: `${Math.round(mileage.next * 100)}p`, effective: y27.starts, tool: 'Mileage allowance (coming)', status: y27.mileage!.carAfterRate.status },
+	{ measure: `Lifetime ISA charge on a first home over ${money(lisa.cap, 0)}`, from: pct(lisa.std), to: pct(lisa.over), effective: lisa.from, tool: 'Lifetime ISA penalty (coming)', status: y26.isa!.lifetimeIsa!.firstHomeOverCapCharge.status },
+	{ measure: 'National Insurance lower earnings limit', from: money(lel.now, 0), to: money(lel.next, 0), effective: y27.starts, tool: 'Take-home pay (no effect on deductions)', status: y27.nationalInsurance.employee.lowerEarningsLimit.status },
+];
+
+const sources = [...new Set([...changes.map((c) => c.source), y26.nextScheduledChange.source].filter(Boolean))];
+---
+
+<Base title="Budget 2026: what changed for pay, savings and property" description="The measures announced on 28 October 2026, their effective dates, the tool that models each, and worked take-home examples under the 2027/28 rules as announced." breadcrumb="Budget 2026" taxYears={['2026-27', '2027-28']}>
+	<article class="prose">
+		<div class="page-head">
+			<p class="kicker"><a href="/calculators/">Calculators</a></p>
+			<h1>Budget 2026: what changed</h1>
+			<p class="subtitle">Announced on 28 October 2026. Most measures start on {longDate(y27.starts)}; the status column says which are still to be legislated.</p>
+		</div>
+
+		<p><strong>Pay.</strong> Income tax rates, the personal allowance and the thresholds are unchanged for {y27.label}, so take-home from a salary alone does not move on {longDate(y27.starts)}. <strong>Savings and property.</strong> Interest above the personal savings allowance and rental income are taxed at {pct(savings.basic)}, {pct(savings.higher)} and {pct(savings.additional)} from {longDate(y27.starts)}, four points above the main rates. <strong>Allowances and benefits.</strong> The trading allowance rises to {money(trading.next, 0)}, a Pension Tax Allowance of up to {money(ptaMax, 0)} begins for people over State Pension age, and the Lifetime ISA charge on a first home over the price cap fell to {pct(lisa.over)} on {longDate(lisa.from)}.</p>
+
+		<h2>Measures</h2>
+		<table>
+			<thead><tr><th scope="col">Measure</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">Effective</th><th scope="col">Status</th><th scope="col">Tool</th></tr></thead>
+			<tbody>
+				{measures.map((m) => (
+					<tr><th scope="row">{m.measure}</th><td>{m.from}</td><td>{m.to}</td><td>{longDate(m.effective)}</td><td class={`status-${m.status}`}>{m.status}</td><td>{m.tool}</td></tr>
+				))}
+			</tbody>
+		</table>
+
+		<h2>Worked examples</h2>
+		<p>Take-home from a salary in England and Northern Ireland, standard tax code, no pension or student loan, under {y26.label} and under {y27.label} as announced so far.</p>
+		<table>
+			<thead><tr><th scope="col">Salary</th><th scope="col" class="num">{y26.label}</th><th scope="col" class="num">{y27.label}</th><th scope="col" class="num">Difference</th></tr></thead>
+			<tbody>
+				{examples.map((e) => (
+					<tr><th scope="row">{live.includes(e.gross) ? <a href={`/salary/${e.gross}/`}>{money(e.gross, 0)}</a> : money(e.gross, 0)}</th><td class="num">{money(e.now, 0)}</td><td class="num">{money(e.next, 0)}</td><td class="num">{e.diff === 0 ? 'None' : money(e.diff, 0)}</td></tr>
+				))}
+			</tbody>
+		</table>
+		<p>The differences are nil because every figure that touches a salary is frozen. Anyone with savings interest above their allowance, rental income or a trade will see a change; those tools follow once each rule is verified.</p>
+
+		<h2>What has not changed</h2>
+		<ul>
+			<li>Personal allowance {money(frozen.pa, 0)}, basic rate limit {money(frozen.brl, 0)}, higher rate threshold {money(frozen.hrt, 0)} and additional rate threshold {money(frozen.art, 0)}, all held until April 2031.</li>
+			<li>National Insurance primary threshold {money(frozen.pt, 0)} and upper earnings limit {money(frozen.uel, 0)}, held to the same date; the main rates stay at {pct(resolve(y27.nationalInsurance.employee.mainRate, 'n', y27.starts).value)} and {pct(resolve(y27.nationalInsurance.employee.upperRate, 'n', y27.starts).value)}.</li>
+			<li>The personal savings allowance, the starting rate for savings, the dividend allowance and the dividend rates.</li>
+			<li>The cash ISA limit, which stays at {money(resolve(y27.isa!.cashLimit!, 'c', y27.starts).value, 0)} after a planned reduction was dropped.</li>
+		</ul>
+
+		<h2>Every value that differs between the two years</h2>
+		<ul class="small">
+			{changes.map((c) => <li>{c.path}: {typeof c.from === 'number' ? (c.from < 1 ? pct(c.from) : money(c.from, 0)) : String(c.from ?? 'not set')} to {typeof c.to === 'number' ? (c.to < 1 ? pct(c.to) : money(c.to, 0)) : String(c.to)} ({c.status})</li>)}
+		</ul>
+
+		<h2>Sources</h2>
+		<ul class="small">
+			{sources.map((s) => <li><a href={s} rel="noopener">{s}</a></li>)}
+		</ul>
+		<p>Full tables for each year: <a href="/rates/2026-27/">rates {y26.label}</a> and <a href="/rates/2027-28/">rates {y27.label}</a>. Scottish income tax for {y27.label} is set by the Scottish Budget on 3 December 2026 and is shown as not set until then.</p>
+	</article>
+</Base>

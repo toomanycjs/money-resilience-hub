@@ -1,0 +1,41 @@
+---
+import { CURRENT_YEAR } from '../../config/site';
+import Base from '../../layouts/Base.astro';
+
+const GROUPS = [
+	{
+		name: 'My pay',
+		tools: [
+			{ href: '/calculators/take-home-pay/', title: 'Take-home pay calculator', desc: 'Salary to monthly, weekly and daily take-home for England, Northern Ireland, Scotland and Wales, with every student loan plan, three pension types and your tax code.' },
+			{ href: '/salary/', title: 'Salary pages', desc: 'A ready-made result for a round-number salary, with the ruler, the ledger and the student loan row per plan.' },
+		],
+	},
+];
+---
+
+<Base title="UK tax and pay calculators that show their working" description="Calculators for UK pay and tax that show every deduction with its rate, the slice it applied to and the gov.uk source, grouped by the situation you are in." breadcrumb="Calculators">
+	<div class="page-head">
+		<h1>Calculators</h1>
+		<p class="subtitle">Each result comes with its working and the rules it used, as at {CURRENT_YEAR.label}. More tools are added as each rule is verified against gov.uk and recorded in the rules file.</p>
+	</div>
+	{GROUPS.map((g) => (
+		<section class="calc-section" aria-labelledby={`g-${g.name.replace(/\s+/g, '-').toLowerCase()}`}>
+			<h2 id={`g-${g.name.replace(/\s+/g, '-').toLowerCase()}`}>{g.name}</h2>
+			<ul class="link-list">
+				{g.tools.map((t) => (
+					<li>
+						<a href={t.href}>{t.title}</a>
+						<span class="desc">{t.desc}</span>
+					</li>
+				))}
+			</ul>
+		</section>
+	))}
+	<section class="calc-section">
+		<h2>Reference</h2>
+		<ul class="link-list">
+			<li><a href="/rates/">Rates and allowances by tax year</a><span class="desc">Every figure the calculators use, with its source, the date it was checked and its status.</span></li>
+			<li><a href="/budget/2026-autumn/">Budget 2026: what changed</a><span class="desc">The measures from 28 October 2026, their effective dates and worked examples.</span></li>
+		</ul>
+	</section>
+</Base>

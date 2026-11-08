@@ -1,0 +1,19 @@
+---
+interface Props {
+	links: { title: string; href: string; desc?: string }[];
+	heading?: string;
+}
+const { links, heading = 'Related' } = Astro.props;
+---
+
+<section class="calc-section related" aria-labelledby="related-heading">
+	<h2 id="related-heading">{heading}</h2>
+	<ul class="link-list">
+		{links.map((l) => (
+			<li>
+				<a href={l.href}>{l.title}</a>
+				{l.desc && <span class="desc">{l.desc}</span>}
+			</li>
+		))}
+	</ul>
+</section>

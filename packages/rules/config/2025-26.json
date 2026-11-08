@@ -1,0 +1,550 @@
+{
+  "taxYear": "2025-26",
+  "label": "2025/26",
+  "starts": "2025-04-06",
+  "ends": "2026-04-05",
+  "nextScheduledChange": {
+    "date": "2026-04-06",
+    "summary": "New tax year 2026/27: the Scottish starter and basic rate thresholds rose, student loan thresholds rose, dividend rates rose to 10.75% and 35.75%, and statutory sick pay became payable at the lower of £123.25 and 80% of average weekly earnings.",
+    "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+    "verified": "2026-11-07",
+    "status": "in-force",
+    "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
+  },
+  "incomeTax": {
+    "personalAllowance": {
+      "value": 12570,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+      "verified": "2026-11-07",
+      "status": "in-force",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+    },
+    "taperStart": {
+      "value": 100000,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+      "verified": "2026-11-07",
+      "status": "in-force",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+    },
+    "taperRate": {
+      "value": 0.5,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+      "verified": "2026-11-07",
+      "status": "in-force",
+      "note": "£1 of allowance lost for every £2 of adjusted net income above the taper start",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+    },
+    "marriageAllowanceTransfer": {
+      "value": 1260,
+      "source": "https://www.gov.uk/marriage-allowance",
+      "verified": "2026-11-07",
+      "status": "in-force",
+      "archived": "archive/2026-11-07/www-gov-uk-marriage-allowance.html"
+    },
+    "bands": {
+      "england-ni": [
+        {
+          "name": "Basic rate",
+          "upTo": 37700,
+          "rate": 0.2,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        {
+          "name": "Higher rate",
+          "upTo": 125140,
+          "rate": 0.4,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        {
+          "name": "Additional rate",
+          "upTo": null,
+          "rate": 0.45,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        }
+      ],
+      "scotland": [
+        {
+          "name": "Starter rate",
+          "upTo": 2827,
+          "rate": 0.19,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        {
+          "name": "Basic rate",
+          "upTo": 14921,
+          "rate": 0.2,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        {
+          "name": "Intermediate rate",
+          "upTo": 31092,
+          "rate": 0.21,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        {
+          "name": "Higher rate",
+          "upTo": 62430,
+          "rate": 0.42,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        {
+          "name": "Advanced rate",
+          "upTo": 125140,
+          "rate": 0.45,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        {
+          "name": "Top rate",
+          "upTo": null,
+          "rate": 0.48,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        }
+      ],
+      "wales": [
+        {
+          "name": "Basic rate",
+          "upTo": 37700,
+          "rate": 0.2,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        {
+          "name": "Higher rate",
+          "upTo": 125140,
+          "rate": 0.4,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        {
+          "name": "Additional rate",
+          "upTo": null,
+          "rate": 0.45,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        }
+      ]
+    },
+    "savings": {
+      "startingRateLimit": {
+        "value": 5000,
+        "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+      },
+      "startingRateIncomeCeiling": {
+        "value": 17570,
+        "source": "https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-apply-tax-free-interest-on-savings-how-much-is-tax-free.html"
+      },
+      "personalSavingsAllowance": {
+        "basic": {
+          "value": 1000,
+          "source": "https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-apply-tax-free-interest-on-savings-how-much-is-tax-free.html"
+        },
+        "higher": {
+          "value": 500,
+          "source": "https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-apply-tax-free-interest-on-savings-how-much-is-tax-free.html"
+        },
+        "additional": {
+          "value": 0,
+          "source": "https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-apply-tax-free-interest-on-savings-how-much-is-tax-free.html"
+        }
+      },
+      "rates": {
+        "basic": {
+          "value": 0.2,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        "higher": {
+          "value": 0.4,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        "additional": {
+          "value": 0.45,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        }
+      }
+    },
+    "property": {
+      "rates": {
+        "basic": {
+          "value": 0.2,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "note": "Property income is charged at the main rates in 2025/26",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        "higher": {
+          "value": 0.4,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        "additional": {
+          "value": 0.45,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        }
+      }
+    },
+    "dividends": {
+      "allowance": {
+        "value": 500,
+        "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+      },
+      "rates": {
+        "basic": {
+          "value": 0.0875,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        "higher": {
+          "value": 0.3375,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        },
+        "additional": {
+          "value": 0.3935,
+          "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+          "verified": "2026-11-07",
+          "status": "in-force",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+        }
+      }
+    },
+    "tradingAllowance": {
+      "value": 1000,
+      "source": "https://www.gov.uk/government/publications/income-tax-increasing-the-trading-allowance/increasing-the-trading-allowance",
+      "verified": "2026-11-07",
+      "status": "in-force",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-increasing-the-trading-allowance-increasing-the-trading-allowance.html"
+    }
+  },
+  "nationalInsurance": {
+    "employee": {
+      "mainRate": {
+        "value": 0.08,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "upperRate": {
+        "value": 0.02,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "lowerEarningsLimit": {
+        "value": 6500,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "primaryThreshold": {
+        "value": 12570,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "upperEarningsLimit": {
+        "value": 50270,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      }
+    },
+    "employer": {
+      "rate": {
+        "value": 0.15,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "secondaryThreshold": {
+        "value": 5000,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "employmentAllowance": {
+        "value": 10500,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      }
+    },
+    "selfEmployed": {
+      "class2Weekly": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "Not read from a gov.uk page yet. The self-employed rates page shows the current year only."
+      },
+      "smallProfitsThreshold": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "Not read from a gov.uk page yet."
+      },
+      "class4": {
+        "lowerProfitsLimit": {
+          "value": null,
+          "source": "",
+          "verified": "",
+          "status": "unset",
+          "note": "Not read from a gov.uk page yet."
+        },
+        "upperProfitsLimit": {
+          "value": null,
+          "source": "",
+          "verified": "",
+          "status": "unset",
+          "note": "Not read from a gov.uk page yet."
+        },
+        "mainRate": {
+          "value": null,
+          "source": "",
+          "verified": "",
+          "status": "unset",
+          "note": "Not read from a gov.uk page yet."
+        },
+        "upperRate": {
+          "value": null,
+          "source": "",
+          "verified": "",
+          "status": "unset",
+          "note": "Not read from a gov.uk page yet."
+        }
+      }
+    }
+  },
+  "studentLoans": {
+    "plan1": {
+      "threshold": {
+        "value": 26065,
+        "source": "https://www.gov.uk/guidance/previous-annual-repayment-thresholds",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-previous-annual-repayment-thresholds.html"
+      },
+      "rate": {
+        "value": 0.09,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      }
+    },
+    "plan2": {
+      "threshold": {
+        "value": 28470,
+        "source": "https://www.gov.uk/guidance/previous-annual-repayment-thresholds",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-previous-annual-repayment-thresholds.html"
+      },
+      "rate": {
+        "value": 0.09,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      }
+    },
+    "plan4": {
+      "threshold": {
+        "value": 32745,
+        "source": "https://www.gov.uk/guidance/previous-annual-repayment-thresholds",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-previous-annual-repayment-thresholds.html"
+      },
+      "rate": {
+        "value": 0.09,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      }
+    },
+    "plan5": {
+      "threshold": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "Plan 5 repayments were not collected in 2025/26; the first Plan 5 repayments were due from April 2026."
+      },
+      "rate": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "See threshold."
+      }
+    },
+    "postgraduate": {
+      "threshold": {
+        "value": 21000,
+        "source": "https://www.gov.uk/guidance/previous-annual-repayment-thresholds",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-previous-annual-repayment-thresholds.html"
+      },
+      "rate": {
+        "value": 0.06,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      }
+    }
+  },
+  "childBenefit": {
+    "chargeFrom": {
+      "value": 60000,
+      "source": "https://www.gov.uk/child-benefit-tax-charge",
+      "verified": "2026-11-07",
+      "status": "in-force",
+      "archived": "archive/2026-11-07/www-gov-uk-child-benefit-tax-charge.html"
+    },
+    "chargeTo": {
+      "value": 80000,
+      "source": "https://www.gov.uk/child-benefit-tax-charge",
+      "verified": "2026-11-07",
+      "status": "in-force",
+      "archived": "archive/2026-11-07/www-gov-uk-child-benefit-tax-charge.html"
+    },
+    "chargeStep": {
+      "value": 200,
+      "source": "https://www.gov.uk/child-benefit-tax-charge",
+      "verified": "2026-11-07",
+      "status": "in-force",
+      "archived": "archive/2026-11-07/www-gov-uk-child-benefit-tax-charge.html"
+    },
+    "weeklyEldest": {
+      "value": null,
+      "source": "",
+      "verified": "",
+      "status": "unset",
+      "note": "The gov.uk rates page shows the current year only."
+    },
+    "weeklyAdditional": {
+      "value": null,
+      "source": "",
+      "verified": "",
+      "status": "unset",
+      "note": "The gov.uk rates page shows the current year only."
+    }
+  },
+  "statutoryPay": {
+    "ssp": {
+      "weekly": {
+        "value": 118.75,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "earningsFraction": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "The 80% of average weekly earnings rule began on 6 April 2026 and did not apply in 2025/26."
+      },
+      "maxWeeks": {
+        "value": 28,
+        "source": "https://www.gov.uk/statutory-sick-pay",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-statutory-sick-pay.html"
+      }
+    }
+  },
+  "isa": {
+    "annualLimit": {
+      "value": null,
+      "source": "",
+      "verified": "",
+      "status": "unset",
+      "note": "The 2025/26 ISA limit has not been read from a 2025/26 gov.uk page."
+    }
+  },
+  "pensionTaxAllowance": null
+}

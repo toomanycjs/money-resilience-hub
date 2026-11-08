@@ -1,0 +1,111 @@
+---
+import { compareYears, getYear, listYears, previousYear, STATUS_LABEL } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { CURRENT_YEAR, SITE_URL } from '../../config/site';
+import Base from '../../layouts/Base.astro';
+import { bandTables, rateTables } from '../../lib/rates';
+import { datasetNode } from '../../lib/schema';
+import { rulesChangedOn } from '../../lib/lastmod.mjs';
+
+export function getStaticPaths() {
+	return listYears().map((y) => ({ params: { year: y.taxYear } }));
+}
+
+const year = getYear(Astro.params.year as string);
+const prev = previousYear(year.taxYear);
+const tables = rateTables(year);
+const bands = bandTables(year);
+const changes = prev ? compareYears(prev, year) : [];
+const allRows = tables.flatMap((t) => t.rows);
+const verifiedDates = allRows.map((r) => r.verified).filter(Boolean).sort();
+const latest = verifiedDates.at(-1) ?? '';
+const earliest = verifiedDates[0] ?? '';
+const unset = allRows.filter((r) => r.status === 'unset').length;
+const announced = allRows.filter((r) => r.status === 'announced').length;
+const fmt = (v: number | string | null) => (typeof v === 'number' ? (v < 1 ? pct(v) : money(v, 0)) : v === null ? 'not set' : String(v));
+const changedOn = rulesChangedOn(year.taxYear);
+const dataset = datasetNode({
+	name: `UK tax rules ${year.label}`,
+	description: `Every rate, threshold and allowance for the ${year.label} tax year with its gov.uk source, verified date and status.`,
+	url: `${SITE_URL}/rates/${year.taxYear}/`,
+	distribution: `${SITE_URL}/rules/${year.taxYear}.json`,
+	modified: changedOn ?? latest,
+});
+---
+
+<Base title={`Tax rates and allowances ${year.label}, with sources`} description={`Income tax bands for England, Scotland and Wales, National Insurance, student loan thresholds, child benefit and statutory pay for ${year.label}, each with its gov.uk source and the date it was checked.`} breadcrumb={`Rates ${year.label}`} extraNodes={[dataset]} taxYears={[year.taxYear]}>
+	<div class="page-head">
+		<p class="kicker"><a href="/rates/">Rates</a></p>
+		<h1>Rates and allowances {year.label}</h1>
+		<p class="subtitle">{longDate(year.starts)} to {longDate(year.ends)}. Figures last checked {earliest === latest ? `on ${longDate(latest)}` : `between ${longDate(earliest)} and ${longDate(latest)}`}.{announced ? ` ${announced} figures are announced but not yet legislated.` : ''}{unset ? ` ${unset} figures are not yet set and are shown as such.` : ''}</p>
+	</div>
+
+	{year.taxYear !== CURRENT_YEAR.taxYear && (
+		<p class="status-note">This is not the current tax year. The tools use {CURRENT_YEAR.label} by default; this page is here for returns, comparisons and planning.</p>
+	)}
+
+	<p>Next scheduled change: {longDate(year.nextScheduledChange.date)}. {year.nextScheduledChange.summary}</p>
+
+	<nav class="toc" aria-label="Contents">
+		<ol>
+			<li><a href="#bands">Income tax bands by nation</a></li>
+			{tables.map((t) => <li><a href={`#${t.id}`}>{t.heading}</a></li>)}
+			<li><a href="#changelog">What changed from {prev ? prev.label : 'the previous year'}</a></li>
+		</ol>
+	</nav>
+
+	<h2 id="bands">Income tax bands by nation</h2>
+	{bands.map((n) => (
+		<section>
+			<h3>{n.nationLabel}</h3>
+			<table class="rates-table">
+				<thead><tr><th scope="col">Band</th><th scope="col" class="num">Taxable income</th><th scope="col" class="num">Rate</th><th scope="col">Source</th><th scope="col">Checked</th><th scope="col">Status</th></tr></thead>
+				<tbody>
+					{n.bands.map((b) => (
+						<tr>
+							<th scope="row">{b.name}</th>
+							<td class="num">{b.rate === null ? 'Not set' : b.upTo === null ? `Over ${money(b.from, 0)}` : `${money(b.from + (b.from ? 1 : 0), 0)} to ${money(b.upTo, 0)}`}</td>
+							<td class="num">{b.rate === null ? '' : pct(b.rate)}</td>
+							<td class="src">{b.source ? <a href={b.source} rel="noopener">gov.uk</a> : ''}</td>
+							<td>{b.verified ? longDate(b.verified) : ''}</td>
+							<td class={`status-${b.status}`}>{STATUS_LABEL[b.status]}{b.note ? ` (${b.note})` : ''}</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+			<p class="small quiet">Taxable income is pay above the personal allowance. The band limits do not change with the allowance; the gross pay at which each starts does.</p>
+		</section>
+	))}
+
+	{tables.map((t) => (
+		<section>
+			<h2 id={t.id}>{t.heading}</h2>
+			<table class="rates-table">
+				<thead><tr><th scope="col">Figure</th><th scope="col" class="num">Value</th><th scope="col">Source</th><th scope="col">Checked</th><th scope="col">Status</th></tr></thead>
+				<tbody>
+					{t.rows.map((r) => (
+						<tr>
+							<th scope="row">{r.label}{r.effectiveFrom ? ` (from ${longDate(r.effectiveFrom)})` : ''}</th>
+							<td class="num">{r.value}</td>
+							<td class="src">{r.source ? <a href={r.source} rel="noopener">{new URL(r.source).hostname.replace(/^www\./, '')}</a> : ''}</td>
+							<td>{r.verified ? longDate(r.verified) : ''}</td>
+							<td class={`status-${r.status}`}>{STATUS_LABEL[r.status]}{r.note ? `. ${r.note}` : ''}</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+		</section>
+	))}
+
+	<h2 id="changelog">What changed from {prev ? prev.label : 'the previous year'}</h2>
+	{changes.length ? (
+		<ul>
+			{changes.map((c) => <li>{c.path}: {fmt(c.from)} to {fmt(c.to)}{c.status !== 'in-force' ? ` (${c.status})` : ''}</li>)}
+		</ul>
+	) : (
+		<p>No earlier year is recorded to compare against.</p>
+	)}
+	{changedOn && <p class="small quiet">A value in this file last changed on {longDate(changedOn)}. Re-verifying a value does not count as a change.</p>}
+	<p>This page is rendered from <a href={`/rules/${year.taxYear}.json`}>the rules file for {year.label}</a>, open data under CC BY 4.0. The <a href="/methodology/">methodology</a> explains the status words and how values are verified.</p>
+	<p>Other years: {listYears().filter((y) => y.taxYear !== year.taxYear).map((y, i, a) => <><a href={`/rates/${y.taxYear}/`}>{y.label}</a>{i < a.length - 1 ? ', ' : ''}</>)}.</p>
+</Base>

@@ -1,0 +1,74 @@
+---
+// The style tile: tokens, the type scale, one full calculator result with its
+// ruler and ledger, a salary page header, the nav and footer, and the ad
+// slots in place. Not indexed. Once approved it is the source of truth.
+import { takeHome } from '@money-resilience-hub/rules';
+import { money, parseForm, renderRulesUsed, DEFAULT_FORM } from '@money-resilience-hub/calculators';
+import AdSlot from '../../components/AdSlot.astro';
+import TakeHomeCalculator from '../../components/TakeHomeCalculator.astro';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Base from '../../layouts/Base.astro';
+
+const TOKENS = [
+	{ name: 'Page', value: '#FFFFFF', role: 'Background. This site is the one that is allowed to be white.' },
+	{ name: 'Ledger', value: '#F1F0EC', role: 'The breakdown table and the rules used box.' },
+	{ name: 'Ink', value: '#14213D', role: 'Text, rules, the take-home figure.' },
+	{ name: 'Quiet', value: '#5B6473', role: 'Secondary text and labels.' },
+	{ name: 'Deduction', value: '#8C2F28', role: 'Deduction amounts in the breakdown, and nothing else.' },
+	{ name: 'Threshold', value: '#C27C0E', role: 'Threshold marks on the ruler, and nothing else.' },
+	{ name: 'Hairline', value: 'Quiet at 35%', role: 'Rules between rows, a tint of Quiet rather than a grey of its own. The total gets ink.' },
+];
+const sample = 30000;
+const b = takeHome(parseForm({ ...DEFAULT_FORM, gross: String(sample), studentLoanPlans: ['plan2'], taxYear: CURRENT_YEAR.taxYear }, BUILD_DATE));
+---
+
+<Base title="Style tile" description="Design tokens and one full calculator result, for review." noindex>
+	<div class="page-head">
+		<p class="kicker">Design</p>
+		<h1>Style tile</h1>
+		<p class="subtitle">Tokens, type, one full result with its ruler and ledger, a salary page header, the nav and footer above and below, and the ad slots in their reserved places.</p>
+	</div>
+
+	<h2>Tokens</h2>
+	<table>
+		<thead><tr><th scope="col">Token</th><th scope="col">Value</th><th scope="col">Role</th></tr></thead>
+		<tbody>
+			{TOKENS.map((t) => (
+				<tr>
+					<th scope="row"><span class="swatch" style={`background:${t.value.startsWith("#") ? t.value : "var(--hairline)"};border:1px solid var(--hairline)`}></span>{t.name}</th>
+					<td>{t.value}</td>
+					<td>{t.role}</td>
+				</tr>
+			))}
+		</tbody>
+	</table>
+
+	<h2>Type</h2>
+	<p class="figure"><span class="figure-amount">{money(b.periods.monthly, 0)}</span><span class="figure-period">Newsreader, the figure</span></p>
+	<h1 style="margin-top:1rem">Heading one, Newsreader 600</h1>
+	<h2 style="margin-top:0.5rem">Heading two, the same face a size down</h2>
+	<h3 style="margin-top:0.5rem">Heading three</h3>
+	<p class="prose">Body, Public Sans at 17 with a line height of 1.5 and a measure of 60 to 70 characters. Figures in running text are lining and tabular: {money(b.gross, 2)} and {money(b.takeHome, 2)} line up when stacked. <a href="#">Links are underlined</a>, never arrowed. Labels are sentence case, never capitals.</p>
+	<p class="quiet small">Quiet text for labels, help and meta.</p>
+
+	<h2>One full result</h2>
+	<TakeHomeCalculator form={{ gross: String(sample), studentLoanPlans: ['plan2'] }} />
+
+	<section class="rules-used" data-rules-used style="margin-top:2.5rem">
+		<h2 style="margin-top:0">Rules used</h2>
+		<div set:html={renderRulesUsed(b, { ratesPath: `/rates/${b.taxYear}/` })} />
+	</section>
+
+	<h2>Ad slot, as reserved</h2>
+	<AdSlot id="tile-after-how" preview />
+
+	<h2>Salary page header</h2>
+	<div class="page-head">
+		<p class="kicker"><a href="/calculators/">Calculators</a></p>
+		<h1>{money(sample, 0)} after tax</h1>
+		<p class="subtitle">{money(b.periods.monthly, 0)} a month in {b.label} for England and Northern Ireland, before any pension or student loan. Change the nation, tax code or loan plan and the page updates.</p>
+	</div>
+
+	<h2>Second ad slot, between the questions and related</h2>
+	<AdSlot id="tile-before-related" preview />
+</Base>

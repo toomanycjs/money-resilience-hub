@@ -1,0 +1,386 @@
+[
+  {
+    "id": "england-at-personal-allowance",
+    "title": "England: gross exactly equal to the personal allowance and the NI primary threshold gives no tax and no NI",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 12570, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 0, "nationalInsurance": 0, "studentLoan": 0, "takeHome": 12570 },
+    "working": "Allowance: 1257 x 10 = 12,570. Taxable income: 12,570 - 12,570 = 0, so no tax. NI: primary threshold is 12,570 per year; 12,570 - 12,570 = 0 at 8% = 0. No student loan. Take-home: 12,570 - 0 - 0 - 0 = 12,570."
+  },
+  {
+    "id": "england-one-pound-over-allowance",
+    "title": "England: one pound over the personal allowance is one pound of taxable income and one pound of NI-able earnings",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 12571, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 0.20, "nationalInsurance": 0.08, "studentLoan": 0, "takeHome": 12570.72 },
+    "working": "Taxable income: 12,571 - 12,570 = 1. Basic rate: 1 x 20% = 0.20. NI: (12,571 - 12,570) = 1 x 8% = 0.08. Take-home: 12,571 - 0.20 - 0.08 = 12,570.72."
+  },
+  {
+    "id": "england-top-of-basic-rate",
+    "title": "England: gross 50,270 is the top of the basic rate band and the NI upper earnings limit",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 50270, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 7540, "nationalInsurance": 3016, "studentLoan": 0, "takeHome": 39714 },
+    "working": "Taxable income: 50,270 - 12,570 = 37,700. The basic rate band on gov.uk runs 12,571 to 50,270, i.e. the first 37,700 of taxable income. Basic rate: 37,700 x 20% = 7,540; nothing at higher rate. NI: upper earnings limit is 50,270 per year, so (50,270 - 12,570) = 37,700 x 8% = 3,016; nothing above the UEL. Take-home: 50,270 - 7,540 - 3,016 = 39,714."
+  },
+  {
+    "id": "england-first-pound-of-higher-rate",
+    "title": "England: gross 50,271 puts one pound into the higher rate and one pound above the NI upper earnings limit",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 50271, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 7540.40, "nationalInsurance": 3016.02, "studentLoan": 0, "takeHome": 39714.58 },
+    "working": "Taxable income: 50,271 - 12,570 = 37,701. Basic rate: 37,700 x 20% = 7,540. Higher rate: 1 x 40% = 0.40. Income tax: 7,540.40. NI: 37,700 x 8% = 3,016 plus (50,271 - 50,270) = 1 x 2% = 0.02, total 3,016.02. Take-home: 50,271 - 7,540.40 - 3,016.02 = 39,714.58."
+  },
+  {
+    "id": "england-100000-no-taper",
+    "title": "England: gross 100,000 exactly keeps the full personal allowance (taper starts above 100,000)",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/income-tax-rates/income-over-100000",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 100000, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 27432, "nationalInsurance": 4010.60, "studentLoan": 0, "takeHome": 68557.40 },
+    "working": "Income is not above 100,000 so the allowance stays 12,570. Taxable income: 100,000 - 12,570 = 87,430. Basic rate: 37,700 x 20% = 7,540. Higher rate: (87,430 - 37,700) = 49,730 x 40% = 19,892. Income tax: 7,540 + 19,892 = 27,432. NI: 37,700 x 8% = 3,016 plus (100,000 - 50,270) = 49,730 x 2% = 994.60, total 4,010.60. Take-home: 100,000 - 27,432 - 4,010.60 = 68,557.40."
+  },
+  {
+    "id": "england-100002-taper-one-pound",
+    "title": "England: gross 100,002 is 2 over the taper start, so the allowance drops by exactly 1",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/income-tax-rates/income-over-100000",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 100002, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 12569, "incomeTax": 27433.20, "nationalInsurance": 4010.64, "studentLoan": 0, "takeHome": 68558.16 },
+    "working": "Excess over 100,000: 2. Allowance goes down 1 for every 2, so reduction = 1; allowance = 12,570 - 1 = 12,569. Taxable income: 100,002 - 12,569 = 87,433. Basic rate: 37,700 x 20% = 7,540. Higher rate: (87,433 - 37,700) = 49,733 x 40% = 19,893.20. Income tax: 27,433.20. NI: 3,016 plus (100,002 - 50,270) = 49,732 x 2% = 994.64, total 4,010.64. Take-home: 100,002 - 27,433.20 - 4,010.64 = 68,558.16."
+  },
+  {
+    "id": "england-110000-taper-5000",
+    "title": "England: gross 110,000 is 10,000 over the taper start, so the allowance drops by 5,000",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/income-tax-rates/income-over-100000",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 110000, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 7570, "incomeTax": 33432, "nationalInsurance": 4210.60, "studentLoan": 0, "takeHome": 72357.40 },
+    "working": "Excess over 100,000: 10,000; reduction = 10,000 / 2 = 5,000; allowance = 12,570 - 5,000 = 7,570. Taxable income: 110,000 - 7,570 = 102,430. Basic rate: 37,700 x 20% = 7,540. Higher rate: (102,430 - 37,700) = 64,730 x 40% = 25,892. Income tax: 7,540 + 25,892 = 33,432. NI: 3,016 plus (110,000 - 50,270) = 59,730 x 2% = 1,194.60, total 4,210.60. Take-home: 110,000 - 33,432 - 4,210.60 = 72,357.40."
+  },
+  {
+    "id": "england-125140-allowance-zero",
+    "title": "England: gross 125,140 exactly tapers the allowance to zero; everything is at basic or higher rate, nothing at additional rate",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/income-tax-rates/income-over-100000",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 125140, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 0, "incomeTax": 42516, "nationalInsurance": 4513.40, "studentLoan": 0, "takeHome": 78110.60 },
+    "working": "Excess over 100,000: 25,140; reduction = 12,570, so allowance = 0 (gov.uk: allowance is zero if income is 125,140 or above). Taxable income: 125,140 - 0 = 125,140. Basic rate: 37,700 x 20% = 7,540. Higher rate runs up to 125,140, so (125,140 - 37,700) = 87,440 x 40% = 34,976. Additional rate applies only over 125,140: nothing. Income tax: 7,540 + 34,976 = 42,516. NI: 3,016 plus (125,140 - 50,270) = 74,870 x 2% = 1,497.40, total 4,513.40. Take-home: 125,140 - 42,516 - 4,513.40 = 78,110.60."
+  },
+  {
+    "id": "england-125141-first-pound-additional-rate",
+    "title": "England: gross 125,141 is the first pound at the additional rate (allowance already zero, so taxable income equals gross)",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/income-tax-rates/income-over-100000",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 125141, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 0, "incomeTax": 42516.45, "nationalInsurance": 4513.42, "studentLoan": 0, "takeHome": 78111.13 },
+    "working": "Allowance is zero (income is 125,140 or above; the taper cannot reduce it below zero). Taxable income: 125,141. Basic rate: 37,700 x 20% = 7,540. Higher rate: (125,140 - 37,700) = 87,440 x 40% = 34,976. Additional rate: (125,141 - 125,140) = 1 x 45% = 0.45. Income tax: 7,540 + 34,976 + 0.45 = 42,516.45. NI: 3,016 plus (125,141 - 50,270) = 74,871 x 2% = 1,497.42, total 4,513.42. Take-home: 125,141 - 42,516.45 - 4,513.42 = 78,111.13."
+  },
+  {
+    "id": "england-150000",
+    "title": "England: gross 150,000, well into the additional rate with no allowance",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/income-tax-rates/income-over-100000",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 150000, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 0, "incomeTax": 53703, "nationalInsurance": 5010.60, "studentLoan": 0, "takeHome": 91286.40 },
+    "working": "Allowance is zero (income 125,140 or above). Taxable income: 150,000. Basic rate: 37,700 x 20% = 7,540. Higher rate: (125,140 - 37,700) = 87,440 x 40% = 34,976. Additional rate: (150,000 - 125,140) = 24,860 x 45% = 11,187. Income tax: 7,540 + 34,976 + 11,187 = 53,703. NI: 3,016 plus (150,000 - 50,270) = 99,730 x 2% = 1,994.60, total 5,010.60. Take-home: 150,000 - 53,703 - 5,010.60 = 91,286.40."
+  },
+  {
+    "id": "scotland-15000-starter-rate-only",
+    "title": "Scotland: gross 15,000 ends inside the starter rate band (which runs to 16,537)",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/scottish-income-tax",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 15000, "nation": "scotland", "taxCode": "S1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 461.70, "nationalInsurance": 194.40, "studentLoan": 0, "takeHome": 14343.90 },
+    "working": "Allowance 12,570. Taxable income: 15,000 - 12,570 = 2,430. Starter rate band is 12,571 to 16,537, i.e. the first 3,967 of taxable income, so all 2,430 is at 19%: 2,430 x 19% = 461.70. NI (UK-wide): 2,430 x 8% = 194.40. Take-home: 15,000 - 461.70 - 194.40 = 14,343.90."
+  },
+  {
+    "id": "scotland-30000-starter-basic-intermediate",
+    "title": "Scotland: gross 30,000 spans the starter, basic and intermediate rate bands",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/scottish-income-tax",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 30000, "nation": "scotland", "taxCode": "S1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 3451.07, "nationalInsurance": 1394.40, "studentLoan": 0, "takeHome": 25154.53 },
+    "working": "Taxable income: 30,000 - 12,570 = 17,430. Band widths in taxable income: starter 12,571-16,537 = 3,967; basic 16,538-29,526 = 12,989 (cumulative 16,956); intermediate 29,527-43,662 = 14,136 (cumulative 31,092). Starter: 3,967 x 19% = 753.73. Basic: 12,989 x 20% = 2,597.80. Intermediate: (17,430 - 16,956) = 474 x 21% = 99.54. Income tax: 753.73 + 2,597.80 + 99.54 = 3,451.07. NI: 17,430 x 8% = 1,394.40. Take-home: 30,000 - 3,451.07 - 1,394.40 = 25,154.53."
+  },
+  {
+    "id": "scotland-50000-higher-rate",
+    "title": "Scotland: gross 50,000 reaches the Scottish higher rate (42%)",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/scottish-income-tax",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 50000, "nation": "scotland", "taxCode": "S1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 8982.05, "nationalInsurance": 2994.40, "studentLoan": 0, "takeHome": 38023.55 },
+    "working": "Taxable income: 50,000 - 12,570 = 37,430. Starter: 3,967 x 19% = 753.73. Basic: 12,989 x 20% = 2,597.80. Intermediate: 14,136 x 21% = 2,968.56 (cumulative top 31,092). Higher (43,663 to 75,000): (37,430 - 31,092) = 6,338 x 42% = 2,661.96. Income tax: 753.73 + 2,597.80 + 2,968.56 + 2,661.96 = 8,982.05. NI: 37,430 x 8% = 2,994.40 (gross is below the 50,270 UEL). Take-home: 50,000 - 8,982.05 - 2,994.40 = 38,023.55."
+  },
+  {
+    "id": "scotland-80000-advanced-rate",
+    "title": "Scotland: gross 80,000 reaches the Scottish advanced rate (45%)",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/scottish-income-tax",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 80000, "nation": "scotland", "taxCode": "S1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 21732.05, "nationalInsurance": 3610.60, "studentLoan": 0, "takeHome": 54657.35 },
+    "working": "Taxable income: 80,000 - 12,570 = 67,430. Starter: 3,967 x 19% = 753.73. Basic: 12,989 x 20% = 2,597.80. Intermediate: 14,136 x 21% = 2,968.56. Higher band 43,663 to 75,000 = 31,338 wide (cumulative top 62,430): 31,338 x 42% = 13,161.96. Advanced (75,001 to 125,140): (67,430 - 62,430) = 5,000 x 45% = 2,250. Income tax: 753.73 + 2,597.80 + 2,968.56 + 13,161.96 + 2,250 = 21,732.05. NI: 37,700 x 8% = 3,016 plus (80,000 - 50,270) = 29,730 x 2% = 594.60, total 3,610.60. Take-home: 80,000 - 21,732.05 - 3,610.60 = 54,657.35."
+  },
+  {
+    "id": "wales-40000",
+    "title": "Wales: gross 40,000 uses the same bands and rates as England and Northern Ireland",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/tax-codes/what-your-tax-code-means",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 40000, "nation": "wales", "taxCode": "C1257L", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 5486, "nationalInsurance": 2194.40, "studentLoan": 0, "takeHome": 32319.60 },
+    "working": "gov.uk/income-tax-rates says only Scotland has different bands, so Wales uses the 12,570 allowance and 20% basic rate to 50,270. Taxable income: 40,000 - 12,570 = 27,430, all within the 37,700 basic rate band: 27,430 x 20% = 5,486. NI: 27,430 x 8% = 2,194.40. Take-home: 40,000 - 5,486 - 2,194.40 = 32,319.60."
+  },
+  {
+    "id": "plan2-at-threshold",
+    "title": "Plan 2 student loan: gross exactly at the 29,385 threshold gives no repayment",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+      "https://www.gov.uk/income-tax-rates"
+    ],
+    "input": { "gross": 29385, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": ["plan2"] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 3363, "nationalInsurance": 1345.20, "studentLoan": 0, "takeHome": 24676.80 },
+    "working": "Plan 2 threshold 29,385 per year; gross - threshold = 0, so repayment 0. Taxable income: 29,385 - 12,570 = 16,815 x 20% = 3,363. NI: 16,815 x 8% = 1,345.20. Take-home: 29,385 - 3,363 - 1,345.20 - 0 = 24,676.80."
+  },
+  {
+    "id": "plan2-threshold-plus-1000",
+    "title": "Plan 2 student loan: 1,000 over the threshold repays 9% of 1,000",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+      "https://www.gov.uk/income-tax-rates"
+    ],
+    "input": { "gross": 30385, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": ["plan2"] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 3563, "nationalInsurance": 1425.20, "studentLoan": 90, "takeHome": 25306.80 },
+    "working": "Student loan: (30,385 - 29,385) = 1,000 x 9% = 90 (whole pounds, nothing to round). Taxable income: 30,385 - 12,570 = 17,815 x 20% = 3,563. NI: 17,815 x 8% = 1,425.20. Take-home: 30,385 - 3,563 - 1,425.20 - 90 = 25,306.80."
+  },
+  {
+    "id": "plan5-at-threshold",
+    "title": "Plan 5 student loan: gross exactly at the 25,000 threshold gives no repayment",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+      "https://www.gov.uk/income-tax-rates"
+    ],
+    "input": { "gross": 25000, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": ["plan5"] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 2486, "nationalInsurance": 994.40, "studentLoan": 0, "takeHome": 21519.60 },
+    "working": "Plan 5 threshold 25,000 per year; gross - threshold = 0, so repayment 0. Taxable income: 25,000 - 12,570 = 12,430 x 20% = 2,486. NI: 12,430 x 8% = 994.40. Take-home: 25,000 - 2,486 - 994.40 - 0 = 21,519.60."
+  },
+  {
+    "id": "plan5-threshold-plus-1000",
+    "title": "Plan 5 student loan: 1,000 over the threshold repays 9% of 1,000",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+      "https://www.gov.uk/income-tax-rates"
+    ],
+    "input": { "gross": 26000, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": ["plan5"] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 2686, "nationalInsurance": 1074.40, "studentLoan": 90, "takeHome": 22149.60 },
+    "working": "Student loan: (26,000 - 25,000) = 1,000 x 9% = 90. Taxable income: 26,000 - 12,570 = 13,430 x 20% = 2,686. NI: 13,430 x 8% = 1,074.40. Take-home: 26,000 - 2,686 - 1,074.40 - 90 = 22,149.60."
+  },
+  {
+    "id": "plan1-plus-postgraduate-35000",
+    "title": "Plan 1 and Postgraduate Loan together at 35,000: the two repayments are summed",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+      "https://www.gov.uk/income-tax-rates"
+    ],
+    "input": { "gross": 35000, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": ["plan1", "postgraduate"] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 4486, "nationalInsurance": 1794.40, "studentLoan": 1569, "takeHome": 27150.60 },
+    "working": "Plan 1: threshold 26,900; (35,000 - 26,900) = 8,100 x 9% = 729. Postgraduate: threshold 21,000; (35,000 - 21,000) = 14,000 x 6% = 840. Student loan total: 729 + 840 = 1,569. Taxable income: 35,000 - 12,570 = 22,430 x 20% = 4,486. NI: 22,430 x 8% = 1,794.40. Take-home: 35,000 - 4,486 - 1,794.40 - 1,569 = 27,150.60."
+  },
+  {
+    "id": "tax-code-k475-30000",
+    "title": "Tax code K475 at 30,000: no allowance, 4,750 added to taxable income, tax well under the 50% cap",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/tax-codes/what-your-tax-code-means",
+      "https://www.gov.uk/tax-codes/k-in-your-tax-code",
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 30000, "nation": "england-ni", "taxCode": "K475", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 0, "incomeTax": 6950, "nationalInsurance": 1394.40, "studentLoan": 0, "takeHome": 21655.60 },
+    "working": "K code: no allowance; 475 x 10 = 4,750 is added to income. Taxable income: 30,000 + 4,750 = 34,750, which is within the 37,700 basic rate band: 34,750 x 20% = 6,950. Cap: employers cannot take more than half of pre-tax pay with a K code; 50% of 30,000 = 15,000, and 6,950 is below that, so no cap applies. The taper does not apply to K codes. NI is unaffected by the tax code: (30,000 - 12,570) = 17,430 x 8% = 1,394.40. Take-home: 30,000 - 6,950 - 1,394.40 = 21,655.60."
+  },
+  {
+    "id": "tax-code-k2000-10000-capped",
+    "title": "Tax code K2000 at 10,000: the K addition would give 6,000 of tax, but the deduction is capped at 50% of gross pay",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/tax-codes/k-in-your-tax-code",
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 10000, "nation": "england-ni", "taxCode": "K2000", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 0, "incomeTax": 5000, "nationalInsurance": 0, "studentLoan": 0, "takeHome": 5000 },
+    "working": "K code: 2000 x 10 = 20,000 added to income. Taxable income: 10,000 + 20,000 = 30,000 x 20% = 6,000 before the cap. Cap: half of pre-tax pay = 10,000 x 50% = 5,000; 6,000 exceeds it, so income tax = 5,000. NI: gross 10,000 is below the 12,570 primary threshold, so 0. Take-home: 10,000 - 5,000 - 0 = 5,000."
+  },
+  {
+    "id": "tax-code-br-30000",
+    "title": "Tax code BR at 30,000: all income taxed at the basic rate with no allowance",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/tax-codes/what-your-tax-code-means",
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 30000, "nation": "england-ni", "taxCode": "BR", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 0, "incomeTax": 6000, "nationalInsurance": 1394.40, "studentLoan": 0, "takeHome": 22605.60 },
+    "working": "BR: all income at the basic rate, 30,000 x 20% = 6,000; no allowance, no bands, no taper. NI: (30,000 - 12,570) = 17,430 x 8% = 1,394.40. Take-home: 30,000 - 6,000 - 1,394.40 = 22,605.60."
+  },
+  {
+    "id": "tax-code-d0-60000",
+    "title": "Tax code D0 at 60,000: all income taxed at the higher rate with no allowance",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/tax-codes/what-your-tax-code-means",
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 60000, "nation": "england-ni", "taxCode": "D0", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 0, "incomeTax": 24000, "nationalInsurance": 3210.60, "studentLoan": 0, "takeHome": 32789.40 },
+    "working": "D0: all income at the higher rate, 60,000 x 40% = 24,000. NI: 37,700 x 8% = 3,016 plus (60,000 - 50,270) = 9,730 x 2% = 194.60, total 3,210.60. Take-home: 60,000 - 24,000 - 3,210.60 = 32,789.40."
+  },
+  {
+    "id": "tax-code-d1-150000",
+    "title": "Tax code D1 at 150,000: all income taxed at the additional rate with no allowance",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/tax-codes/what-your-tax-code-means",
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 150000, "nation": "england-ni", "taxCode": "D1", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 0, "incomeTax": 67500, "nationalInsurance": 5010.60, "studentLoan": 0, "takeHome": 77489.40 },
+    "working": "D1: all income at the additional rate, 150,000 x 45% = 67,500. NI: 3,016 plus (150,000 - 50,270) = 99,730 x 2% = 1,994.60, total 5,010.60. Take-home: 150,000 - 67,500 - 5,010.60 = 77,489.40."
+  },
+  {
+    "id": "tax-code-nt-30000",
+    "title": "Tax code NT at 30,000: no income tax, but NI is still due",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/tax-codes/what-your-tax-code-means",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 30000, "nation": "england-ni", "taxCode": "NT", "studentLoanPlans": [] },
+    "expected": { "incomeTax": 0, "nationalInsurance": 1394.40, "studentLoan": 0, "takeHome": 28605.60 },
+    "working": "NT: not paying any tax on this income, so income tax 0. NI: (30,000 - 12,570) = 17,430 x 8% = 1,394.40. Take-home: 30,000 - 0 - 1,394.40 = 28,605.60."
+  },
+  {
+    "id": "tax-code-1383m-30000",
+    "title": "Tax code 1383M at 30,000: Marriage Allowance recipient has 12,570 + 1,260 = 13,830 allowance",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/marriage-allowance",
+      "https://www.gov.uk/tax-codes/what-your-tax-code-means",
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 30000, "nation": "england-ni", "taxCode": "1383M", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 13830, "incomeTax": 3234, "nationalInsurance": 1394.40, "studentLoan": 0, "takeHome": 25371.60 },
+    "working": "Marriage Allowance transfers 1,260 of allowance; recipient allowance 12,570 + 1,260 = 13,830, matching 1383 x 10. Taxable income: 30,000 - 13,830 = 16,170 x 20% = 3,234. (Compared with 1257L the tax is 252 lower, the maximum saving gov.uk states.) NI: 17,430 x 8% = 1,394.40. Take-home: 30,000 - 3,234 - 1,394.40 = 25,371.60."
+  },
+  {
+    "id": "tax-code-1131n-30000",
+    "title": "Tax code 1131N at 30,000: Marriage Allowance giver has 12,570 - 1,260 = 11,310 allowance",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/marriage-allowance",
+      "https://www.gov.uk/tax-codes/what-your-tax-code-means",
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 30000, "nation": "england-ni", "taxCode": "1131N", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 11310, "incomeTax": 3738, "nationalInsurance": 1394.40, "studentLoan": 0, "takeHome": 24867.60 },
+    "working": "Giver allowance: 12,570 - 1,260 = 11,310 (gov.uk example figure), matching 1131 x 10. Taxable income: 30,000 - 11,310 = 18,690 x 20% = 3,738. NI: 17,430 x 8% = 1,394.40. Take-home: 30,000 - 3,738 - 1,394.40 = 24,867.60."
+  },
+  {
+    "id": "tax-code-0t-30000",
+    "title": "Tax code 0T at 30,000: no allowance but normal bands apply (same result as BR here because 30,000 is inside the basic rate band)",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/tax-codes/what-your-tax-code-means",
+      "https://www.gov.uk/income-tax-rates",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 30000, "nation": "england-ni", "taxCode": "0T", "studentLoanPlans": [] },
+    "expected": { "personalAllowance": 0, "incomeTax": 6000, "nationalInsurance": 1394.40, "studentLoan": 0, "takeHome": 22605.60 },
+    "working": "0T: allowance 0 x 10 = 0. Taxable income: 30,000, within the 37,700 basic rate band: 30,000 x 20% = 6,000. NI: 17,430 x 8% = 1,394.40. Take-home: 30,000 - 6,000 - 1,394.40 = 22,605.60. (0T and BR only diverge once taxable income exceeds 37,700.)"
+  },
+  {
+    "id": "scotland-plan4-40000",
+    "title": "Scotland with Plan 4 student loan at 40,000: Scottish bands plus a repayment that is rounded down to a whole pound",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/scottish-income-tax",
+      "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
+      "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027"
+    ],
+    "input": { "gross": 40000, "nation": "scotland", "taxCode": "S1257L", "studentLoanPlans": ["plan4"] },
+    "expected": { "personalAllowance": 12570, "incomeTax": 5551.07, "nationalInsurance": 2194.40, "studentLoan": 558, "takeHome": 31696.53 },
+    "working": "Taxable income: 40,000 - 12,570 = 27,430. Starter: 3,967 x 19% = 753.73. Basic: 12,989 x 20% = 2,597.80 (cumulative top 16,956). Intermediate: (27,430 - 16,956) = 10,474 x 21% = 2,199.54. Income tax: 753.73 + 2,597.80 + 2,199.54 = 5,551.07. NI: 27,430 x 8% = 2,194.40. Plan 4: threshold 33,795; (40,000 - 33,795) = 6,205 x 9% = 558.45, rounded down to 558. Take-home: 40,000 - 5,551.07 - 2,194.40 - 558 = 31,696.53."
+  }
+]

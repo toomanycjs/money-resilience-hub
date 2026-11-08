@@ -1,0 +1,7 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "mrh-dev", "runtimeExecutable": "corepack", "runtimeArgs": ["pnpm", "--dir", "C:/Users/Craig/Documents/money-resilience-hub", "astro", "dev", "--port", "4331"], "port": 4331 },
+    { "name": "mrh-preview", "runtimeExecutable": "corepack", "runtimeArgs": ["pnpm", "--dir", "C:/Users/Craig/Documents/money-resilience-hub", "astro", "preview", "--port", "4332"], "port": 4332 }
+  ]
+}

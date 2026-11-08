@@ -1,0 +1,79 @@
+---
+import edgeCases from '../../packages/rules/fixtures/edge-cases.json' with { type: 'json' };
+import hmrcExamples from '../../packages/rules/fixtures/hmrc-examples.json' with { type: 'json' };
+import { listYears, resolve, STATUS_LABEL, MARGINAL_STEP } from '@money-resilience-hub/rules';
+import { money } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../config/site';
+import { longDate } from '@money-resilience-hub/calculators';
+import { REPO_URL, SITE_NAME } from '../config/site';
+import Plain from '../layouts/Plain.astro';
+
+const years = listYears();
+const taperRate = resolve(CURRENT_YEAR.incomeTax.taperRate, 'taperRate', BUILD_DATE).value;
+const taperWords = `${money(1, 0)} for every ${money(1 / taperRate, 0)}`;
+const step = money(MARGINAL_STEP, 0);
+const fixtures = [...(hmrcExamples as { id: string; title: string; sources: string[] }[]), ...(edgeCases as { id: string; title: string; sources: string[] }[])];
+const contents = [
+	{ id: 'rules', label: 'Where every figure comes from' },
+	{ id: 'status', label: 'What the status words mean' },
+	{ id: 'take-home', label: 'How the take-home calculator works' },
+	{ id: 'rounding', label: 'Rounding' },
+	{ id: 'tests', label: 'The test suite' },
+	{ id: 'limits', label: 'Known limits' },
+	{ id: 'review', label: 'Review' },
+	{ id: 'funding', label: 'Funding' },
+];
+---
+
+<Plain title="Methodology: how the calculators are built and checked" description="How every figure is sourced and verified, how each calculator works, the HMRC worked examples the test suite runs, the rounding rules and the known limits." h1="Methodology" intro="How the figures are sourced, how the calculators compute, what is tested and what is not covered." contents={contents}>
+	<h2 id="rules">Where every figure comes from</h2>
+	<p>Every rate, threshold, allowance and date lives in one rules file per tax year. Each value carries the URL of the primary source it was read from (gov.uk, HMRC, the Scottish and Welsh governments or the Student Loans Company), the date it was checked, its status, and the path of an archived copy of the source page taken that day. The build fails if any value lacks a source, a date or an archive, and warns when a value was checked more than 180 days ago.</p>
+	<p>No figure is typed into a page. The calculators, the <a href="/rates/">rates pages</a> and the worked examples all read from the same file, so they cannot disagree. If a source cannot be found the field is left empty, marked as not set, and the tool says so rather than guessing. The rules files are published as open data: {years.map((y, i) => <><a href={`/rules/${y.taxYear}.json`}>{y.label}</a>{i < years.length - 1 ? ', ' : ''}</>)}.</p>
+
+	<h2 id="status">What the status words mean</h2>
+	<dl>
+		<dt>{STATUS_LABEL['in-force']}</dt><dd>The rule applies now and is on the gov.uk page cited.</dd>
+		<dt>{STATUS_LABEL.legislated}</dt><dd>The rule is in an Act but does not apply yet, such as a threshold fixed for future years.</dd>
+		<dt>{STATUS_LABEL.announced}</dt><dd>The rule was announced at a fiscal event and is in a Finance Bill or awaiting one. It can still change, and a figure shown with this status is shown as announced.</dd>
+		<dt>{STATUS_LABEL.unset}</dt><dd>No primary source gives the figure yet. The tool reports this rather than using an estimate.</dd>
+	</dl>
+
+	<h2 id="take-home">How the take-home calculator works</h2>
+	<ol>
+		<li>The tax code sets the allowance: the number in an L, M, N or T code times ten; K codes add the number times ten to taxable pay; BR, D0 and D1 charge all pay at one rate; NT charges none. Unknown codes fall back to the standard code with a visible note.</li>
+		<li>Adjusted net income is pay less gross pension contributions. Above the taper start the allowance falls by {taperWords}.</li>
+		<li>Taxable income is pay (after a net pay or salary sacrifice pension) less the allowance, rounded down to the pound, and taxed band by band for the nation chosen. Relief at source widens every band by the gross contribution.</li>
+		<li>National Insurance is employee Class 1, category A, on pay after salary sacrifice, using the annual thresholds.</li>
+		<li>Each selected student loan plan repays its rate on pay after salary sacrifice above its threshold, rounded down to the pound.</li>
+		<li>Take-home is pay less every deduction. The marginal rate is one minus the change in take-home over the next {step}.</li>
+	</ol>
+
+	<h2 id="rounding">Rounding</h2>
+	<p>The conventions are set out in <a href={`${REPO_URL}/blob/main/packages/rules/ROUNDING.md`} rel="noopener">ROUNDING.md</a> in the repository: taxable income rounded down to the pound, tax and National Insurance to the penny, student loans rounded down to the pound, the Pension Tax Allowance maximum rounded up to the pound. A monthly payslip can differ by pence because PAYE works period by period.</p>
+
+	<h2 id="tests">The test suite</h2>
+	<p>The engine runs against {fixtures.length} fixtures on every build. {hmrcExamples.length} come from HMRC and gov.uk worked examples and {edgeCases.length} are edge cases written from gov.uk pages alone by someone who had not seen the engine: income exactly at each threshold, the taper, the point where the allowance reaches zero, the Scottish bands, each loan plan at and just above its threshold, and the K, BR, D0, D1, NT, 0T, M and N codes. The suite is public in <a href={`${REPO_URL}/tree/main/packages/rules/fixtures`} rel="noopener">the repository</a>.</p>
+	<details>
+		<summary>Every fixture and its source</summary>
+		<ul class="small">
+			{fixtures.map((f) => <li>{f.title} <span class="quiet">({f.sources.map((s) => new URL(s).pathname).join(', ')})</span></li>)}
+		</ul>
+	</details>
+
+	<h2 id="limits">Known limits</h2>
+	<ul>
+		<li>Benefits in kind, more than one employment, and National Insurance category letters other than A are not modelled.</li>
+		<li>K codes are modelled in the basic case: the addition to taxable pay and the cap of half of pay. Codes carrying cumulative adjustments from earlier in the year are not.</li>
+		<li>Relief at source pensions are shown with the basic rate band widened by the gross contribution, which is the Self Assessment outcome; a payslip only shows it if HMRC has adjusted the tax code.</li>
+		<li>Scottish and Welsh rules are applied to income tax bands only. Interactions between the Scottish bands and the allowance taper follow the same arithmetic as the rest of the UK.</li>
+		<li>The pension annual allowance and its taper are not modelled.</li>
+		<li>Nothing that depends on live market data (mortgage or savings rates) or on a rule under legal challenge is modelled.</li>
+	</ul>
+
+	<h2 id="review">Review</h2>
+	<p>No external review has taken place yet. When a chartered accountant or chartered tax adviser reviews a tool, this page will state who, when and the scope, and nothing beyond it. Until then every tool is checked against the fixtures above and against gov.uk's own calculators, and the <a href="/corrections/">corrections log</a> records anything found wrong.</p>
+
+	<h2 id="funding">Funding</h2>
+	<p>Display advertising will pay for {SITE_NAME} once traffic qualifies for a premium network. Ads never affect a figure, a result or the facts-not-advice line, and gambling, cryptoasset, high-cost credit and debt-solution ads are blocked. There are no affiliate links inside any result, ledger or rules used box.</p>
+	<p class="small quiet">Page reviewed {longDate(new Date().toISOString().slice(0, 10))}.</p>
+</Plain>

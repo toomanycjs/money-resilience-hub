@@ -1,0 +1,1 @@
+Run `pnpm sources:watch` and report every source page that has changed since it was archived, with the config paths that cite it. Never change a value. Suggest which paths to re-verify with /verify-rates.

@@ -1,0 +1,127 @@
+[
+  {
+    "id": "pta-explainer-steph",
+    "title": "HMRC explainer, Steph: income is the full new State Pension; the allowance removes all £93.28 of tax (the explainer taxes the unrounded £466.40; the engine rounds taxable income down to £466 as HMRC computations do, a difference of 8p)",
+    "fn": "pensionTaxAllowance",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": [
+      "https://www.gov.uk/government/publications/pension-tax-allowance-explainer/pension-tax-allowance-explainer"
+    ],
+    "input": {
+      "gross": 13036.4,
+      "nation": "england-ni"
+    },
+    "expected": {
+      "incomeTaxBefore": 93.28,
+      "pensionTaxAllowance": 94,
+      "incomeTaxAfter": 0
+    },
+    "tolerance": 0.1
+  },
+  {
+    "id": "pta-explainer-anne",
+    "title": "HMRC explainer, Anne: £12,970 of income owes £80 of tax, all removed",
+    "fn": "pensionTaxAllowance",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": [
+      "https://www.gov.uk/government/publications/pension-tax-allowance-explainer/pension-tax-allowance-explainer"
+    ],
+    "input": {
+      "gross": 12970,
+      "nation": "england-ni"
+    },
+    "expected": {
+      "incomeTaxBefore": 80,
+      "incomeTaxAfter": 0
+    }
+  },
+  {
+    "id": "pta-explainer-jonathan",
+    "title": "HMRC explainer, Jonathan: £13,186.40 is in the withdrawal range, so the allowance is £44",
+    "fn": "pensionTaxAllowance",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": [
+      "https://www.gov.uk/government/publications/pension-tax-allowance-explainer/pension-tax-allowance-explainer"
+    ],
+    "input": {
+      "gross": 13186.4,
+      "nation": "england-ni"
+    },
+    "expected": {
+      "pensionTaxAllowance": 44
+    }
+  },
+  {
+    "id": "pta-explainer-nadia",
+    "title": "HMRC explainer, Nadia: £13,400 owes £166 and gets no allowance because income is above £13,319",
+    "fn": "pensionTaxAllowance",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": [
+      "https://www.gov.uk/government/publications/pension-tax-allowance-explainer/pension-tax-allowance-explainer"
+    ],
+    "input": {
+      "gross": 13400,
+      "nation": "england-ni"
+    },
+    "expected": {
+      "incomeTaxBefore": 166,
+      "pensionTaxAllowance": 0,
+      "incomeTaxAfter": 166,
+      "withdrawnAt": 13318.4
+    }
+  },
+  {
+    "id": "marriage-allowance-saving",
+    "title": "gov.uk: transferring £1,260 of allowance reduces the partner's tax by up to £252",
+    "fn": "marriageAllowanceSaving",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/marriage-allowance"
+    ],
+    "input": {
+      "nation": "england-ni"
+    },
+    "expected": {
+      "saving": 252
+    }
+  },
+  {
+    "id": "marriage-allowance-giver-code",
+    "title": "gov.uk: the giver's allowance becomes £11,310, which is tax code 1131N",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/marriage-allowance"
+    ],
+    "input": {
+      "gross": 20000,
+      "nation": "england-ni",
+      "taxCode": "1131N",
+      "studentLoanPlans": []
+    },
+    "expected": {
+      "personalAllowance": 11310,
+      "incomeTax": 1738
+    }
+  },
+  {
+    "id": "income-over-100000-zero-allowance",
+    "title": "gov.uk: the allowance is zero at £125,140",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/income-tax-rates/income-over-100000"
+    ],
+    "input": {
+      "gross": 125140,
+      "nation": "england-ni",
+      "taxCode": "1257L",
+      "studentLoanPlans": []
+    },
+    "expected": {
+      "personalAllowance": 0
+    }
+  }
+]

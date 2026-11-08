@@ -1,0 +1,35 @@
+---
+import corrections from '../../docs/corrections.json' with { type: 'json' };
+import { longDate } from '@money-resilience-hub/calculators';
+import Plain from '../layouts/Plain.astro';
+
+interface Correction {
+	date: string;
+	page: string;
+	wrong: string;
+	from: string;
+	to: string;
+	affected: string;
+	change: string;
+	fixture?: string;
+}
+const entries = (corrections as Correction[]).sort((a, b) => b.date.localeCompare(a.date));
+---
+
+<Plain title="Corrections log" description="Every figure or statement found wrong on the site, newest first: what was wrong, between which dates, who it affected and what changed." h1="Corrections" intro="Newest first. Errors will happen; this log is how they are made visible.">
+	{entries.length === 0 ? (
+		<p>No corrections have been needed yet. The <a href="/editorial-policy/">editorial policy</a> says how one is handled when it is.</p>
+	) : (
+		<dl>
+			{entries.map((c) => (
+				<>
+					<dt>{longDate(c.date)}: <a href={c.page}>{c.page}</a></dt>
+					<dd>
+						<p>{c.wrong} Wrong from {longDate(c.from)} to {longDate(c.to)}. Affected: {c.affected}. Change: {c.change}.{c.fixture ? ` Fixture added: ${c.fixture}.` : ''}</p>
+					</dd>
+				</>
+			))}
+		</dl>
+	)}
+	<p>Found something wrong? The <a href="/about/">about page</a> has the address.</p>
+</Plain>

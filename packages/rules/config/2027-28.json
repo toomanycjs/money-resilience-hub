@@ -1,0 +1,623 @@
+{
+  "taxYear": "2027-28",
+  "label": "2027/28",
+  "starts": "2027-04-06",
+  "ends": "2028-04-05",
+  "nextScheduledChange": {
+    "date": "2028-04-06",
+    "summary": "New tax year 2028/29. The personal allowance and basic rate limit stay at £12,570 and £37,700 until April 2031.",
+    "source": "https://www.gov.uk/government/publications/maintaining-income-tax-and-equivalent-national-insurance-contributions-thresholds-until-5-april-2031/income-tax-maintaining-the-personal-allowance-and-the-basic-rate-limit-for-income-tax-and-equivalent-national-insurance-contributions-thresholds-unt",
+    "verified": "2026-11-07",
+    "status": "announced",
+    "archived": "archive/2026-11-07/www-gov-uk-government-publications-maintaining-income-tax-and-equivalent-national-insurance-contributions-thresholds-until-5-april-2031-income-tax-mai.html"
+  },
+  "incomeTax": {
+    "personalAllowance": {
+      "value": 12570,
+      "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+      "verified": "2026-11-07",
+      "status": "legislated",
+      "note": "Fixed until April 2028 by section 5 of Finance Act 2023",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+    },
+    "taperStart": {
+      "value": 100000,
+      "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+      "verified": "2026-11-07",
+      "status": "legislated",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+    },
+    "taperRate": {
+      "value": 0.5,
+      "source": "https://www.gov.uk/income-tax-rates/income-over-100000",
+      "verified": "2026-11-07",
+      "status": "legislated",
+      "note": "£1 of allowance lost for every £2 of adjusted net income above the taper start",
+      "archived": "archive/2026-11-07/www-gov-uk-income-tax-rates-income-over-100000.html"
+    },
+    "marriageAllowanceTransfer": {
+      "value": 1260,
+      "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+      "verified": "2026-11-07",
+      "status": "announced",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+    },
+    "bands": {
+      "england-ni": [
+        {
+          "name": "Basic rate",
+          "upTo": 37700,
+          "rate": 0.2,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "note": "The basic rate limit is fixed until April 2028 by Finance Act 2023; the rate for 2027/28 is set in Finance Bill 2026-27",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+        },
+        {
+          "name": "Higher rate",
+          "upTo": 125140,
+          "rate": 0.4,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+        },
+        {
+          "name": "Additional rate",
+          "upTo": null,
+          "rate": 0.45,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+        }
+      ],
+      "scotland": [
+        {
+          "name": "Starter rate",
+          "upTo": null,
+          "rate": null,
+          "source": "",
+          "verified": "",
+          "status": "unset",
+          "note": "Set by the Scottish Budget on 3 December 2026 and voted on in February 2027."
+        }
+      ],
+      "wales": [
+        {
+          "name": "Basic rate",
+          "upTo": 37700,
+          "rate": 0.2,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "note": "Welsh rates are the UK rates less 10p plus the Welsh rate; the Welsh rate for 2027/28 is set by the Welsh Government",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-budget-2026-overview-of-tax-legislation-and-rates-ootlar.html"
+        },
+        {
+          "name": "Higher rate",
+          "upTo": 125140,
+          "rate": 0.4,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-budget-2026-overview-of-tax-legislation-and-rates-ootlar.html"
+        },
+        {
+          "name": "Additional rate",
+          "upTo": null,
+          "rate": 0.45,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-budget-2026-overview-of-tax-legislation-and-rates-ootlar.html"
+        }
+      ]
+    },
+    "savings": {
+      "startingRateLimit": {
+        "value": 5000,
+        "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      },
+      "startingRateIncomeCeiling": {
+        "value": 17570,
+        "source": "https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "note": "Personal allowance plus the starting rate limit; both are unchanged",
+        "archived": "archive/2026-11-07/www-gov-uk-apply-tax-free-interest-on-savings-how-much-is-tax-free.html"
+      },
+      "personalSavingsAllowance": {
+        "basic": {
+          "value": 1000,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+        },
+        "higher": {
+          "value": 500,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+        },
+        "additional": {
+          "value": 0,
+          "source": "https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-apply-tax-free-interest-on-savings-how-much-is-tax-free.html"
+        }
+      },
+      "rates": {
+        "basic": {
+          "value": 0.24,
+          "effectiveFrom": "2027-04-06",
+          "source": "https://www.gov.uk/government/publications/income-tax-changes-to-tax-rates-for-property-and-savings-income/income-tax-changes-to-tax-rates-for-property-and-savings-income",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-changes-to-tax-rates-for-property-and-savings-income-income-tax-changes-to-tax-rates-for-property-and-sa.html"
+        },
+        "higher": {
+          "value": 0.44,
+          "effectiveFrom": "2027-04-06",
+          "source": "https://www.gov.uk/government/publications/income-tax-changes-to-tax-rates-for-property-and-savings-income/income-tax-changes-to-tax-rates-for-property-and-savings-income",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-changes-to-tax-rates-for-property-and-savings-income-income-tax-changes-to-tax-rates-for-property-and-sa.html"
+        },
+        "additional": {
+          "value": 0.49,
+          "effectiveFrom": "2027-04-06",
+          "source": "https://www.gov.uk/government/publications/income-tax-changes-to-tax-rates-for-property-and-savings-income/income-tax-changes-to-tax-rates-for-property-and-savings-income",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-changes-to-tax-rates-for-property-and-savings-income-income-tax-changes-to-tax-rates-for-property-and-sa.html"
+        }
+      }
+    },
+    "property": {
+      "rates": {
+        "basic": {
+          "value": 0.24,
+          "effectiveFrom": "2027-04-06",
+          "source": "https://www.gov.uk/government/publications/income-tax-changes-to-tax-rates-for-property-and-savings-income/income-tax-changes-to-tax-rates-for-property-and-savings-income",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "note": "England, Wales and Northern Ireland. Scotland and Wales may set their own property income rates.",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-changes-to-tax-rates-for-property-and-savings-income-income-tax-changes-to-tax-rates-for-property-and-sa.html"
+        },
+        "higher": {
+          "value": 0.44,
+          "effectiveFrom": "2027-04-06",
+          "source": "https://www.gov.uk/government/publications/income-tax-changes-to-tax-rates-for-property-and-savings-income/income-tax-changes-to-tax-rates-for-property-and-savings-income",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-changes-to-tax-rates-for-property-and-savings-income-income-tax-changes-to-tax-rates-for-property-and-sa.html"
+        },
+        "additional": {
+          "value": 0.49,
+          "effectiveFrom": "2027-04-06",
+          "source": "https://www.gov.uk/government/publications/income-tax-changes-to-tax-rates-for-property-and-savings-income/income-tax-changes-to-tax-rates-for-property-and-savings-income",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-changes-to-tax-rates-for-property-and-savings-income-income-tax-changes-to-tax-rates-for-property-and-sa.html"
+        }
+      },
+      "scotlandRates": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "Scotland gains the power to set its own property income rates from 2027/28; none set yet."
+      }
+    },
+    "dividends": {
+      "allowance": {
+        "value": 500,
+        "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      },
+      "rates": {
+        "basic": {
+          "value": 0.1075,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+        },
+        "higher": {
+          "value": 0.3575,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+        },
+        "additional": {
+          "value": 0.3935,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+        }
+      }
+    },
+    "tradingAllowance": {
+      "value": 3000,
+      "effectiveFrom": "2027-04-06",
+      "source": "https://www.gov.uk/government/publications/income-tax-increasing-the-trading-allowance/increasing-the-trading-allowance",
+      "verified": "2026-11-07",
+      "status": "announced",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-increasing-the-trading-allowance-increasing-the-trading-allowance.html"
+    }
+  },
+  "nationalInsurance": {
+    "employee": {
+      "mainRate": {
+        "value": 0.08,
+        "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      },
+      "upperRate": {
+        "value": 0.02,
+        "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      },
+      "lowerEarningsLimit": {
+        "value": 6916,
+        "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "note": "£133 a week; legislation in early 2027",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-budget-2026-overview-of-tax-legislation-and-rates-ootlar.html"
+      },
+      "primaryThreshold": {
+        "value": 12570,
+        "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "note": "£242 a week",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      },
+      "upperEarningsLimit": {
+        "value": 50270,
+        "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "note": "£967 a week",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      }
+    },
+    "employer": {
+      "rate": {
+        "value": 0.15,
+        "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      },
+      "secondaryThreshold": {
+        "value": 5000,
+        "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "note": "£96 a week",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      },
+      "employmentAllowance": {
+        "value": 10500,
+        "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      }
+    },
+    "selfEmployed": {
+      "class2Weekly": {
+        "value": 3.8,
+        "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      },
+      "smallProfitsThreshold": {
+        "value": 7355,
+        "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      },
+      "class4": {
+        "lowerProfitsLimit": {
+          "value": 12570,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+        },
+        "upperProfitsLimit": {
+          "value": 50270,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+        },
+        "mainRate": {
+          "value": 0.06,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+        },
+        "upperRate": {
+          "value": 0.02,
+          "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+          "verified": "2026-11-07",
+          "status": "announced",
+          "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+        }
+      }
+    }
+  },
+  "studentLoans": {
+    "plan1": {
+      "threshold": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "Plan 1 thresholds for 2027/28 are announced by the Department for Education in the winter before the tax year."
+      },
+      "rate": {
+        "value": 0.09,
+        "source": "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "archived": "archive/2026-11-07/www-gov-uk-repaying-your-student-loan-what-you-pay.html"
+      }
+    },
+    "plan2": {
+      "threshold": {
+        "value": 29385,
+        "source": "https://assets.publishing.service.gov.uk/media/692872fd2a37784b16ecf676/Budget_2025-Policy_Costings.pdf",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "note": "Budget 2025 policy costing: the Plan 2 threshold is maintained at the 2026/27 level from 6 April 2027 until April 2030",
+        "archived": "archive/2026-11-07/assets-publishing-service-gov-uk-media-692872fd2a37784b16ecf676-budget-2025-policy-costings-pdf.pdf"
+      },
+      "rate": {
+        "value": 0.09,
+        "source": "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "archived": "archive/2026-11-07/www-gov-uk-repaying-your-student-loan-what-you-pay.html"
+      }
+    },
+    "plan4": {
+      "threshold": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "Plan 4 thresholds for 2027/28 are set by the Scottish Government."
+      },
+      "rate": {
+        "value": 0.09,
+        "source": "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "archived": "archive/2026-11-07/www-gov-uk-repaying-your-student-loan-what-you-pay.html"
+      }
+    },
+    "plan5": {
+      "threshold": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "No 2027/28 Plan 5 threshold has been read from a gov.uk page."
+      },
+      "rate": {
+        "value": 0.09,
+        "source": "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "archived": "archive/2026-11-07/www-gov-uk-repaying-your-student-loan-what-you-pay.html"
+      }
+    },
+    "postgraduate": {
+      "threshold": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "No 2027/28 postgraduate loan threshold has been read from a gov.uk page."
+      },
+      "rate": {
+        "value": 0.06,
+        "source": "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
+        "verified": "2026-11-07",
+        "status": "announced",
+        "archived": "archive/2026-11-07/www-gov-uk-repaying-your-student-loan-what-you-pay.html"
+      }
+    }
+  },
+  "childBenefit": {
+    "chargeFrom": {
+      "value": 60000,
+      "source": "https://www.gov.uk/child-benefit-tax-charge",
+      "verified": "2026-11-07",
+      "status": "legislated",
+      "note": "No change announced at Budget 2026",
+      "archived": "archive/2026-11-07/www-gov-uk-child-benefit-tax-charge.html"
+    },
+    "chargeTo": {
+      "value": 80000,
+      "source": "https://www.gov.uk/child-benefit-tax-charge",
+      "verified": "2026-11-07",
+      "status": "legislated",
+      "archived": "archive/2026-11-07/www-gov-uk-child-benefit-tax-charge.html"
+    },
+    "chargeStep": {
+      "value": 200,
+      "source": "https://www.gov.uk/child-benefit-tax-charge",
+      "verified": "2026-11-07",
+      "status": "legislated",
+      "archived": "archive/2026-11-07/www-gov-uk-child-benefit-tax-charge.html"
+    },
+    "weeklyEldest": {
+      "value": null,
+      "source": "",
+      "verified": "",
+      "status": "unset",
+      "note": "The 2027/28 weekly rate has not been read from a gov.uk page."
+    },
+    "weeklyAdditional": {
+      "value": null,
+      "source": "",
+      "verified": "",
+      "status": "unset",
+      "note": "The 2027/28 weekly rate has not been read from a gov.uk page."
+    }
+  },
+  "statutoryPay": {
+    "ssp": {
+      "weekly": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "The 2027/28 statutory sick pay rate is published in the winter before the tax year."
+      },
+      "earningsFraction": {
+        "value": 0.8,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+        "verified": "2026-11-07",
+        "status": "legislated",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
+      },
+      "maxWeeks": {
+        "value": 28,
+        "source": "https://www.gov.uk/statutory-sick-pay",
+        "verified": "2026-11-07",
+        "status": "legislated",
+        "archived": "archive/2026-11-07/www-gov-uk-statutory-sick-pay.html"
+      }
+    }
+  },
+  "mileage": {
+    "carFirstRate": {
+      "value": 0.55,
+      "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+      "verified": "2026-11-07",
+      "status": "announced",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-budget-2026-overview-of-tax-legislation-and-rates-ootlar.html"
+    },
+    "carFirstMiles": {
+      "value": 10000,
+      "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+      "verified": "2026-11-07",
+      "status": "announced",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-budget-2026-overview-of-tax-legislation-and-rates-ootlar.html"
+    },
+    "carAfterRate": {
+      "value": 0.35,
+      "effectiveFrom": "2027-04-06",
+      "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar",
+      "verified": "2026-11-07",
+      "status": "announced",
+      "previous": {
+        "value": 0.25,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
+      },
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-budget-2026-overview-of-tax-legislation-and-rates-ootlar.html"
+    }
+  },
+  "isa": {
+    "annualLimit": {
+      "value": 20000,
+      "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+      "verified": "2026-11-07",
+      "status": "announced",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+    },
+    "cashLimit": {
+      "value": 20000,
+      "source": "https://www.gov.uk/government/publications/tax-free-savings-newsletter-24/tax-free-savings-newsletter-24-october-2026",
+      "verified": "2026-11-07",
+      "status": "announced",
+      "note": "The previously announced reduction will not take effect",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-tax-free-savings-newsletter-24-tax-free-savings-newsletter-24-october-2026.html"
+    },
+    "lifetimeIsa": {
+      "propertyCap": {
+        "value": 450000,
+        "source": "https://www.gov.uk/government/publications/tax-free-savings-newsletter-24/tax-free-savings-newsletter-24-october-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-tax-free-savings-newsletter-24-tax-free-savings-newsletter-24-october-2026.html"
+      },
+      "withdrawalCharge": {
+        "value": 0.25,
+        "source": "https://www.gov.uk/government/publications/tax-free-savings-newsletter-24/tax-free-savings-newsletter-24-october-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-tax-free-savings-newsletter-24-tax-free-savings-newsletter-24-october-2026.html"
+      },
+      "firstHomeOverCapCharge": {
+        "value": 0.2,
+        "source": "https://www.gov.uk/government/publications/tax-free-savings-newsletter-24/tax-free-savings-newsletter-24-october-2026",
+        "verified": "2026-11-07",
+        "status": "in-force",
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-tax-free-savings-newsletter-24-tax-free-savings-newsletter-24-october-2026.html"
+      }
+    }
+  },
+  "pensionTaxAllowance": {
+    "effectiveFrom": "2027-04-06",
+    "fullNewStatePension": {
+      "value": 13036.4,
+      "source": "https://www.gov.uk/government/publications/pension-tax-allowance-explainer/pension-tax-allowance-explainer",
+      "verified": "2026-11-07",
+      "status": "announced",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-pension-tax-allowance-explainer-pension-tax-allowance-explainer.html"
+    },
+    "rate": {
+      "value": 0.2,
+      "source": "https://www.gov.uk/government/publications/income-tax-reduction-for-eligible-pensioners/reduction-in-income-tax-for-eligible-pensioners",
+      "verified": "2026-11-07",
+      "status": "announced",
+      "note": "20% of the amount by which the full new State Pension exceeds the personal allowance",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-reduction-for-eligible-pensioners-reduction-in-income-tax-for-eligible-pensioners.html"
+    },
+    "taperDivisor": {
+      "value": 3,
+      "source": "https://www.gov.uk/government/publications/income-tax-reduction-for-eligible-pensioners/reduction-in-income-tax-for-eligible-pensioners",
+      "verified": "2026-11-07",
+      "status": "announced",
+      "note": "Withdrawn at £1 for every £3 of income above the full new State Pension",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-reduction-for-eligible-pensioners-reduction-in-income-tax-for-eligible-pensioners.html"
+    },
+    "lastYear": {
+      "value": "2029-30",
+      "source": "https://www.gov.uk/government/publications/income-tax-reduction-for-eligible-pensioners/reduction-in-income-tax-for-eligible-pensioners",
+      "verified": "2026-11-07",
+      "status": "announced",
+      "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-reduction-for-eligible-pensioners-reduction-in-income-tax-for-eligible-pensioners.html"
+    }
+  }
+}
