@@ -4,19 +4,21 @@ import { takeHome } from '@money-resilience-hub/rules';
 import TakeHomeCalculator from '../components/TakeHomeCalculator.astro';
 import { BUILD_DATE, CURRENT_YEAR, SITE_DESCRIPTION, SITE_NAME } from '../config/site';
 import Base from '../layouts/Base.astro';
+import { guideBySlug } from '../lib/guides';
 import { liveAmounts } from '../lib/pages';
 
 const live = liveAmounts('salary');
 const defaultBreakdown = takeHome(parseForm({ ...DEFAULT_FORM, taxYear: CURRENT_YEAR.taxYear }, BUILD_DATE));
 const pick = (n: number) => (live.includes(n) ? n : live[0]);
 
-// Hand-edited each month: the six questions people are asking.
+// Hand-edited each month: the questions people are asking.
 const asking = [
 	{ title: `What is ${money(pick(30000), 0)} after tax?`, href: `/salary/${pick(30000)}/` },
 	{ title: `How much do you keep of ${money(pick(50000), 0)}?`, href: `/salary/${pick(50000)}/` },
 	{ title: 'What changes on 6 April 2027', href: '/budget/2026-autumn/' },
 	{ title: `Every rate and threshold for ${CURRENT_YEAR.label}`, href: `/rates/${CURRENT_YEAR.taxYear}/` },
-	{ title: 'Take-home pay in Scotland and Wales', href: '/calculators/take-home-pay/' },
+	{ title: guideBySlug('scottish-income-tax').h1, href: '/guides/scottish-income-tax/' },
+	{ title: guideBySlug('why-your-payslip-differs').h1, href: '/guides/why-your-payslip-differs/' },
 	{ title: 'How the figures are checked', href: '/methodology/' },
 ];
 ---

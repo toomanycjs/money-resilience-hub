@@ -24,7 +24,7 @@ const entries = (corrections as Correction[]).sort((a, b) => b.date.localeCompar
 		<dl>
 			{entries.map((c) => (
 				<>
-					<dt>{longDate(c.date)}: <a href={c.page}>{c.page}</a></dt>
+					<dt id={c.fixture ?? c.date}>{longDate(c.date)}: <a href={c.page}>{c.page}</a></dt>
 					<dd>
 						<p>{c.wrong} Wrong from {longDate(c.from)} to {longDate(c.to)}. Affected: {c.affected}. Change: {c.change}.{c.fixture ? ` Fixture added: ${c.fixture}.` : ''}</p>
 					</dd>

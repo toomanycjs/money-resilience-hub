@@ -24,7 +24,8 @@ export function bandsFor(year: YearConfig, nation: Nation, extendBy = 0): Band[]
 
 /**
  * Tax on `taxable` (already net of the allowance, rounded down to a pound).
- * BR, D0 and D1 codes charge everything at one band's rate.
+ * BR, D0 and D1 codes charge everything at one band's rate: basic, higher
+ * and additional, or in Scotland (SBR, SD0, SD1) basic, intermediate and higher.
  */
 export function incomeTax(taxable: number, nation: Nation, year: YearConfig, options: { flatBand?: 'BR' | 'D0' | 'D1'; extendBy?: number; capAt?: number | null } = {}): IncomeTaxResult {
 	const bands = bandsFor(year, nation, options.extendBy ?? 0);
@@ -33,7 +34,8 @@ export function incomeTax(taxable: number, nation: Nation, year: YearConfig, opt
 
 	if (options.flatBand) {
 		const index = { BR: 0, D0: 1, D1: 2 }[options.flatBand];
-		const band = bands[Math.min(index, bands.length - 1)];
+		const named = nation === 'scotland' ? { BR: 'Basic rate', D0: 'Intermediate rate', D1: 'Higher rate' } : { BR: 'Basic rate', D0: 'Higher rate', D1: 'Additional rate' };
+		const band = bands.find((b) => b.name === named[options.flatBand!]) ?? bands[Math.min(index, bands.length - 1)];
 		const tax = round2(income * (band.rate as number));
 		results.push({ name: band.name, rate: band.rate as number, from: 0, to: null, slice: income, tax, provenance: provenanceOf(band) });
 	} else {

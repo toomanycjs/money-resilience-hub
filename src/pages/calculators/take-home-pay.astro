@@ -3,6 +3,7 @@ import { getYear, resolve, PLAN_LABEL, NATION_LABEL, MARGINAL_STEP } from '@mone
 import { money, pct } from '@money-resilience-hub/calculators';
 import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
 import Calculator from '../../layouts/Calculator.astro';
+import { guideLink } from '../../lib/guides';
 import { liveAmounts } from '../../lib/pages';
 
 const year = getYear(CURRENT_YEAR.taxYear);
@@ -60,6 +61,8 @@ const faqs = [
 		{ title: `What ${money(live[2] ?? live[0], 0)} looks like after tax`, href: `/salary/${live[2] ?? live[0]}/`, desc: 'A worked result for a round number, with the student loan row for every plan.' },
 		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'Every figure this tool uses, with its source and the date it was checked.' },
 		{ title: 'Budget 2026: what changes on 6 April 2027', href: '/budget/2026-autumn/', desc: 'The measures that touch pay, savings and property, with worked examples.' },
+		guideLink('why-your-payslip-differs', 'The usual reasons a payslip and a calculator disagree.'),
+		guideLink('tax-codes-explained', 'What the letters and numbers in a tax code do to the result.'),
 	]}
 >
 	<Fragment slot="how">
@@ -67,7 +70,7 @@ const faqs = [
 			<li><strong>Allowance.</strong> Your tax code sets the allowance: the standard code gives {money(pa, 0)}. Above {money(taperStart, 0)} of adjusted net income it falls by {taperWords}, reaching zero at {money(taperEnd, 0)}. A K code adds to taxable pay instead.</li>
 			<li><strong>Income tax.</strong> Pay above the allowance is taxed band by band. In England, Northern Ireland and Wales for {year.label}: {eni.map((b) => `${b.name.toLowerCase()} at ${pct(b.rate ?? 0)}${b.upTo ? ` on the first ${money(b.upTo, 0)}` : ' above that'}`).join('; ')}. Taxable income is rounded down to the pound.</li>
 			<li><strong>National Insurance.</strong> {pct(mainRate)} on earnings between {money(pt, 0)} and {money(uel, 0)}, then {pct(upperRate)} above, using the annual thresholds.</li>
-			<li><strong>Student loan.</strong> The plan rate on pay above the plan threshold, rounded down to the pound. Several plans can run at once.</li>
+			<li><strong>Student loan.</strong> The plan rate on pay above the plan threshold, rounded down to the pound. With more than one of Plans 1, 2, 4 and 5 there is a single repayment, on pay above the lowest of their thresholds; a Postgraduate Loan is repaid on top of it.</li>
 			<li><strong>Pension.</strong> Salary sacrifice reduces pay before tax and National Insurance. Net pay reduces taxable pay only. Relief at source leaves pay alone and widens the basic rate band by the gross contribution.</li>
 			<li><strong>Take-home.</strong> Salary less each deduction. Monthly, weekly and daily figures divide the annual result by 12, 52 and 260.</li>
 		</ol>

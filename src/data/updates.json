@@ -1,0 +1,32 @@
+[
+	{
+		"date": "2026-11-09",
+		"title": "Salary pages for every thousand pounds, each with a Scottish version",
+		"description": "The salary pages now run in steps of a thousand pounds and include the salaries that sit on a threshold. Each has a second page under the Scottish income tax bands, and shows the distance to each threshold, what the next few thousand is worth and a pension scenario.",
+		"link": "/salary/"
+	},
+	{
+		"date": "2026-11-09",
+		"title": "Hourly and monthly pay pages",
+		"description": "Take-home pay starting from an hourly rate or a monthly amount, with the same working and sources as the salary pages.",
+		"link": "/hourly/"
+	},
+	{
+		"date": "2026-11-09",
+		"title": "Rates pages: capital gains tax, pension allowances, inheritance tax and more",
+		"description": "The rates pages for each tax year now include capital gains tax, the pension allowances, inheritance tax, Class 3 National Insurance, Blind Person's Allowance and Married Couple's Allowance, each with its source and check date.",
+		"link": "/rates/2026-27/"
+	},
+	{
+		"date": "2026-11-09",
+		"title": "Scottish income tax 2027/28",
+		"description": "A page that shows the Scottish bands and rates for 2027/28 as soon as the Scottish Budget sets them, next to the bands in force now.",
+		"link": "/rates/scotland-2027-28/"
+	},
+	{
+		"date": "2026-11-09",
+		"title": "Budget 2026: sources and check dates on every measure",
+		"description": "Each measure on the Budget 2026 page now carries its gov.uk source, the date it was checked and its status, and the list of changed figures uses the same labels and units as the rates pages.",
+		"link": "/budget/2026-autumn/"
+	}
+]

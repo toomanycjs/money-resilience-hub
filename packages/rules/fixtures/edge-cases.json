@@ -382,5 +382,63 @@
     "input": { "gross": 40000, "nation": "scotland", "taxCode": "S1257L", "studentLoanPlans": ["plan4"] },
     "expected": { "personalAllowance": 12570, "incomeTax": 5551.07, "nationalInsurance": 2194.40, "studentLoan": 558, "takeHome": 31696.53 },
     "working": "Taxable income: 40,000 - 12,570 = 27,430. Starter: 3,967 x 19% = 753.73. Basic: 12,989 x 20% = 2,597.80 (cumulative top 16,956). Intermediate: (27,430 - 16,956) = 10,474 x 21% = 2,199.54. Income tax: 753.73 + 2,597.80 + 2,199.54 = 5,551.07. NI: 27,430 x 8% = 2,194.40. Plan 4: threshold 33,795; (40,000 - 33,795) = 6,205 x 9% = 558.45, rounded down to 558. Take-home: 40,000 - 5,551.07 - 2,194.40 - 558 = 31,696.53."
+  },
+  {
+    "id": "loans-plan1-plan2-38400",
+    "title": "Plan 1 and Plan 2 together at 38,400: one repayment of 9% above the lower threshold (gov.uk worked example)",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/repaying-your-student-loan/what-you-pay"
+    ],
+    "input": { "gross": 38400, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": ["plan1", "plan2"] },
+    "expected": { "studentLoan": 1035 },
+    "working": "gov.uk: on more than one plan type without a Postgraduate Loan, 9% of income over the lowest threshold. Its example is Plan 1 and Plan 2 on 38,400 a year, repaying 9% over the Plan 1 threshold (86 a month). On the annual basis the engine uses: (38,400 - 26,900) = 11,500 x 9% = 1,035. Charging each plan above its own threshold would give 1,035 + 811 = 1,846, which is wrong."
+  },
+  {
+    "id": "loans-plan2-postgraduate-30000",
+    "title": "Plan 2 with a Postgraduate Loan at 30,000: 6% above the postgraduate threshold plus 9% above the Plan 2 threshold (gov.uk worked example)",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/repaying-your-student-loan/what-you-pay"
+    ],
+    "input": { "gross": 30000, "nation": "england-ni", "taxCode": "1257L", "studentLoanPlans": ["plan2", "postgraduate"] },
+    "expected": { "studentLoan": 595 },
+    "working": "Postgraduate: (30,000 - 21,000) = 9,000 x 6% = 540. Plan 2: (30,000 - 29,385) = 615 x 9% = 55.35, rounded down to 55. Total 595. gov.uk's monthly example gives 45 + 4 = 49 a month."
+  },
+  {
+    "id": "tax-code-sbr-20000",
+    "title": "SBR at 20,000 in Scotland: all pay at the Scottish basic rate, not the starter rate",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/tax-codes/what-your-tax-code-means",
+      "https://www.gov.uk/scottish-income-tax"
+    ],
+    "input": { "gross": 20000, "nation": "scotland", "taxCode": "SBR" },
+    "expected": { "personalAllowance": 0, "incomeTax": 4000 },
+    "working": "gov.uk: SBR means all income from this job is taxed at the basic rate in Scotland, which is 20%. 20,000 x 20% = 4,000. The starter rate of 19% would give 3,800, which is wrong."
+  },
+  {
+    "id": "tax-code-sd0-20000",
+    "title": "SD0 at 20,000 in Scotland: all pay at the Scottish intermediate rate",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/tax-codes/what-your-tax-code-means",
+      "https://www.gov.uk/scottish-income-tax"
+    ],
+    "input": { "gross": 20000, "nation": "scotland", "taxCode": "SD0" },
+    "expected": { "personalAllowance": 0, "incomeTax": 4200 },
+    "working": "gov.uk: SD0 means all income from this job is taxed at the intermediate rate in Scotland, which is 21%. 20,000 x 21% = 4,200."
+  },
+  {
+    "id": "tax-code-sd1-20000",
+    "title": "SD1 at 20,000 in Scotland: all pay at the Scottish higher rate",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/tax-codes/what-your-tax-code-means",
+      "https://www.gov.uk/scottish-income-tax"
+    ],
+    "input": { "gross": 20000, "nation": "scotland", "taxCode": "SD1" },
+    "expected": { "personalAllowance": 0, "incomeTax": 8400 },
+    "working": "gov.uk: SD1 means all income from this job is taxed at the higher rate in Scotland, which is 42%. 20,000 x 42% = 8,400."
   }
 ]

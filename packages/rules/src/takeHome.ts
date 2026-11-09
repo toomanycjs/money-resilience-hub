@@ -5,7 +5,7 @@ import { getYear, leastSettled, today, yearFor } from './config.ts';
 import { bandsFor, incomeTax, taxableIncome } from './incomeTax.ts';
 import { nationalInsurance } from './nationalInsurance.ts';
 import { round2 } from './rounding.ts';
-import { studentLoan } from './studentLoan.ts';
+import { studentLoan, type StudentLoanResult } from './studentLoan.ts';
 import { parseTaxCode, taperAllowance } from './taxCode.ts';
 import { nextThresholdFor, thresholdsFor } from './thresholds.ts';
 import {
@@ -185,27 +185,59 @@ export function takeHome(input: TakeHomeInput, options: { withMarginal?: boolean
 	}
 
 	// Student loans on pay after sacrifice (net pay pensions do not reduce it).
+	// With more than one of Plans 1, 2, 4 and 5 there is a single repayment,
+	// on pay above the lowest of their thresholds; a Postgraduate Loan is
+	// repaid on top, above its own threshold.
 	const loans: Breakdown['studentLoans']['plans'] = [];
+	const results: StudentLoanResult[] = [];
 	for (const plan of plans) {
 		try {
-			const r = studentLoan(payAfterSacrifice, plan, year, asAt);
-			use(r.provenance);
+			results.push(studentLoan(payAfterSacrifice, plan, year, asAt));
+		} catch (e) {
+			if (e instanceof RulesUnavailableError) warnings.push(`${PLAN_LABEL[plan]} for ${year.label} is not yet set: ${e.message.replace(/^.*?: /, '')}`);
+			else throw e;
+		}
+	}
+	const undergraduate = results.filter((r) => r.plan !== 'postgraduate');
+	const lowest = undergraduate.length > 1 ? undergraduate.reduce((x, y) => (y.threshold < x.threshold ? y : x)) : null;
+	for (const r of results) {
+		use(r.provenance);
+		if (lowest && r.plan !== 'postgraduate') {
+			if (r !== lowest) {
+				// Covered by the single repayment on the plan with the lowest threshold.
+				loans.push({ ...r, slice: 0, amount: 0 });
+				continue;
+			}
+			const together = undergraduate.map((u) => PLAN_LABEL[u.plan]).join(' and ');
 			loans.push(r);
 			lines.push({
-				id: `loan-${plan}`,
-				label: `Student loan (${PLAN_LABEL[plan]})`,
+				id: `loan-${r.plan}`,
+				label: `Student loan (${together})`,
 				kind: 'deduction',
 				rate: r.rate,
 				slice: r.slice,
 				amount: r.amount,
 				sign: -1,
 				provenance: r.provenance,
-				arithmetic: r.slice > 0 ? `Pay above the ${PLAN_LABEL[plan]} threshold of ${money(r.threshold)}: ${money(r.slice)} × ${pct(r.rate)} = ${money(r.amount)}, rounded down to a pound.` : `Pay is at or below the ${PLAN_LABEL[plan]} threshold of ${money(r.threshold)}, so nothing is repaid.`,
+				arithmetic:
+					r.slice > 0
+						? `With more than one plan there is one repayment, on pay above the lowest threshold, ${money(r.threshold)} for ${PLAN_LABEL[r.plan]}: ${money(r.slice)} × ${pct(r.rate)} = ${money(r.amount)}, rounded down to a pound. The Student Loans Company divides it between the loans.`
+						: `Pay is at or below the lowest threshold of these plans, ${money(r.threshold)} for ${PLAN_LABEL[r.plan]}, so nothing is repaid.`,
 			});
-		} catch (e) {
-			if (e instanceof RulesUnavailableError) warnings.push(`${PLAN_LABEL[plan]} for ${year.label} is not yet set: ${e.message.replace(/^.*?: /, '')}`);
-			else throw e;
+			continue;
 		}
+		loans.push(r);
+		lines.push({
+			id: `loan-${r.plan}`,
+			label: `Student loan (${PLAN_LABEL[r.plan]})`,
+			kind: 'deduction',
+			rate: r.rate,
+			slice: r.slice,
+			amount: r.amount,
+			sign: -1,
+			provenance: r.provenance,
+			arithmetic: r.slice > 0 ? `Pay above the ${PLAN_LABEL[r.plan]} threshold of ${money(r.threshold)}: ${money(r.slice)} × ${pct(r.rate)} = ${money(r.amount)}, rounded down to a pound.` : `Pay is at or below the ${PLAN_LABEL[r.plan]} threshold of ${money(r.threshold)}, so nothing is repaid.`,
+		});
 	}
 	const loanTotal = loans.reduce((s, l) => s + l.amount, 0);
 

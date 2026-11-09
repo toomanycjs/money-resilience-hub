@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "date": "2026-11-09",
+    "page": "/calculators/take-home-pay/",
+    "wrong": "With more than one of Plans 1, 2, 4 and 5 selected, each plan was charged 9% above its own threshold. gov.uk takes a single repayment of 9% above the lowest threshold, so the student loan line was too high.",
+    "from": "2026-11-07",
+    "to": "2026-11-09",
+    "affected": "anyone who ticked two or more undergraduate loan plans in the take-home pay calculator or on a salary page; one plan, or one plan with a Postgraduate Loan, was not affected",
+    "change": "the engine now takes one repayment above the lowest threshold and says so in the working",
+    "fixture": "loans-plan1-plan2-38400"
+  },
+  {
+    "date": "2026-11-09",
+    "page": "/calculators/take-home-pay/",
+    "wrong": "The Scottish tax codes SBR, SD0 and SD1 were taxed at the starter, basic and intermediate rates. They mean the Scottish basic, intermediate and higher rates.",
+    "from": "2026-11-07",
+    "to": "2026-11-09",
+    "affected": "anyone who entered SBR, SD0 or SD1 with Scotland selected",
+    "change": "each code now uses the band gov.uk names for it",
+    "fixture": "tax-code-sbr-20000"
+  }
+]
