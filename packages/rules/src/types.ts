@@ -99,11 +99,14 @@ export interface YearConfig {
 		dividends: { allowance: Leaf; rates: { basic: Leaf; higher: Leaf; additional: Leaf } };
 		tradingAllowance: Leaf;
 		propertyAllowance?: Leaf;
+		blindPersonsAllowance?: Leaf;
+		marriedCouplesAllowance?: { maximum: Leaf; minimum: Leaf };
 	};
 	nationalInsurance: {
 		employee: { mainRate: Leaf; upperRate: Leaf; lowerEarningsLimit: Leaf; primaryThreshold: Leaf; upperEarningsLimit: Leaf };
 		employer: { rate: Leaf; secondaryThreshold: Leaf; employmentAllowance: Leaf };
 		selfEmployed: { class2Weekly: Leaf; smallProfitsThreshold: Leaf; class4: { lowerProfitsLimit: Leaf; upperProfitsLimit: Leaf; mainRate: Leaf; upperRate: Leaf } };
+		voluntary?: { class3Weekly: Leaf };
 	};
 	studentLoans: Record<Plan, { threshold: Leaf; rate: Leaf }>;
 	childBenefit: { chargeFrom: Leaf; chargeTo: Leaf; chargeStep: Leaf; weeklyEldest: Leaf; weeklyAdditional: Leaf };
@@ -111,6 +114,10 @@ export interface YearConfig {
 	minimumWage?: { effectiveFrom: string; age21AndOver: Leaf; age18To20: Leaf; under18: Leaf; apprentice: Leaf };
 	mileage?: { carFirstRate: Leaf; carFirstMiles: Leaf; carAfterRate: Leaf; motorcycle?: Leaf; cycle?: Leaf };
 	isa?: { annualLimit: Leaf; cashLimit?: Leaf; lifetimeIsa?: { propertyCap: Leaf; withdrawalCharge: Leaf; firstHomeOverCapCharge: Leaf; bonusRate?: Leaf; annualLimit?: Leaf } };
+	/** Reference values for the rates pages; no function reads them yet. */
+	capitalGainsTax?: { annualExemptAmount: Leaf; rates: { basic: Leaf; higher: Leaf } };
+	pensionAllowances?: { annualAllowance: Leaf; moneyPurchaseAnnualAllowance: Leaf; taperThresholdIncome: Leaf; taperAdjustedIncome: Leaf; lumpSumAllowance: Leaf };
+	inheritanceTax?: { nilRateBand: Leaf; residenceNilRateBand: Leaf; taperThreshold: Leaf; rate: Leaf };
 	pensionTaxAllowance: null | { effectiveFrom: string; fullNewStatePension: Leaf; rate: Leaf; taperDivisor: Leaf; lastYear: Leaf<string> };
 	statePension?: { fullNewWeekly: Leaf };
 }
