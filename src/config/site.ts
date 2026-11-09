@@ -1,9 +1,9 @@
-// Site-wide constants. The domain is a placeholder until the owner confirms it.
+// Site-wide constants.
 
 import { today, yearFor } from '@money-resilience-hub/rules';
 
 export const SITE_NAME = 'The Money Resilience Hub';
-export const SITE_URL = 'https://www.moneyresiliencehub.co.uk';
+export const SITE_URL = 'https://www.themoneyresiliencehub.co.uk';
 export const SITE_DESCRIPTION =
 	'UK take-home pay and tax calculators that show their working: every deduction on its own line, with the rate, the threshold and the gov.uk page it came from.';
 
@@ -25,5 +25,5 @@ export const ANALYTICS_ENDPOINT: string = (import.meta as { env?: Record<string,
 /** Hosts allowed to serve scripts. Empty until analytics or the consent platform is added. */
 export const SCRIPT_ALLOWLIST: string[] = [];
 
-export const CONTACT_EMAIL = 'hello@moneyresiliencehub.co.uk';
+export const CONTACT_EMAIL = 'hello@themoneyresiliencehub.co.uk';
 export const REPO_URL = 'https://github.com/toomanycjs/money-resilience-hub';

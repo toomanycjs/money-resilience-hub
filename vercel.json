@@ -2,8 +2,17 @@
   "framework": "astro",
   "trailingSlash": true,
   "redirects": [
-    { "source": "/salary/:amount(\d+)k/", "destination": "/salary/:amount000/", "permanent": true },
-    { "source": "/salary/:a(\d+)-:b(\d{3})/", "destination": "/salary/:a:b/", "permanent": true },
-    { "source": "/salary/:a(\d+),:b(\d{3})/", "destination": "/salary/:a:b/", "permanent": true }
+    { "source": "/:path*", "has": [{ "type": "host", "value": "themoneyresiliencehub.co.uk" }], "destination": "https://www.themoneyresiliencehub.co.uk/:path*", "permanent": true },
+    { "source": "/salary/20k/", "destination": "/salary/20000/", "permanent": true },
+    { "source": "/salary/25k/", "destination": "/salary/25000/", "permanent": true },
+    { "source": "/salary/30k/", "destination": "/salary/30000/", "permanent": true },
+    { "source": "/salary/35k/", "destination": "/salary/35000/", "permanent": true },
+    { "source": "/salary/40k/", "destination": "/salary/40000/", "permanent": true },
+    { "source": "/salary/50k/", "destination": "/salary/50000/", "permanent": true },
+    { "source": "/salary/60k/", "destination": "/salary/60000/", "permanent": true },
+    { "source": "/salary/75k/", "destination": "/salary/75000/", "permanent": true },
+    { "source": "/salary/100k/", "destination": "/salary/100000/", "permanent": true },
+    { "source": "/salary/:a(\\d{2,3})-:b(\\d{3})/", "destination": "/salary/:a:b/", "permanent": true },
+    { "source": "/salary/:a(\\d{2,3}),:b(\\d{3})/", "destination": "/salary/:a:b/", "permanent": true }
   ]
 }

@@ -8,4 +8,4 @@ Allow: /
 User-agent: PerplexityBot
 Allow: /
 
-Sitemap: https://www.moneyresiliencehub.co.uk/sitemap-index.xml
+Sitemap: https://www.themoneyresiliencehub.co.uk/sitemap-index.xml

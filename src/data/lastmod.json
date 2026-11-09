@@ -1,21 +1,26 @@
 {
-	"generated": "2026-11-07",
+	"generated": "2026-11-09",
 	"pages": {
-		"/about/": "2026-11-07",
-		"/budget/2026-autumn/": "2026-11-07",
-		"/calculators/": "2026-11-07",
-		"/calculators/take-home-pay/": "2026-11-07",
-		"/corrections/": "2026-11-07",
-		"/editorial-policy/": "2026-11-07",
-		"/": "2026-11-07",
-		"/methodology/": "2026-11-07",
-		"/privacy/": "2026-11-07",
-		"/rates/": "2026-11-07",
-		"/salary/": "2026-11-07"
+		"/about/": "2026-11-08",
+		"/budget/2026-autumn/": "2026-11-09",
+		"/calculators/": "2026-11-09",
+		"/calculators/landlord-tax/": "2026-11-09",
+		"/calculators/lifetime-isa-penalty/": "2026-11-09",
+		"/calculators/savings-tax/": "2026-11-09",
+		"/calculators/side-hustle-tax/": "2026-11-09",
+		"/calculators/state-pension-tax/": "2026-11-09",
+		"/calculators/take-home-pay/": "2026-11-08",
+		"/corrections/": "2026-11-08",
+		"/editorial-policy/": "2026-11-08",
+		"/": "2026-11-08",
+		"/methodology/": "2026-11-08",
+		"/privacy/": "2026-11-08",
+		"/rates/": "2026-11-08",
+		"/salary/": "2026-11-08"
 	},
 	"rules": {
-		"2025-26": "2026-11-07",
-		"2026-27": "2026-11-07",
-		"2027-28": "2026-11-07"
+		"2025-26": "2026-11-09",
+		"2026-27": "2026-11-09",
+		"2027-28": "2026-11-09"
 	}
 }

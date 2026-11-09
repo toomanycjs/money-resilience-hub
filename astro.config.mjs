@@ -8,7 +8,7 @@ import sitemaps from './src/integrations/sitemaps.mjs';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://www.moneyresiliencehub.co.uk',
+	site: 'https://www.themoneyresiliencehub.co.uk',
 	trailingSlash: 'always',
 	build: { inlineStylesheets: 'auto' },
 	integrations: [mdx(), sitemaps(), linkCheck(), indexNow({ key: 'a7c3f0e1b94d4e2f8c6a5b1d3e7f9a0c' })],
