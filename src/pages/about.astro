@@ -6,12 +6,11 @@ const contents = [
 	{ id: 'what', label: 'What this site is' },
 	{ id: 'who', label: 'Who makes it' },
 	{ id: 'not-advice', label: 'Information, not advice' },
-	{ id: 'funding', label: 'How it is funded' },
 	{ id: 'contact', label: 'Contact' },
 ];
 ---
 
-<Plain title={`About ${SITE_NAME}`} description="What the site is, who makes it, why it gives information rather than advice, and how it is funded." h1={`About ${SITE_NAME}`} contents={contents}>
+<Plain title={`About ${SITE_NAME}`} description="What the site is, who makes it, and why it gives information rather than advice." h1={`About ${SITE_NAME}`} contents={contents}>
 	<h2 id="what">What this site is</h2>
 	<p>{SITE_NAME} is a set of UK personal finance calculators that show their working. Each result lists every deduction on its own line with the rate it used, the slice of income it applied to and the gov.uk page the figure came from, dated. The <a href="/rates/">rates pages</a> show the same figures as a reference, and the <a href="/methodology/">methodology</a> explains how each tool computes and what it leaves out.</p>
 
@@ -20,9 +19,6 @@ const contents = [
 
 	<h2 id="not-advice">Information, not advice</h2>
 	<p>{SITE_NAME} is not regulated by the Financial Conduct Authority and does not give financial advice. A result can tell you what your marginal rate is and where the next threshold sits. It never tells you what to do with your money. For advice about your own circumstances, speak to a regulated adviser or to HMRC.</p>
-
-	<h2 id="funding">How it is funded</h2>
-	<p>Display advertising will pay for the site once traffic qualifies for a premium ad network. Ads sit in reserved, labelled spaces outside every result, never affect a figure, and gambling, cryptoasset, high-cost credit and debt-solution ads are blocked. There is no sign-up and no email list. Our <a href="/privacy/">privacy page</a> explains what is counted.</p>
 
 	<h2 id="contact">Contact</h2>
 	<p>Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. If you find a figure that is wrong, say which page and which line; corrections are made within a day and logged on the <a href="/corrections/">corrections page</a>. The engine, the rules files and the tests are open at <a href={REPO_URL} rel="noopener">the repository</a>.</p>

@@ -19,11 +19,8 @@ export const CURRENT_YEAR = yearFor(BUILD_DATE);
 /** Ads are off until traffic qualifies. Slots are reserved in the templates but render nothing. */
 export const ADS_ENABLED = false;
 
-/** First-party, aggregate analytics endpoint. Empty means no analytics requests are sent at all. */
-export const ANALYTICS_ENDPOINT: string = (import.meta as { env?: Record<string, string | undefined> }).env?.PUBLIC_ANALYTICS_ENDPOINT ?? '';
-
-/** Hosts allowed to serve scripts. Empty until analytics or the consent platform is added. */
-export const SCRIPT_ALLOWLIST: string[] = [];
+/** Hosts allowed to serve scripts: Google Analytics. The consent platform and ad stack join it when ads start. */
+export const SCRIPT_ALLOWLIST: string[] = ['www.googletagmanager.com'];
 
 export const CONTACT_EMAIL = 'hello@moneyresiliencehub.co.uk';
 export const REPO_URL = 'https://github.com/toomanycjs/money-resilience-hub';

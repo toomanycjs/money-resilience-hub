@@ -1,20 +1,21 @@
-// Nothing a person types into a calculator can reach an analytics payload.
+// Nothing a person types into a calculator can reach analytics: the address
+// reported for a page never carries the hash (where share links keep inputs)
+// or the query string.
 
 import { describe, expect, it } from 'vitest';
-import { buildHit } from '../src/scripts/analytics';
+import { browserOptedOut, pageLocation } from '../src/scripts/analytics';
 
-describe('analytics payload', () => {
-	it('strips the hash and query from the path', () => {
-		const hit = buildHit('/calculators/take-home-pay/#s=abc?x=1', '', 400);
-		expect(hit.p).toBe('/calculators/take-home-pay/');
+describe('analytics', () => {
+	it('reports the origin and path only', () => {
+		expect(pageLocation('https://www.moneyresiliencehub.co.uk/calculators/take-home-pay/#s=WyI1NTAwMCJd')).toBe('https://www.moneyresiliencehub.co.uk/calculators/take-home-pay/');
+		expect(pageLocation('https://www.moneyresiliencehub.co.uk/salary/30000/?gross=55000#s=abc')).toBe('https://www.moneyresiliencehub.co.uk/salary/30000/');
 	});
-	it('carries input names, never values', () => {
-		const hit = buildHit('/x/', '', 1200, ['gross', 'nation', '30000', 'taxCode=K475']);
-		expect(hit.i).toEqual(['gross', 'nation']);
+	it('gives nothing for a malformed address', () => {
+		expect(pageLocation('not a url')).toBe('');
 	});
-	it('only ever has the allowed keys', () => {
-		const hit = buildHit('/x/', 'https://example.org/page', 800, []);
-		expect(Object.keys(hit).sort()).toEqual(['p', 'r', 'w']);
-		expect(hit.r).toBe('example.org');
+	it('respects Do Not Track and Global Privacy Control', () => {
+		expect(browserOptedOut({ doNotTrack: '1' })).toBe(true);
+		expect(browserOptedOut({ globalPrivacyControl: true })).toBe(true);
+		expect(browserOptedOut({ doNotTrack: null })).toBe(false);
 	});
 });

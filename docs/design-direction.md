@@ -26,7 +26,7 @@ Subsetting: `pnpm fonts:subset` writes Latin-1 plus the pound, en dash, minus an
 
 ## Layout
 
-On a laptop the calculator is two columns: inputs on the left as a short form, the result on the right as a ledger. On a phone the result sits above the inputs and the figure stays pinned while the person scrolls the breakdown. The breakdown is a table with hairline rules between rows and a heavier rule above the total, in the ledger tone. Structure elsewhere is space and one rule weight, not boxes. Links underlined, not arrowed. Headings not numbered unless the content is a sequence.
+On a laptop the calculator is two columns: inputs on the left as a short form, the result on the right as a ledger. On a phone the inputs come first and the result follows, at the owner's request, so nobody meets a result before they have entered anything; the figure stays pinned while the person scrolls the breakdown. The breakdown is a table with hairline rules between rows and a heavier rule above the total, in the ledger tone. Structure elsewhere is space and one rule weight, not boxes. Links underlined, not arrowed. Headings not numbered unless the content is a sequence.
 
 ## The result language
 

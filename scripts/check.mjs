@@ -58,7 +58,7 @@ if (!existsSync(DIST)) {
 	errors.push('dist/ not found: run astro build first');
 } else {
 	const files = walk(DIST, ['.html']);
-	const ALLOW = (process.env.SCRIPT_ALLOWLIST ?? '').split(',').filter(Boolean);
+	const ALLOW = ['www.googletagmanager.com', ...(process.env.SCRIPT_ALLOWLIST ?? '').split(',').filter(Boolean)];
 	const salaryTexts = [];
 	for (const file of files) {
 		const page = '/' + file.slice(DIST.length).replace(/\\/g, '/').replace(/^\/|index\.html$/g, '');

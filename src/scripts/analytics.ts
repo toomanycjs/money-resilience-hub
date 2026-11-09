@@ -1,87 +1,55 @@
-// First-party, aggregate analytics with a visible opt-out, built to meet the
-// UK statistical purposes exception: no third party, no advertising use, no
-// identifier stored, and never a calculator input. The payload is the page
-// path with the hash and query removed, the referrer's host, a viewport
-// bucket and the names of inputs used (never their values).
+// Google Analytics 4, loaded after the page has finished loading.
 //
-// Nothing is sent unless PUBLIC_ANALYTICS_ENDPOINT is set at build time.
+// One rule holds whatever else changes: nothing a person types into a
+// calculator reaches analytics. Inputs only ever leave the form in a share
+// link's hash, so before Google's script is added the hash is removed from
+// the address bar, and the page address sent is the origin and path alone.
+// A browser set to Do Not Track or Global Privacy Control is not counted.
 
-export const OPT_OUT_KEY = 'mrh:analytics';
-
-export function optedOut(): boolean {
-	try {
-		if (localStorage.getItem(OPT_OUT_KEY) === 'off') return true;
-	} catch {
-		/* storage unavailable: treat as opted in to nothing special */
-	}
-	const n = navigator as Navigator & { globalPrivacyControl?: boolean };
-	return n.doNotTrack === '1' || n.globalPrivacyControl === true;
-}
-
-export function setOptOut(off: boolean): void {
-	try {
-		if (off) localStorage.setItem(OPT_OUT_KEY, 'off');
-		else localStorage.removeItem(OPT_OUT_KEY);
-	} catch {
-		/* nothing to store */
+declare global {
+	interface Window {
+		dataLayer?: unknown[];
 	}
 }
 
-/** Only these keys ever leave the page. */
-const ALLOWED_KEYS = ['p', 'r', 'w', 'i'] as const;
-
-export interface Hit {
-	p: string;
-	r: string;
-	w: 'phone' | 'tablet' | 'laptop';
-	i?: string[];
-}
-
-export function buildHit(pathname: string, referrer: string, width: number, inputsUsed: string[] = []): Hit {
-	const hit: Hit = {
-		p: pathname.split(/[?#]/)[0],
-		r: referrerHost(referrer),
-		w: width < 600 ? 'phone' : width < 1000 ? 'tablet' : 'laptop',
-	};
-	if (inputsUsed.length) hit.i = inputsUsed.filter((k) => /^[a-zA-Z]+$/.test(k)).slice(0, 10);
-	for (const k of Object.keys(hit)) if (!(ALLOWED_KEYS as readonly string[]).includes(k)) delete (hit as Record<string, unknown>)[k];
-	return hit;
-}
-
-function referrerHost(ref: string): string {
+/** The address reported for a page: origin and path, never the hash or the query. */
+export function pageLocation(href: string): string {
 	try {
-		const u = new URL(ref);
-		const own = typeof location === 'undefined' ? '' : location.hostname;
-		return u.hostname === own ? 'self' : u.hostname;
+		const u = new URL(href);
+		return u.origin + u.pathname;
 	} catch {
 		return '';
 	}
 }
 
-export function send(endpoint: string, hit: Hit): void {
-	if (!endpoint || optedOut()) return;
-	try {
-		const body = JSON.stringify(hit);
-		if (!navigator.sendBeacon || !navigator.sendBeacon(endpoint, new Blob([body], { type: 'application/json' }))) {
-			fetch(endpoint, { method: 'POST', body, keepalive: true, headers: { 'content-type': 'application/json' }, credentials: 'omit' }).catch(() => {});
-		}
-	} catch {
-		/* analytics must never break the page */
-	}
+/** True when the browser asks not to be tracked. */
+export function browserOptedOut(nav: { doNotTrack?: string | null; globalPrivacyControl?: boolean } = navigator): boolean {
+	return nav.doNotTrack === '1' || nav.globalPrivacyControl === true;
 }
 
-export function trackPage(endpoint: string): void {
-	if (!endpoint) return;
-	send(endpoint, buildHit(location.pathname, document.referrer, window.innerWidth));
-	// Which inputs a calculator used, by name only, once the person leaves.
-	const root = document.querySelector<HTMLElement>('[data-calculator]');
-	if (!root) return;
-	const used = new Set<string>();
-	root.addEventListener('input', (e) => {
-		const name = (e.target as HTMLInputElement | null)?.name;
-		if (name) used.add(name);
-	});
-	addEventListener('pagehide', () => {
-		if (used.size) send(endpoint, buildHit(location.pathname, document.referrer, window.innerWidth, [...used]));
-	});
+function start(id: string) {
+	// A share link's inputs live in the hash as "#s=...". The calculator has
+	// read them by now; take them out of the address before anything is
+	// recorded. Plain page anchors such as "#how" carry nothing and stay.
+	if (location.hash.includes('=')) history.replaceState(null, '', location.pathname + location.search);
+
+	window.dataLayer = window.dataLayer || [];
+	// gtag.js expects the Arguments object, not an array.
+	function gtag(..._args: unknown[]) {
+		// eslint-disable-next-line prefer-rest-params
+		window.dataLayer!.push(arguments);
+	}
+	gtag('js', new Date());
+	gtag('config', id, { page_location: pageLocation(location.href) });
+
+	const s = document.createElement('script');
+	s.async = true;
+	s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(id)}`;
+	document.head.appendChild(s);
+}
+
+export function loadGoogleAnalytics(id: string): void {
+	if (!id || browserOptedOut()) return;
+	if (document.readyState === 'complete') start(id);
+	else addEventListener('load', () => start(id), { once: true });
 }

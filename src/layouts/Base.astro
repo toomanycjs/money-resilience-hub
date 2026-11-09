@@ -6,7 +6,7 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import JsonLd from '../components/JsonLd.astro';
-import { ANALYTICS_ENDPOINT, BUILD_DATE } from '../config/site';
+import { BUILD_DATE } from '../config/site';
 import { breadcrumbList, crumbsFor, faqPage, organisation, webPage, websiteNode, type FaqPair } from '../lib/schema';
 
 interface Props {
@@ -51,11 +51,10 @@ const nodes = noindex
 			<slot />
 		</main>
 		<Footer />
-		{ANALYTICS_ENDPOINT && (
-			<script>
-				import { trackPage } from '../scripts/analytics';
-				trackPage(import.meta.env.PUBLIC_ANALYTICS_ENDPOINT ?? '');
-			</script>
-		)}
+		<script>
+			import { GA_MEASUREMENT_ID } from '../config/analytics';
+			import { loadGoogleAnalytics } from '../scripts/analytics';
+			if (!location.pathname.startsWith('/design/')) loadGoogleAnalytics(GA_MEASUREMENT_ID);
+		</script>
 	</body>
 </html>

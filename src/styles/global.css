@@ -127,8 +127,8 @@ a:hover { text-decoration-color: var(--ink); }
 	margin: 0 auto;
 	padding: 0 var(--gutter);
 }
-main { padding: 1.5rem 0 3rem; }
-@media (min-width: 900px) { main { padding: 2.5rem 0 4rem; } }
+main.frame { padding-top: 2.25rem; padding-bottom: 3rem; }
+@media (min-width: 900px) { main.frame { padding-top: 3.25rem; padding-bottom: 4rem; } }
 
 /* Header and footer: a name, a short nav, one rule */
 .site-header { border-bottom: var(--rule); }
@@ -221,18 +221,14 @@ button.link {
 	cursor: pointer;
 }
 
-/* Calculator grid: inputs left, result right on a laptop; result first on a phone */
+/* Calculator grid: inputs left, result right on a laptop; inputs first, then the result, on a phone */
 .calc {
 	display: grid;
 	gap: 2rem;
 	grid-template-columns: 1fr;
 }
-.calc-inputs { order: 2; }
-.calc-result { order: 1; }
 @media (min-width: 900px) {
 	.calc { grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 3rem; align-items: start; }
-	.calc-inputs { order: 1; }
-	.calc-result { order: 2; }
 }
 
 /* The figure: pinned on a phone while the breakdown scrolls */
@@ -425,5 +421,5 @@ button.link {
 	.site-header, .site-footer, .calc-inputs, .actions, .ad-slot, .ledger-toggle::after { display: none !important; }
 	.ledger-arith[hidden] { display: table-row; }
 	.figure-block { position: static; }
-	main { padding: 0; }
+	main.frame { padding: 0; }
 }

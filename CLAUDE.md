@@ -19,7 +19,9 @@ Author and publisher of every page: The Money Resilience Hub.
 - No tool models a rule under legal challenge or needing live market data.
 - Calculator inputs never reach analytics, ad requests, logs or any URL sent to a third party. Inputs live in
   the URL hash, never the query string, and the hash is stripped before anything is counted.
-- Analytics is first-party and aggregate, with an opt-out, and sends nothing unless PUBLIC_ANALYTICS_ENDPOINT is set.
+- Analytics is Google Analytics 4 (the owner's decision, 9 November 2026), loaded after the page (src/scripts/analytics.ts, ID in
+  src/config/analytics.ts). The share hash is removed from the address before it loads and the page address sent is origin and path only.
+  Do Not Track and Global Privacy Control are respected. There is no consent banner yet.
   Advertising cookies only after consent through a Google-certified consent platform.
 - Ads only in the reserved, labelled slots (AdSlot component); never within items 1 to 6 of the calculator template.
 - No affiliate or paid links inside any calculator result, ledger or rules used box.
