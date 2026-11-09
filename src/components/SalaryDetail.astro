@@ -1,0 +1,119 @@
+---
+// The part of a salary page that is particular to its salary: the nations
+// side by side, the band-by-band working under the other set of rates, the
+// distance to each threshold, what each of the next thousands is worth, a
+// pension scenario per scheme type and the student loan row per plan with
+// its source. Every figure comes from src/lib/salaryPage.ts.
+import { MARGINAL_STEP, NATION_LABEL, type Nation } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { PENSION_SCENARIO_PERCENT, STEP, STEPS, type SalaryPageData } from '../lib/salaryPage';
+
+interface Props {
+	page: SalaryPageData;
+	/** Amounts with a salary page, so only built pages are linked. */
+	live: number[];
+	/** Whether the Scottish version of each salary page is built. */
+	scottishLive: number[];
+}
+
+const { page, live, scottishLive } = Astro.props;
+const b = page.breakdown;
+const label = money(page.amount, 0);
+const scottish = page.nation === 'scotland';
+const href = (amount: number) => (scottish ? `/salary/${amount}/scotland/` : `/salary/${amount}/`);
+const has = (amount: number) => (scottish ? scottishLive : live).includes(amount);
+const otherHref = scottish ? `/salary/${page.amount}/` : `/salary/${page.amount}/scotland/`;
+const otherLive = scottish ? live.includes(page.amount) : scottishLive.includes(page.amount);
+const otherName = scottish ? 'the rest of the UK' : 'Scotland';
+const nations = Object.keys(page.byNation) as Nation[];
+const pence = (share: number) => `${Math.round(share * 100)}p`;
+---
+
+<h3>By nation</h3>
+<table>
+	<thead><tr><th scope="col">Where you live</th><th scope="col" class="num">A month</th><th scope="col" class="num">A year</th><th scope="col" class="num">Income tax</th></tr></thead>
+	<tbody>
+		{nations.map((n) => {
+			const r = page.byNation[n];
+			return r ? (
+				<tr><th scope="row">{NATION_LABEL[n]}</th><td class="num">{money(r.periods.monthly, 0)}</td><td class="num">{money(r.takeHome, 0)}</td><td class="num">{money(r.incomeTax.total, 0)}</td></tr>
+			) : (
+				<tr><th scope="row">{NATION_LABEL[n]}</th><td colspan="3">Not yet set for {b.label}</td></tr>
+			);
+		})}
+	</tbody>
+</table>
+{page.walesMatchesEngland && <p>Wales matches England and Northern Ireland because the Welsh rates of income tax for {b.label} add up to the same rate in every band. National Insurance and student loan repayments are the same in all four nations.</p>}
+
+{page.other && (
+	<>
+		<h3>{label} under the rates for {otherName}</h3>
+		<table>
+			<thead><tr><th scope="col">Band</th><th scope="col" class="num">Rate</th><th scope="col" class="num">On</th><th scope="col" class="num">Income tax</th></tr></thead>
+			<tbody>
+				{page.other.incomeTax.bands.filter((band) => band.slice > 0).map((band) => (
+					<tr><th scope="row">{band.name}</th><td class="num">{pct(band.rate)}</td><td class="num">{money(band.slice, 0)}</td><td class="num">{money(band.tax, 2)}</td></tr>
+				))}
+				<tr><th scope="row">Income tax in all</th><td class="num"></td><td class="num">{money(page.other.taxableIncome, 0)}</td><td class="num">{money(page.other.incomeTax.total, 2)}</td></tr>
+			</tbody>
+		</table>
+		<p>
+			That is {money(Math.abs(page.other.incomeTax.total - b.incomeTax.total), 0)} {page.other.incomeTax.total > b.incomeTax.total ? 'more' : 'less'} income tax a year than {scottish ? 'under the Scottish rates' : `in ${NATION_LABEL[page.nation]}`}, so take-home is {money(page.other.periods.monthly, 0)} a month.
+			{otherLive && <> <a href={otherHref}>{label} after tax {scottish ? 'in England, Wales and Northern Ireland' : 'in Scotland'}</a> has the full working.</>}
+		</p>
+	</>
+)}
+
+<h3>Distance to each threshold</h3>
+<table>
+	<thead><tr><th scope="col">Threshold</th><th scope="col" class="num">Pay at which it applies</th><th scope="col" class="num">From {label}</th></tr></thead>
+	<tbody>
+		{page.thresholdRows.map((t) => (
+			<tr>
+				<th scope="row">{t.label}</th>
+				<td class="num">{has(t.value) && t.value !== page.amount ? <a href={href(t.value)}>{money(t.value, 0)}</a> : money(t.value, 0)}</td>
+				<td class="num">{t.distance === 0 ? 'At this pay' : `${money(Math.abs(t.distance), 0)} ${t.distance > 0 ? 'above' : 'below'}`}</td>
+			</tr>
+		))}
+	</tbody>
+</table>
+<p>The marginal rate on the next {money(MARGINAL_STEP, 0)} is {pct(b.marginalRate ?? 0)}. {b.nextThreshold?.sentence}</p>
+
+<h3>What the next {money(STEP * STEPS, 0)} is worth</h3>
+<table>
+	<thead><tr><th scope="col">Salary</th><th scope="col" class="num">Take-home a year</th><th scope="col" class="num">More a year</th><th scope="col" class="num">More a month</th><th scope="col" class="num">Kept of each pound</th></tr></thead>
+	<tbody>
+		{page.steps.map((s) => (
+			<tr>
+				<th scope="row">{has(s.amount) ? <a href={href(s.amount)}>{money(s.amount, 0)}</a> : money(s.amount, 0)}</th>
+				<td class="num">{money(s.takeHome, 0)}</td>
+				<td class="num">{money(s.extra, 0)}</td>
+				<td class="num">{money(s.extraMonthly, 0)}</td>
+				<td class="num">{pence(s.kept)}</td>
+			</tr>
+		))}
+	</tbody>
+</table>
+<p>Each row compares that salary with {label}, before any pension or student loan.</p>
+
+<h3>With {PENSION_SCENARIO_PERCENT}% into a pension</h3>
+<table>
+	<thead><tr><th scope="col">Scheme type</th><th scope="col" class="num">Into the pension a year</th><th scope="col" class="num">Take-home a month</th><th scope="col" class="num">Take-home falls by</th><th scope="col" class="num">Cost of each pound</th></tr></thead>
+	<tbody>
+		{page.pensionRows.map((r) => (
+			<tr><th scope="row">{r.label}</th><td class="num">{money(r.intoPension, 0)}</td><td class="num">{money(r.monthly, 0)}</td><td class="num">{money(r.cost, 0)} a year</td><td class="num">{pence(r.costPerPound)}</td></tr>
+		))}
+	</tbody>
+</table>
+<p>The employee's own contribution only, as a share of salary. Salary sacrifice costs least because the sacrificed pay carries no National Insurance. Your scheme type is on your pension statement or payslip.</p>
+
+<h3>Student loan repayments at {label}</h3>
+<table>
+	<thead><tr><th scope="col">Plan</th><th scope="col" class="num">Threshold</th><th scope="col" class="num">Rate</th><th scope="col" class="num">A year</th><th scope="col" class="num">A month</th><th scope="col">Source</th></tr></thead>
+	<tbody>
+		{page.loanRows.map((r) => (
+			<tr><th scope="row">{r.label}</th><td class="num">{money(r.threshold, 0)}</td><td class="num">{pct(r.rate)}</td><td class="num">{money(r.amount, 0)}</td><td class="num">{money(r.monthly, 0)}</td><td class="src"><a href={r.source} rel="noopener">gov.uk</a>, checked {longDate(r.verified)}</td></tr>
+		))}
+	</tbody>
+</table>
+<p>Each line in the breakdown above is worked out as the <a href="/calculators/take-home-pay/#how">take-home pay calculator</a> describes: the allowance from the tax code, income tax band by band on pay above it, National Insurance between the annual thresholds, and each loan plan on pay above its threshold.</p>

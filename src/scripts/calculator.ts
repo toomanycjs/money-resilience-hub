@@ -9,7 +9,9 @@ import {
 	encodeShare,
 	forgetInputs,
 	formFromInput,
+	ledgerHeading,
 	loadSaved,
+	money,
 	parseForm,
 	renderBar,
 	renderFigure,
@@ -27,6 +29,7 @@ if (root) {
 	const form = root.querySelector('form') as HTMLFormElement;
 	const asAt = root.dataset.asAt as string;
 	const lockedGross = root.dataset.lockedGross ? Number(root.dataset.lockedGross) : null;
+	const lockedNation = root.dataset.lockedNation ?? null;
 	const expanded = root.dataset.expanded === 'true';
 	const siteUrl = root.dataset.siteUrl ?? '';
 	const path = location.pathname;
@@ -83,6 +86,10 @@ if (root) {
 			put('[data-ledger]', renderLedger(b, { ratesPath, expanded }));
 			put('[data-bar]', renderBar(b));
 			put('[data-rules-used]', renderRulesUsed(b, { ratesPath }));
+			const heading = el('[data-ledger-heading]');
+			if (heading) heading.textContent = ledgerHeading(b);
+			const sticky = el('[data-sticky-amount]');
+			if (sticky) sticky.textContent = money(b.periods.monthly, 0);
 			const changed = el('[data-what-changed]');
 			if (changed) {
 				const y = yearOnYear(input);
@@ -111,8 +118,10 @@ if (root) {
 	const shared = decodeShare(location.hash);
 	const saved = shared ?? loadSaved();
 	if (saved) {
-		write(lockedGross != null ? { ...saved, gross: String(lockedGross) } : saved);
-		if (!shared) remember();
+		// A page about one salary or one nation keeps its own, and does not
+		// overwrite what the browser saved with it.
+		write({ ...saved, ...(lockedGross != null ? { gross: String(lockedGross) } : {}), ...(lockedNation && !shared ? { nation: lockedNation } : {}) });
+		if (!shared && !lockedNation) remember();
 		render();
 	} else {
 		syncPensionField();
@@ -151,7 +160,7 @@ if (root) {
 			navigator.clipboard?.writeText(url).then(() => say('Link copied. Your inputs travel in the link itself and are never sent to us.'), () => say(url));
 		} else if (action === 'forget') {
 			forgetInputs();
-			write({ ...DEFAULT_FORM, gross: lockedGross != null ? String(lockedGross) : DEFAULT_FORM.gross });
+			write({ ...DEFAULT_FORM, gross: lockedGross != null ? String(lockedGross) : DEFAULT_FORM.gross, nation: lockedNation ?? DEFAULT_FORM.nation });
 			render();
 			say('Your inputs have been removed from this browser.');
 		}
@@ -159,6 +168,16 @@ if (root) {
 
 	function say(text: string) {
 		if (status) status.textContent = text;
+	}
+
+	// On a phone the form sits above the result. While the figure is still
+	// below the screen, a bar at the bottom shows it and links to it.
+	const stickyBar = el('[data-sticky-figure]');
+	const figure = el('[data-figure]');
+	if (stickyBar && figure && 'IntersectionObserver' in window) {
+		new IntersectionObserver(([entry]) => {
+			stickyBar.hidden = entry.isIntersecting || entry.boundingClientRect.top < 0;
+		}).observe(figure);
 	}
 
 	// Tax year toggle: only years the engine can compute for the chosen nation.

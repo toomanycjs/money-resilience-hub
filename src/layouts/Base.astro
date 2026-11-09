@@ -9,6 +9,7 @@ import Header from '../components/Header.astro';
 import JsonLd from '../components/JsonLd.astro';
 import { GA_MEASUREMENT_ID } from '../config/analytics';
 import { BUILD_DATE } from '../config/site';
+import { lastmodFor } from '../lib/lastmod.mjs';
 import { breadcrumbList, crumbsFor, faqPage, organisation, webPage, websiteNode, type FaqPair } from '../lib/schema';
 
 interface Props {
@@ -33,7 +34,7 @@ const nodes = noindex
 	: [
 			organisation,
 			crumbs.length === 1 ? websiteNode() : breadcrumbList(crumbs),
-			webPage({ url: new URL(Astro.url.pathname, Astro.site).href, title, description, modified: BUILD_DATE }),
+			webPage({ url: new URL(Astro.url.pathname, Astro.site).href, title, description, modified: lastmodFor(Astro.url.pathname, taxYears) ?? BUILD_DATE }),
 			...(faqs?.length ? [faqPage(faqs)] : []),
 			...extraNodes,
 		];

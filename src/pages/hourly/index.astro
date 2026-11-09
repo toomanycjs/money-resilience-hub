@@ -1,0 +1,41 @@
+---
+import { takeHome } from '@money-resilience-hub/rules';
+import { money } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Base from '../../layouts/Base.astro';
+import { HOURS_PER_WEEK, WEEKS_PER_YEAR, liveAmounts, salaryForHourly } from '../../lib/pages';
+
+const rows = liveAmounts('hourly').map((rate) => {
+	const gross = salaryForHourly(rate);
+	const b = takeHome({ gross, nation: 'england-ni', asAt: BUILD_DATE }, { withMarginal: false });
+	return { rate, gross, monthly: b.periods.monthly, weekly: b.periods.weekly };
+});
+const hasConverter = Object.keys(import.meta.glob('../calculators/hourly-to-salary.astro')).length > 0;
+---
+
+<Base title={`Hourly pay after tax ${CURRENT_YEAR.label}: take-home by rate`} description={`Take-home pay for hourly rates from ${money(rows[0].rate, 0)} to ${money(rows.at(-1)!.rate, 0)} in ${CURRENT_YEAR.label}, on a ${HOURS_PER_WEEK}-hour week. Every deduction is sourced to gov.uk.`} breadcrumb="Hourly pages" taxYears={[CURRENT_YEAR.taxYear]}>
+	<div class="page-head">
+		<p class="kicker"><a href="/salary/">Salary pages</a></p>
+		<h1>Hourly pay after tax</h1>
+		<p class="subtitle">One page per hourly rate, taken to a salary on a {HOURS_PER_WEEK}-hour week over {WEEKS_PER_YEAR} weeks and then through the {CURRENT_YEAR.label} rules. Each page also shows the rate over other weekly hours.</p>
+	</div>
+
+	<h2 id="rates">Take-home by hourly rate</h2>
+	<table>
+		<thead><tr><th scope="col">Rate</th><th scope="col" class="num">Before tax a year</th><th scope="col" class="num">Take-home a month</th><th scope="col" class="num">Take-home a week</th></tr></thead>
+		<tbody>
+			{rows.map((r) => (
+				<tr>
+					<th scope="row"><a href={`/hourly/${r.rate}/`}>{money(r.rate, 0)} an hour after tax</a></th>
+					<td class="num">{money(r.gross, 0)}</td>
+					<td class="num">{money(r.monthly, 0)}</td>
+					<td class="num">{money(r.weekly, 0)}</td>
+				</tr>
+			))}
+		</tbody>
+	</table>
+	<p class="small quiet">England, Wales and Northern Ireland, standard tax code, no student loan, no pension.</p>
+
+	<h2 id="other">Other hours and other rates</h2>
+	<p>{hasConverter ? <>The <a href="/calculators/hourly-to-salary/">hourly rate to salary converter</a> takes any rate, any hours and any number of weeks. </> : ''}The <a href="/calculators/take-home-pay/">take-home pay calculator</a> works from a salary a year and adds a pension, a tax code or a student loan. The <a href="/salary/">salary pages</a> and the <a href="/monthly/">monthly pages</a> start from pay a year and pay a month.</p>
+</Base>

@@ -60,6 +60,7 @@ if (!existsSync(DIST)) {
 	const files = walk(DIST, ['.html']);
 	const ALLOW = ['www.googletagmanager.com', ...(process.env.SCRIPT_ALLOWLIST ?? '').split(',').filter(Boolean)];
 	const salaryTexts = [];
+	let sameWording = 0;
 	for (const file of files) {
 		const page = '/' + file.slice(DIST.length).replace(/\\/g, '/').replace(/^\/|index\.html$/g, '');
 		if (page === '/404.html') continue;
@@ -76,7 +77,9 @@ if (!existsSync(DIST)) {
 		const title = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? '';
 		if (!title) errors.push(`${page}: no title`);
 		else if (title.length > 60 && !isDesign) errors.push(`${page}: title is ${title.length} characters ("${title}")`);
-		if (!/<meta name="description" content="[^"]+"/.test(html)) errors.push(`${page}: no description`);
+		const description = html.match(/<meta name="description" content="([^"]+)"/)?.[1] ?? '';
+		if (!description) errors.push(`${page}: no description`);
+		else if (description.replace(/&#?\w+;/g, 'x').length > 160 && !isDesign) errors.push(`${page}: description is ${description.replace(/&#?\w+;/g, 'x').length} characters; search results cut it at about 160`);
 		if (!/<link rel="canonical"/.test(html)) errors.push(`${page}: no canonical`);
 		if (!/<html lang="en-GB">/.test(html)) errors.push(`${page}: lang is not en-GB`);
 		if (/nosnippet|max-snippet/.test(html) && !isDesign) errors.push(`${page}: snippet limits are not allowed`);
@@ -105,23 +108,26 @@ if (!existsSync(DIST)) {
 		}
 		if (/\.(ledger|rules-used|ruler)\b[^{]*\{[^}]*ad/.test(html)) errors.push(`${page}: ad styling borrows a content tone`);
 
-		if (/^\/salary\/\d+\/$/.test(page)) {
+		const generated = page.match(/^\/(salary|hourly|monthly)\/(\d+)\/(scotland\/)?$/);
+		if (generated) {
 			const main = html.match(/<main[\s\S]*?<\/main>/)?.[0] ?? '';
 			const stripped = main.replace(/<script[\s\S]*?<\/script>/g, '').replace(/<[^>]+>/g, ' ').replace(/[\d,.]+/g, '#').replace(/\s+/g, ' ');
-			salaryTexts.push({ page, amount: Number(page.match(/\d+/)[0]), stripped, html });
+			salaryTexts.push({ page, family: `${generated[1]}${generated[3] ?? ''}`, amount: Number(generated[2]), stripped, html });
 		}
 	}
-	salaryTexts.sort((a, b) => a.amount - b.amount);
+	salaryTexts.sort((a, b) => a.family.localeCompare(b.family) || a.amount - b.amount);
 	for (let i = 1; i < salaryTexts.length; i++) {
 		const a = salaryTexts[i - 1];
 		const b = salaryTexts[i];
-		if (a.stripped === b.stripped) {
-			// Identical text apart from digits: the facts must still differ by more than the margins (see guardReport).
-			const take = (h) => Number(h.match(/data-result="[^"]*?takeHome&quot;:([\d.]+)/)?.[1] ?? h.match(/class="figure-amount">£([\d,]+)/)?.[1]?.replace(/,/g, '') ?? 0);
-			if (Math.abs(take(a.html) - take(b.html)) < 75) errors.push(`${b.page} is near-identical to ${a.page}`);
-			else warn.push(`${b.page} has the same wording as ${a.page}; the figures differ`);
+		if (a.family === b.family && a.stripped === b.stripped) {
+			// Identical wording apart from digits: the take-home a year must still differ by more than a month's margin
+			// times twelve (see GUARD_MARGINS in src/lib/salaryPage.ts), or the two pages say the same thing.
+			const take = (h) => Number(h.match(/<dt>A year<\/dt><dd>£([\d,]+)/)?.[1]?.replace(/,/g, '') ?? 0);
+			if (Math.abs(take(a.html) - take(b.html)) < 300) errors.push(`${b.page} is near-identical to ${a.page}`);
+			else sameWording++;
 		}
 	}
+	if (sameWording) console.log(`${sameWording} generated page(s) share their wording with a neighbour and differ in their figures`);
 	console.log(`checked ${files.length} built pages`);
 }
 

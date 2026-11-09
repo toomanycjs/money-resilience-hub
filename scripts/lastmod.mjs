@@ -5,7 +5,7 @@
 // changes; the build reads this file rather than asking git.
 
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
 const PAGES = 'src/pages';
@@ -25,15 +25,30 @@ function walk(dir) {
 }
 const posix = (p) => p.split(sep).join('/');
 
+// Files a generated page is built from besides its template: a change to any of them changes every page of the family.
+const BUILT_FROM = {
+	'/salary/*/': ['src/components/SalaryPage.astro', 'src/components/SalaryDetail.astro', 'src/lib/salaryPage.ts'],
+	'/salary/*/scotland/': ['src/components/SalaryPage.astro', 'src/components/SalaryDetail.astro', 'src/lib/salaryPage.ts'],
+	'/hourly/*/': ['src/components/SalaryDetail.astro', 'src/lib/salaryPage.ts'],
+	'/monthly/*/': ['src/components/SalaryDetail.astro', 'src/lib/salaryPage.ts'],
+};
+
 const pages = {};
+const templates = {};
 for (const file of walk(PAGES).filter((f) => f.endsWith('.astro'))) {
 	const rel = posix(relative(PAGES, file)).replace(/\.astro$/, '');
-	if (rel.includes('[') || rel === '404' || rel.startsWith('design/')) continue;
+	if (rel === '404' || rel.startsWith('design/')) continue;
+	if (rel.includes('[')) {
+		const pattern = `/${rel.replace(/\[[^\]]+\]/g, '*')}/`;
+		const dates = [file, ...(BUILT_FROM[pattern] ?? [])].map((f) => git('log', '-1', '--format=%cs', '--', f)).filter(Boolean);
+		templates[pattern] = dates.sort().at(-1) ?? today;
+		continue;
+	}
 	const path = rel === 'index' ? '/' : `/${rel.replace(/(^|\/)index$/, '')}/`.replace(/\/+/g, '/');
 	const date = git('log', '-1', '--format=%cs', '--', file);
 	pages[path] = date || today;
 }
-for (const file of walk('src/content').filter((f) => /\.mdx?$/.test(f))) {
+for (const file of (existsSync('src/content') ? walk('src/content') : []).filter((f) => /\.mdx?$/.test(f))) {
 	const rel = posix(relative('src/content', file)).replace(/\.mdx?$/, '');
 	pages[`/${rel}/`] = git('log', '-1', '--format=%cs', '--', file) || today;
 }
@@ -77,5 +92,5 @@ for (const file of readdirSync(CONFIG).filter((f) => /^\d{4}-\d{2}\.json$/.test(
 }
 
 mkdirSync('src/data', { recursive: true });
-writeFileSync('src/data/lastmod.json', JSON.stringify({ generated: today, pages, rules }, null, '\t') + '\n');
-console.log(`lastmod: ${Object.keys(pages).length} pages, ${Object.keys(rules).length} tax years`);
+writeFileSync('src/data/lastmod.json', JSON.stringify({ generated: today, pages, templates, rules }, null, '\t') + '\n');
+console.log(`lastmod: ${Object.keys(pages).length} pages, ${Object.keys(templates).length} templates, ${Object.keys(rules).length} tax years`);

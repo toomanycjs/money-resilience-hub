@@ -82,6 +82,11 @@ function lineRow(l: LedgerLine, i: number, expanded: boolean): string {
 /** What the ledger needs: the lines, the notes under them and a caption. */
 export type LedgerSource = Pick<Breakdown, 'lines' | 'warnings' | 'label'> & Partial<Pick<Breakdown, 'gross' | 'takeHome'>> & { caption?: string };
 
+/** The heading over the take-home ledger: what goes in and what comes out. */
+export function ledgerHeading(b: Pick<Breakdown, 'gross' | 'takeHome'>): string {
+	return `How ${money(b.gross, 0)} becomes ${money(b.takeHome, 0)}`;
+}
+
 export function renderLedger(b: LedgerSource, opts: RenderOptions): string {
 	const expanded = !!opts.expanded;
 	const rows = b.lines.map((l, i) => lineRow(l, i, expanded)).join('');
@@ -126,7 +131,7 @@ export function renderRulesUsed(b: { rulesUsed: RulesUsed }, opts: RenderOptions
 	<div><dt>Tax year</dt><dd>${esc(r.label)} (6 April ${r.taxYear.slice(0, 4)} to 5 April ${r.taxYear.slice(0, 2)}${r.taxYear.slice(5)})</dd></div>
 	<div><dt>Nation</dt><dd>${NATION_LABEL[r.nation]}</dd></div>
 	<div><dt>Figures</dt><dd>${checked}. Status: ${STATUS_LABEL[r.status].toLowerCase()}.</dd></div>
-	<div><dt>Next scheduled change</dt><dd>${longDate(r.nextChange.date)}: ${esc(r.nextChange.summary)}</dd></div>
+	<div><dt>Next scheduled change</dt><dd>${longDate(r.nextChange.date)}</dd></div>
 	<div><dt>Every figure</dt><dd><a href="${esc(opts.ratesPath)}">Rates and allowances for ${esc(r.label)}</a>, each with its source and the date it was checked.</dd></div>
 </dl>`;
 }

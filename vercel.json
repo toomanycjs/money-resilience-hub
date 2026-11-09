@@ -1,18 +1,739 @@
 {
   "framework": "astro",
   "trailingSlash": true,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.google-analytics.com https://www.googletagmanager.com; font-src 'self'; connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=()"
+        }
+      ]
+    }
+  ],
   "redirects": [
-    { "source": "/:path*", "has": [{ "type": "host", "value": "moneyresiliencehub.co.uk" }], "destination": "https://www.moneyresiliencehub.co.uk/:path*", "permanent": true },
-    { "source": "/salary/20k/", "destination": "/salary/20000/", "permanent": true },
-    { "source": "/salary/25k/", "destination": "/salary/25000/", "permanent": true },
-    { "source": "/salary/30k/", "destination": "/salary/30000/", "permanent": true },
-    { "source": "/salary/35k/", "destination": "/salary/35000/", "permanent": true },
-    { "source": "/salary/40k/", "destination": "/salary/40000/", "permanent": true },
-    { "source": "/salary/50k/", "destination": "/salary/50000/", "permanent": true },
-    { "source": "/salary/60k/", "destination": "/salary/60000/", "permanent": true },
-    { "source": "/salary/75k/", "destination": "/salary/75000/", "permanent": true },
-    { "source": "/salary/100k/", "destination": "/salary/100000/", "permanent": true },
-    { "source": "/salary/:a(\\d{2,3})-:b(\\d{3})/", "destination": "/salary/:a:b/", "permanent": true },
-    { "source": "/salary/:a(\\d{2,3}),:b(\\d{3})/", "destination": "/salary/:a:b/", "permanent": true }
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "moneyresiliencehub.co.uk"
+        }
+      ],
+      "destination": "https://www.moneyresiliencehub.co.uk/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/sitemap-index.xml",
+      "permanent": true
+    },
+    {
+      "source": "/salary/15k/",
+      "destination": "/salary/15000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/16k/",
+      "destination": "/salary/16000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/17k/",
+      "destination": "/salary/17000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/18k/",
+      "destination": "/salary/18000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/19k/",
+      "destination": "/salary/19000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/20k/",
+      "destination": "/salary/20000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/21k/",
+      "destination": "/salary/21000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/22k/",
+      "destination": "/salary/22000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/23k/",
+      "destination": "/salary/23000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/24k/",
+      "destination": "/salary/24000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/25k/",
+      "destination": "/salary/25000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/26k/",
+      "destination": "/salary/26000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/27k/",
+      "destination": "/salary/27000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/28k/",
+      "destination": "/salary/28000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/29k/",
+      "destination": "/salary/29000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/30k/",
+      "destination": "/salary/30000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/31k/",
+      "destination": "/salary/31000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/32k/",
+      "destination": "/salary/32000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/33k/",
+      "destination": "/salary/33000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/34k/",
+      "destination": "/salary/34000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/35k/",
+      "destination": "/salary/35000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/36k/",
+      "destination": "/salary/36000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/37k/",
+      "destination": "/salary/37000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/38k/",
+      "destination": "/salary/38000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/39k/",
+      "destination": "/salary/39000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/40k/",
+      "destination": "/salary/40000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/41k/",
+      "destination": "/salary/41000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/42k/",
+      "destination": "/salary/42000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/43k/",
+      "destination": "/salary/43000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/44k/",
+      "destination": "/salary/44000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/45k/",
+      "destination": "/salary/45000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/46k/",
+      "destination": "/salary/46000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/47k/",
+      "destination": "/salary/47000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/48k/",
+      "destination": "/salary/48000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/49k/",
+      "destination": "/salary/49000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/50k/",
+      "destination": "/salary/50000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/51k/",
+      "destination": "/salary/51000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/52k/",
+      "destination": "/salary/52000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/53k/",
+      "destination": "/salary/53000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/54k/",
+      "destination": "/salary/54000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/55k/",
+      "destination": "/salary/55000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/56k/",
+      "destination": "/salary/56000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/57k/",
+      "destination": "/salary/57000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/58k/",
+      "destination": "/salary/58000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/59k/",
+      "destination": "/salary/59000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/60k/",
+      "destination": "/salary/60000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/61k/",
+      "destination": "/salary/61000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/62k/",
+      "destination": "/salary/62000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/63k/",
+      "destination": "/salary/63000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/64k/",
+      "destination": "/salary/64000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/65k/",
+      "destination": "/salary/65000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/66k/",
+      "destination": "/salary/66000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/67k/",
+      "destination": "/salary/67000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/68k/",
+      "destination": "/salary/68000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/69k/",
+      "destination": "/salary/69000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/70k/",
+      "destination": "/salary/70000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/71k/",
+      "destination": "/salary/71000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/72k/",
+      "destination": "/salary/72000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/73k/",
+      "destination": "/salary/73000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/74k/",
+      "destination": "/salary/74000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/75k/",
+      "destination": "/salary/75000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/76k/",
+      "destination": "/salary/76000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/77k/",
+      "destination": "/salary/77000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/78k/",
+      "destination": "/salary/78000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/79k/",
+      "destination": "/salary/79000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/80k/",
+      "destination": "/salary/80000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/81k/",
+      "destination": "/salary/81000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/82k/",
+      "destination": "/salary/82000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/83k/",
+      "destination": "/salary/83000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/84k/",
+      "destination": "/salary/84000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/85k/",
+      "destination": "/salary/85000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/86k/",
+      "destination": "/salary/86000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/87k/",
+      "destination": "/salary/87000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/88k/",
+      "destination": "/salary/88000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/89k/",
+      "destination": "/salary/89000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/90k/",
+      "destination": "/salary/90000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/91k/",
+      "destination": "/salary/91000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/92k/",
+      "destination": "/salary/92000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/93k/",
+      "destination": "/salary/93000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/94k/",
+      "destination": "/salary/94000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/95k/",
+      "destination": "/salary/95000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/96k/",
+      "destination": "/salary/96000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/97k/",
+      "destination": "/salary/97000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/98k/",
+      "destination": "/salary/98000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/99k/",
+      "destination": "/salary/99000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/100k/",
+      "destination": "/salary/100000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/101k/",
+      "destination": "/salary/101000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/102k/",
+      "destination": "/salary/102000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/103k/",
+      "destination": "/salary/103000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/104k/",
+      "destination": "/salary/104000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/105k/",
+      "destination": "/salary/105000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/106k/",
+      "destination": "/salary/106000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/107k/",
+      "destination": "/salary/107000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/108k/",
+      "destination": "/salary/108000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/109k/",
+      "destination": "/salary/109000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/110k/",
+      "destination": "/salary/110000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/111k/",
+      "destination": "/salary/111000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/112k/",
+      "destination": "/salary/112000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/113k/",
+      "destination": "/salary/113000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/114k/",
+      "destination": "/salary/114000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/115k/",
+      "destination": "/salary/115000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/116k/",
+      "destination": "/salary/116000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/117k/",
+      "destination": "/salary/117000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/118k/",
+      "destination": "/salary/118000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/119k/",
+      "destination": "/salary/119000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/120k/",
+      "destination": "/salary/120000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/121k/",
+      "destination": "/salary/121000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/122k/",
+      "destination": "/salary/122000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/123k/",
+      "destination": "/salary/123000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/124k/",
+      "destination": "/salary/124000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/125k/",
+      "destination": "/salary/125000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/126k/",
+      "destination": "/salary/126000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/127k/",
+      "destination": "/salary/127000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/128k/",
+      "destination": "/salary/128000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/129k/",
+      "destination": "/salary/129000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/130k/",
+      "destination": "/salary/130000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/131k/",
+      "destination": "/salary/131000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/132k/",
+      "destination": "/salary/132000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/133k/",
+      "destination": "/salary/133000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/134k/",
+      "destination": "/salary/134000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/135k/",
+      "destination": "/salary/135000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/136k/",
+      "destination": "/salary/136000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/137k/",
+      "destination": "/salary/137000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/138k/",
+      "destination": "/salary/138000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/139k/",
+      "destination": "/salary/139000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/140k/",
+      "destination": "/salary/140000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/141k/",
+      "destination": "/salary/141000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/142k/",
+      "destination": "/salary/142000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/143k/",
+      "destination": "/salary/143000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/144k/",
+      "destination": "/salary/144000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/145k/",
+      "destination": "/salary/145000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/146k/",
+      "destination": "/salary/146000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/147k/",
+      "destination": "/salary/147000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/148k/",
+      "destination": "/salary/148000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/149k/",
+      "destination": "/salary/149000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/150k/",
+      "destination": "/salary/150000/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/:a(\\d{2,3})-:b(\\d{3})/",
+      "destination": "/salary/:a:b/",
+      "permanent": true
+    },
+    {
+      "source": "/salary/:a(\\d{2,3}),:b(\\d{3})/",
+      "destination": "/salary/:a:b/",
+      "permanent": true
+    }
   ]
 }

@@ -2,13 +2,14 @@
 // salary pages the headline figure with a small ruler. Same tokens as the
 // site, drawn with satori and rasterised with sharp.
 
-import { listYears, takeHome } from '@money-resilience-hub/rules';
+import { listYears, takeHome, type Nation } from '@money-resilience-hub/rules';
 import { money } from '@money-resilience-hub/calculators';
 import fs from 'node:fs';
 import satori from 'satori';
 import sharp from 'sharp';
 import { BUILD_DATE, SITE_NAME } from '../../config/site';
-import { liveAmounts } from '../../lib/pages';
+import { HOURS_PER_WEEK, liveAmounts, salaryForHourly, salaryForMonthlyPay } from '../../lib/pages';
+import { pagesPassingGuard } from '../../lib/salaryPage';
 
 const INK = '#14213D';
 const QUIET = '#5B6473';
@@ -33,7 +34,9 @@ export function getStaticPaths() {
 		{ slug: 'calculators/state-pension-tax', title: 'State Pension tax calculator', tail: 'Income tax on pensions and the Pension Tax Allowance from April 2027' },
 		{ slug: 'calculators/lifetime-isa-penalty', title: 'Lifetime ISA withdrawal charge', tail: 'By reason and date, with the reduced charge from 29 October 2026' },
 		{ slug: 'calculators/side-hustle-tax', title: 'Side hustle tax calculator', tail: 'The trading allowance this year and from April 2027' },
-		{ slug: 'salary', title: 'Salary after tax', tail: 'One page per salary, computed from the rules file' },
+		{ slug: 'salary', title: 'Salary after tax', tail: 'One page per salary, with a Scottish version of each' },
+		{ slug: 'hourly', title: 'Hourly pay after tax', tail: 'One page per hourly rate, with the working shown' },
+		{ slug: 'monthly', title: 'Monthly pay after tax', tail: 'What a monthly amount leaves, and the salary that leaves it' },
 		{ slug: 'rates', title: 'Rates and allowances', tail: 'Every figure with its source, the date it was checked and its status' },
 		{ slug: 'budget/2026-autumn', title: 'Budget 2026: what changed', tail: 'Measures, effective dates and worked examples' },
 		{ slug: 'methodology', title: 'Methodology', tail: 'How the figures are sourced, computed and tested' },
@@ -43,16 +46,14 @@ export function getStaticPaths() {
 		{ slug: 'corrections', title: 'Corrections', tail: 'What was wrong, when, and what changed' },
 	];
 	for (const y of listYears()) cards.push({ slug: `rates/${y.taxYear}`, title: `Rates and allowances ${y.label}`, tail: 'Every figure with its source and the date it was checked' });
-	for (const amount of liveAmounts('salary')) {
-		const b = takeHome({ gross: amount, nation: 'england-ni', asAt: BUILD_DATE }, { withMarginal: false });
-		cards.push({
-			slug: `salary/${amount}`,
-			title: `${money(amount, 0)} after tax`,
-			tail: `a month in ${b.label}, England and Northern Ireland, standard tax code`,
-			figure: money(b.periods.monthly, 0),
-			ruler: { marks: b.thresholds.map((t) => t.value), you: amount, top: Math.max(150000, amount * 1.1) },
-		});
-	}
+	const figureCard = (slug: string, title: string, gross: number, nation: Nation, tail: string): Card => {
+		const b = takeHome({ gross, nation, asAt: BUILD_DATE }, { withMarginal: false });
+		return { slug, title, tail: `a month in ${b.label}, ${tail}`, figure: money(b.periods.monthly, 0), ruler: { marks: b.thresholds.map((t) => t.value), you: gross, top: Math.max(150000, gross * 1.1) } };
+	};
+	for (const amount of pagesPassingGuard(liveAmounts('salary'), BUILD_DATE)) cards.push(figureCard(`salary/${amount}`, `${money(amount, 0)} after tax`, amount, 'england-ni', 'England, Wales and Northern Ireland'));
+	for (const amount of pagesPassingGuard(liveAmounts('salary'), BUILD_DATE, 'scotland')) cards.push(figureCard(`salary/${amount}/scotland`, `${money(amount, 0)} after tax in Scotland`, amount, 'scotland', 'Scottish income tax bands'));
+	for (const rate of liveAmounts('hourly')) cards.push(figureCard(`hourly/${rate}`, `${money(rate, 0)} an hour after tax`, salaryForHourly(rate), 'england-ni', `on a ${HOURS_PER_WEEK}-hour week`));
+	for (const monthly of liveAmounts('monthly')) cards.push(figureCard(`monthly/${monthly}`, `${money(monthly, 0)} a month after tax`, salaryForMonthlyPay(monthly), 'england-ni', 'from that pay before tax'));
 	return cards.map((c) => ({ params: { slug: c.slug }, props: c }));
 }
 

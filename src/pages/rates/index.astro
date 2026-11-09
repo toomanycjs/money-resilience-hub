@@ -7,7 +7,7 @@ import Base from '../../layouts/Base.astro';
 const years = listYears();
 ---
 
-<Base title="UK tax rates and allowances by year, with sources" description="Income tax, National Insurance, student loan, child benefit and statutory pay figures for each tax year, each with its gov.uk source, the date it was checked and its status." breadcrumb="Rates">
+<Base title="UK tax rates and allowances by year, with sources" description="Income tax, National Insurance, student loan, child benefit and statutory pay figures for each tax year, each with its gov.uk source and check date." breadcrumb="Rates">
 	<div class="page-head">
 		<h1>Rates and allowances</h1>
 		<p class="subtitle">One page per tax year, rendered from the same rules file the calculators use. Every row shows its source, the date it was checked and whether it is in force, legislated or only announced.</p>
@@ -20,5 +20,6 @@ const years = listYears();
 			</li>
 		))}
 	</ul>
+	<p><a href="/rates/scotland-2027-28/">Scottish income tax for 2027/28</a> has its own page, which shows the bands as soon as the Scottish Budget sets them.</p>
 	<p>The rules files are open data under CC BY 4.0: <a href="/rules/2026-27.json">2026/27 as JSON</a>, with the other years alongside it. The <a href="/methodology/">methodology</a> explains how each value is verified and what the status words mean.</p>
 </Base>

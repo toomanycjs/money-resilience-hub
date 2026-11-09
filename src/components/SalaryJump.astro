@@ -1,0 +1,38 @@
+---
+// "Jump to a salary": a box that opens the page for a salary. A round
+// thousand in range has its own page; anything else opens the calculator
+// with the amount filled in, carried in the part of the address after the #,
+// which stays in the browser.
+import { money } from '@money-resilience-hub/calculators';
+
+interface Props {
+	/** Amounts with a page. */
+	live: number[];
+	/** Open the Scottish version of each page. */
+	scottish?: boolean;
+	heading?: 'h2' | 'h3';
+}
+
+const { live, scottish = false, heading: Heading = 'h2' } = Astro.props;
+const min = live[0];
+const max = live.at(-1) as number;
+---
+
+<section class="calc-section jump" aria-labelledby="jump-heading">
+	<Heading id="jump-heading">Jump to a salary</Heading>
+	<form data-salary-jump data-live={live.join(',')} data-suffix={scottish ? 'scotland/' : ''} action="/calculators/take-home-pay/">
+		<label for="jump-salary">Salary a year</label>
+		<div class="jump-row">
+			<div class="money-input">
+				<span class="prefix" aria-hidden="true">£</span>
+				<input type="text" inputmode="numeric" id="jump-salary" autocomplete="off" />
+			</div>
+			<button type="submit">Show take-home</button>
+		</div>
+		<p class="help">Every {money(1000, 0)} from {money(min, 0)} to {money(max, 0)} has its own page{scottish ? ' under the Scottish rates' : ''}. Any other amount opens the calculator with it filled in.</p>
+	</form>
+</section>
+
+<script>
+	import '../scripts/jump';
+</script>

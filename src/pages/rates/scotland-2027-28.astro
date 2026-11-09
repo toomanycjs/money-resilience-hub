@@ -1,0 +1,123 @@
+---
+// Scottish income tax for 2027/28. The bands are set by the Scottish Budget,
+// after the UK one. Until they are entered in the rules file this page says
+// so and shows what is already fixed; once they are entered, the same page
+// shows the bands, their sources and take-home next to 2026/27, with no
+// change to this file.
+import { RulesUnavailableError, STATUS_LABEL, getYear, resolve, takeHome } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import Base from '../../layouts/Base.astro';
+import { liveAmounts } from '../../lib/pages';
+import { bandTables } from '../../lib/rates';
+
+const now = getYear('2026-27');
+const next = getYear('2027-28');
+const bandsOf = (year: typeof now) => bandTables(year).find((n) => n.nation === 'scotland')!.bands;
+const nowBands = bandsOf(now);
+const nextBands = bandsOf(next);
+const isSet = nextBands.length > 0 && nextBands.every((b) => b.rate !== null);
+const pending = next.incomeTax.bands.scotland.find((b) => b.rate === null);
+const range = (b: (typeof nowBands)[number]) => (b.upTo === null ? `Over ${money(b.from, 0)}` : `${money(b.from + (b.from ? 1 : 0), 0)} to ${money(b.upTo, 0)}`);
+
+// Band by band, matched by name so a band added or dropped shows as such.
+const names = [...new Set([...nowBands.map((b) => b.name), ...(isSet ? nextBands.map((b) => b.name) : [])])];
+const compare = names.map((name) => ({ name, was: nowBands.find((b) => b.name === name), is: isSet ? nextBands.find((b) => b.name === name) : undefined }));
+
+const fixed = [
+	['Personal allowance', next.incomeTax.personalAllowance, 'incomeTax.personalAllowance', (v: number) => money(v, 0)],
+	['Income limit for the personal allowance', next.incomeTax.taperStart, 'incomeTax.taperStart', (v: number) => money(v, 0)],
+	['National Insurance primary threshold', next.nationalInsurance.employee.primaryThreshold, 'nationalInsurance.employee.primaryThreshold', (v: number) => money(v, 0)],
+	['National Insurance upper earnings limit', next.nationalInsurance.employee.upperEarningsLimit, 'nationalInsurance.employee.upperEarningsLimit', (v: number) => money(v, 0)],
+	['National Insurance main rate', next.nationalInsurance.employee.mainRate, 'nationalInsurance.employee.mainRate', (v: number) => pct(v)],
+	['National Insurance rate above the upper earnings limit', next.nationalInsurance.employee.upperRate, 'nationalInsurance.employee.upperRate', (v: number) => pct(v)],
+].flatMap(([label, leaf, path, fmt]) => {
+	try {
+		const r = resolve(leaf as Parameters<typeof resolve>[0], path as string, next.starts);
+		return [{ label: label as string, value: (fmt as (v: number) => string)(r.value as number), source: r.provenance.source, verified: r.provenance.verified, status: r.provenance.status }];
+	} catch {
+		return [];
+	}
+});
+
+const live = liveAmounts('salary');
+const samples = [3, 5, 7.5, 10, 12.5].map((n) => n * 10000).map((gross) => {
+	const run = (nation: 'scotland' | 'england-ni', taxYear: string, asAt: string) => {
+		try {
+			return takeHome({ gross, nation, taxYear, asAt }, { withMarginal: false });
+		} catch (e) {
+			if (e instanceof RulesUnavailableError) return null;
+			throw e;
+		}
+	};
+	const a = run('scotland', now.taxYear, now.starts);
+	const b = run('scotland', next.taxYear, next.starts);
+	const uk = run('england-ni', next.taxYear, next.starts);
+	return { gross, now: a, next: b, restOfUk: uk };
+});
+const hasGuide = Object.keys(import.meta.glob('../guides/scottish-income-tax.astro')).length > 0;
+const checked = isSet ? nextBands.map((b) => b.verified).filter(Boolean).sort() : [];
+---
+
+<Base title={`Scottish income tax ${next.label}: bands and rates, with sources`} description={`Scottish income tax bands and rates for ${next.label} as they are set, each with its source and status, and take-home at sample salaries next to ${now.label}.`} breadcrumb={`Scottish income tax ${next.label}`} taxYears={[now.taxYear, next.taxYear]}>
+	<article class="prose">
+		<div class="page-head">
+			<p class="kicker"><a href="/rates/">Rates</a></p>
+			<h1>Scottish income tax {next.label}</h1>
+			<p class="subtitle">
+				{isSet
+					? `${nextBands.length} bands from ${longDate(next.starts)}, ${STATUS_LABEL[nextBands[0].status].toLowerCase()}, checked ${checked[0] === checked.at(-1) ? `on ${longDate(checked[0])}` : `between ${longDate(checked[0])} and ${longDate(checked.at(-1)!)}`}.`
+					: `Not yet set. ${pending?.note ?? ''} This page shows the bands and their sources once they are published.`}
+			</p>
+		</div>
+
+		<h2 id="bands">Bands and rates</h2>
+		<table class="rates-table">
+			<thead><tr><th scope="col">Band</th><th scope="col" class="num">Taxable income, {now.label}</th><th scope="col" class="num">Rate, {now.label}</th><th scope="col" class="num">Taxable income, {next.label}</th><th scope="col" class="num">Rate, {next.label}</th><th scope="col">Source</th><th scope="col">Status</th></tr></thead>
+			<tbody>
+				{compare.map((c) => (
+					<tr>
+						<th scope="row">{c.name}</th>
+						<td class="num">{c.was ? range(c.was) : 'No such band'}</td>
+						<td class="num">{c.was && c.was.rate !== null ? pct(c.was.rate) : ''}</td>
+						<td class="num">{c.is ? range(c.is) : isSet ? 'No such band' : 'Not yet set'}</td>
+						<td class="num">{c.is && c.is.rate !== null ? pct(c.is.rate) : ''}</td>
+						<td class="src">{(c.is ?? c.was)?.source ? <a href={(c.is ?? c.was)!.source} rel="noopener">gov.uk</a> : ''}{c.is?.verified ? `, checked ${longDate(c.is.verified)}` : ''}</td>
+						<td class={`status-${isSet ? c.is?.status ?? 'unset' : 'unset'}`}>{isSet && c.is ? STATUS_LABEL[c.is.status] : isSet ? '' : STATUS_LABEL.unset}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+		<p class="small quiet">Taxable income is pay above the personal allowance. {isSet ? '' : `The ${now.label} columns are the bands in force now; the source link in each row is the page they were checked against.`}</p>
+
+		<h2 id="fixed">What is already fixed for {next.label}</h2>
+		<p>The personal allowance and National Insurance are set for the whole UK, so these apply to Scottish taxpayers whatever the Scottish Budget decides.</p>
+		<table class="rates-table">
+			<thead><tr><th scope="col">Figure</th><th scope="col" class="num">{next.label}</th><th scope="col">Source</th><th scope="col">Checked</th><th scope="col">Status</th></tr></thead>
+			<tbody>
+				{fixed.map((f) => (
+					<tr><th scope="row">{f.label}</th><td class="num">{f.value}</td><td class="src"><a href={f.source} rel="noopener">gov.uk</a></td><td>{longDate(f.verified)}</td><td class={`status-${f.status}`}>{STATUS_LABEL[f.status]}</td></tr>
+				))}
+			</tbody>
+		</table>
+
+		<h2 id="take-home">Take-home in Scotland, {now.label} and {next.label}</h2>
+		<table>
+			<thead><tr><th scope="col">Salary</th><th scope="col" class="num">A month, {now.label}</th><th scope="col" class="num">A month, {next.label}</th><th scope="col" class="num">Change a year</th><th scope="col" class="num">Rest of the UK, {next.label}</th></tr></thead>
+			<tbody>
+				{samples.map((s) => (
+					<tr>
+						<th scope="row">{live.includes(s.gross) ? <a href={`/salary/${s.gross}/scotland/`}>{money(s.gross, 0)}</a> : money(s.gross, 0)}</th>
+						<td class="num">{s.now ? money(s.now.periods.monthly, 0) : 'Not set'}</td>
+						<td class="num">{s.next ? money(s.next.periods.monthly, 0) : 'Not yet set'}</td>
+						<td class="num">{s.now && s.next ? (Math.round(s.next.takeHome - s.now.takeHome) === 0 ? 'None' : `${money(Math.abs(s.next.takeHome - s.now.takeHome), 0)} ${s.next.takeHome > s.now.takeHome ? 'more' : 'less'}`) : ''}</td>
+						<td class="num">{s.restOfUk ? money(s.restOfUk.periods.monthly, 0) : 'Not yet set'}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+		<p class="small quiet">Standard tax code, no pension or student loan. The last column is the same salary in England, Wales and Northern Ireland under {next.label} as announced so far.</p>
+
+		<h2 id="more">More on Scottish income tax</h2>
+		<p>Every salary page has a version under the Scottish bands, listed on the <a href="/salary/">salary pages</a> index, and the <a href="/calculators/take-home-pay/">take-home pay calculator</a> works for Scotland in each tax year that is set.{hasGuide && <> The <a href="/guides/scottish-income-tax/">guide to Scottish income tax</a> explains who pays it and how the bands differ.</>} Full tables: <a href={`/rates/${now.taxYear}/`}>rates {now.label}</a> and <a href={`/rates/${next.taxYear}/`}>rates {next.label}</a>.</p>
+	</article>
+</Base>

@@ -81,7 +81,8 @@ export function thresholdsFor(year: YearConfig, nation: Nation, plans: Plan[], a
 	for (const t of out.sort((a, b) => a.value - b.value)) {
 		const existing = merged.get(t.value);
 		if (existing) {
-			existing.label = `${existing.label} and ${t.label}`;
+			// "Additional rate and allowance gone", but "... and NI upper earnings limit".
+			existing.label = `${existing.label} and ${/^[A-Z][a-z]/.test(t.label) ? t.label[0].toLowerCase() + t.label.slice(1) : t.label}`;
 			existing.phrase = `${existing.phrase} and ${t.phrase}`;
 		} else merged.set(t.value, { ...t });
 	}

@@ -1,0 +1,41 @@
+---
+import { takeHome } from '@money-resilience-hub/rules';
+import { money } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Base from '../../layouts/Base.astro';
+import { liveAmounts, salaryForMonthlyPay } from '../../lib/pages';
+import { salaryForMonthly } from '../../lib/salaryPage';
+
+const rows = liveAmounts('monthly').map((monthly) => {
+	const gross = salaryForMonthlyPay(monthly);
+	const b = takeHome({ gross, nation: 'england-ni', asAt: BUILD_DATE }, { withMarginal: false });
+	return { monthly, gross, takeHome: b.periods.monthly, needed: salaryForMonthly(monthly, BUILD_DATE) };
+});
+---
+
+<Base title={`Monthly pay after tax ${CURRENT_YEAR.label}: take-home by month`} description={`Take-home pay for monthly pay from ${money(rows[0].monthly, 0)} to ${money(rows.at(-1)!.monthly, 0)} before tax in ${CURRENT_YEAR.label}, and the salary each take-home needs. Every deduction is sourced to gov.uk.`} breadcrumb="Monthly pages" taxYears={[CURRENT_YEAR.taxYear]}>
+	<div class="page-head">
+		<p class="kicker"><a href="/salary/">Salary pages</a></p>
+		<h1>Monthly pay after tax</h1>
+		<p class="subtitle">One page per monthly amount, computed from the {CURRENT_YEAR.label} rules. Each answers two questions: what that pay before tax leaves, and what salary leaves that amount as take-home.</p>
+	</div>
+
+	<h2 id="amounts">Take-home by monthly pay</h2>
+	<table>
+		<thead><tr><th scope="col">Pay a month before tax</th><th scope="col" class="num">Salary a year</th><th scope="col" class="num">Take-home a month</th><th scope="col" class="num">Salary needed to take it home</th></tr></thead>
+		<tbody>
+			{rows.map((r) => (
+				<tr>
+					<th scope="row"><a href={`/monthly/${r.monthly}/`}>{money(r.monthly, 0)} a month after tax</a></th>
+					<td class="num">{money(r.gross, 0)}</td>
+					<td class="num">{money(r.takeHome, 0)}</td>
+					<td class="num">{money(r.needed, 0)}</td>
+				</tr>
+			))}
+		</tbody>
+	</table>
+	<p class="small quiet">England, Wales and Northern Ireland, standard tax code, no student loan, no pension. The last column is the salary a year whose take-home is the amount in the first column.</p>
+
+	<h2 id="other">Pay by the year or by the hour</h2>
+	<p>The <a href="/salary/">salary pages</a> start from pay a year and the <a href="/hourly/">hourly pages</a> from an hourly rate. For any other amount, or to add a pension, a tax code or a student loan, use the <a href="/calculators/take-home-pay/">take-home pay calculator</a>.</p>
+</Base>

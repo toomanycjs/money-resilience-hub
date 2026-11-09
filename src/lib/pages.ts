@@ -32,6 +32,25 @@ export function neighbours(family: 'salary' | 'hourly' | 'monthly', amount: numb
 	return { below, above };
 }
 
+/** The working week the hourly pages assume, and the weeks in a year. */
+export const HOURS_PER_WEEK = 37.5;
+export const WEEKS_PER_YEAR = 52;
+
+/** The annual salary an hourly rate gives on the standard week. */
+export function salaryForHourly(rate: number, hours = HOURS_PER_WEEK): number {
+	return Math.round(rate * hours * WEEKS_PER_YEAR);
+}
+
+/** The annual salary a monthly pay before tax gives. */
+export function salaryForMonthlyPay(monthly: number): number {
+	return monthly * 12;
+}
+
+/** The salaries that sit on a threshold of the tax system rather than a round thousand. */
+export function thresholdAmounts(): number[] {
+	return liveAmounts('salary').filter((a) => a % 1000 !== 0);
+}
+
 export function familyOf(pathname: string): Family {
 	const first = pathname.split('/').filter(Boolean)[0];
 	if (first === 'calculators') return 'calculators';

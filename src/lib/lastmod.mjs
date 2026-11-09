@@ -4,6 +4,8 @@
 // `pnpm lastmod` writes from git (Vercel clones a shallow history).
 //
 //   pages:  the last commit that touched the page's source file
+//   templates: for generated pages (a salary, an hourly rate), the last
+//           commit that touched the template or the files it is built from
 //   rules:  per tax year, the last commit that changed a config VALUE
 //           (verified, archived and note fields are ignored)
 // A page that renders from a tax year takes the later of the two.
@@ -14,16 +16,26 @@ const JSON_FILE = 'src/data/lastmod.json';
 
 let cache;
 function data() {
-	if (!cache) cache = existsSync(JSON_FILE) ? JSON.parse(readFileSync(JSON_FILE, 'utf8')) : { pages: {}, rules: {}, generated: '' };
+	if (!cache) cache = existsSync(JSON_FILE) ? JSON.parse(readFileSync(JSON_FILE, 'utf8')) : { pages: {}, templates: {}, rules: {}, generated: '' };
 	return cache;
 }
 
 /** Date for a page path, allowing for the tax years it renders from. */
 export function lastmodFor(pathname, taxYears = []) {
 	const d = data();
-	const dates = [d.pages[pathname], ...taxYears.map((y) => d.rules[y])].filter(Boolean);
+	const dates = [d.pages[pathname] ?? templateDate(d, pathname), ...taxYears.map((y) => d.rules[y])].filter(Boolean);
 	if (!dates.length) return d.generated || undefined;
 	return dates.sort().at(-1);
+}
+
+// The date of the template a generated page is built from: a star in the
+// pattern stands for one path segment, so the salary pattern matches /salary/30000/.
+function templateDate(d, pathname) {
+	for (const [pattern, date] of Object.entries(d.templates ?? {})) {
+		const re = new RegExp('^' + pattern.split('*').join('[^/]+') + '$');
+		if (re.test(pathname)) return date;
+	}
+	return undefined;
 }
 
 export function rulesChangedOn(taxYear) {

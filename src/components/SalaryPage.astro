@@ -1,0 +1,70 @@
+---
+// One salary page: the calculator locked to the salary and the nation, then
+// the detail that is particular to that salary. Used by /salary/30000/ and
+// by /salary/30000/scotland/.
+import { NATION_LABEL, type Nation } from '@money-resilience-hub/rules';
+import { money } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../config/site';
+import Calculator from '../layouts/Calculator.astro';
+import { liveAmounts, thresholdAmounts } from '../lib/pages';
+import { pagesPassingGuard, salaryPage } from '../lib/salaryPage';
+import SalaryDetail from './SalaryDetail.astro';
+import SalaryJump from './SalaryJump.astro';
+
+interface Props {
+	amount: number;
+	nation: Nation;
+}
+
+const { amount, nation } = Astro.props;
+const scottish = nation === 'scotland';
+const live = pagesPassingGuard(liveAmounts('salary'), BUILD_DATE);
+const scottishLive = pagesPassingGuard(liveAmounts('salary'), BUILD_DATE, 'scotland');
+const mine = scottish ? scottishLive : live;
+const page = salaryPage(amount, BUILD_DATE, nation);
+const b = page.breakdown;
+const below = [...mine].reverse().find((a) => a < amount) ?? null;
+const above = mine.find((a) => a > amount) ?? null;
+const label = money(amount, 0);
+const year = CURRENT_YEAR;
+const href = (a: number) => (scottish ? `/salary/${a}/scotland/` : `/salary/${a}/`);
+const where = scottish ? ' in Scotland' : '';
+const thresholds = thresholdAmounts().filter((a) => a !== amount && mine.includes(a));
+
+const related = [
+	...(below ? [{ title: `${money(below, 0)} after tax${where}`, href: href(below) }] : []),
+	...(above ? [{ title: `${money(above, 0)} after tax${where}`, href: href(above) }] : []),
+	...(scottish
+		? live.includes(amount)
+			? [{ title: `${label} after tax in England, Wales and Northern Ireland`, href: `/salary/${amount}/`, desc: 'The same salary under the rates for the rest of the UK.' }]
+			: []
+		: scottishLive.includes(amount)
+			? [{ title: `${label} after tax in Scotland`, href: `/salary/${amount}/scotland/`, desc: 'The same salary under the Scottish income tax bands.' }]
+			: []),
+	...thresholds.map((a) => ({ title: `${money(a, 0)} after tax${where}`, href: href(a), desc: 'A salary that sits on a threshold.' })),
+	{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'Change the salary, add a pension or a tax code.' },
+	{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'Every figure on this page, with its source and the date it was checked.' },
+];
+---
+
+<Calculator
+	title={scottish ? `${label} after tax in Scotland ${year.label}: take-home pay` : `${label} after tax ${year.label}: take-home, sourced to gov.uk`}
+	description={`${label} a year${where} is ${money(b.periods.monthly, 0)} a month after tax and National Insurance in ${year.label}. Every deduction is shown with its rate and gov.uk source.`}
+	h1={`${label} after tax${where}`}
+	subtitle={`${money(b.periods.monthly, 0)} a month in ${year.label} ${scottish ? 'under the Scottish income tax bands' : `for ${NATION_LABEL['england-ni']} and Wales`}, before any pension or student loan. Change the tax code, pension or loan plan and the page updates.`}
+	breadcrumb={`${label} after tax${where}`}
+	form={{ nation }}
+	lockedGross={amount}
+	lockedNation={scottish ? nation : undefined}
+	expanded
+	faqs={page.faqs}
+	limits="It assumes a steady salary over a full tax year with no benefits in kind, one job and National Insurance category A. The student loan rows show what someone on each plan would repay at this salary; your own plan is on your Student Loans Company statement."
+	related={related}
+>
+	<Fragment slot="how">
+		<SalaryDetail page={page} live={live} scottishLive={scottishLive} />
+	</Fragment>
+	<Fragment slot="before-related">
+		<SalaryJump live={mine} scottish={scottish} />
+	</Fragment>
+</Calculator>

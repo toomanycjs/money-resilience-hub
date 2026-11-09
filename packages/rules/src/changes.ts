@@ -12,9 +12,11 @@ export interface ValueChange {
 	to: number | string | null;
 	source: string;
 	status: string;
+	/** The date the later year's value was checked. */
+	verified: string;
 }
 
-function isLeaf(x: unknown): x is { value: unknown; source: string; status: string } {
+function isLeaf(x: unknown): x is { value: unknown; source: string; status: string; verified?: string } {
 	return !!x && typeof x === 'object' && 'value' in (x as object) && 'source' in (x as object);
 }
 
@@ -22,7 +24,7 @@ function walk(a: unknown, b: unknown, path: string, out: ValueChange[]) {
 	if (isLeaf(a) || isLeaf(b)) {
 		const av = isLeaf(a) ? a.value : null;
 		const bv = isLeaf(b) ? b.value : null;
-		if (av !== bv) out.push({ path, from: av as number | string | null, to: bv as number | string | null, source: isLeaf(b) ? b.source : '', status: isLeaf(b) ? b.status : 'unset' });
+		if (av !== bv) out.push({ path, from: av as number | string | null, to: bv as number | string | null, source: isLeaf(b) ? b.source : '', status: isLeaf(b) ? b.status : 'unset', verified: isLeaf(b) ? (b.verified ?? '') : '' });
 		return;
 	}
 	if (Array.isArray(a) || Array.isArray(b)) {
@@ -35,22 +37,28 @@ function walk(a: unknown, b: unknown, path: string, out: ValueChange[]) {
 			// Bands: compare upTo and rate.
 			if ((x && 'rate' in x) || (y && 'rate' in y)) {
 				for (const k of ['upTo', 'rate'] as const) {
-					if ((x?.[k] ?? null) !== (y?.[k] ?? null)) out.push({ path: `${path}[${i}].${k}`, from: (x?.[k] as number) ?? null, to: (y?.[k] as number) ?? null, source: (y?.source as string) ?? '', status: (y?.status as string) ?? 'unset' });
+					if ((x?.[k] ?? null) !== (y?.[k] ?? null)) out.push({ path: `${path}[${i}].${k}`, from: (x?.[k] as number) ?? null, to: (y?.[k] as number) ?? null, source: (y?.source as string) ?? '', status: (y?.status as string) ?? 'unset', verified: (y?.verified as string) ?? '' });
 				}
 			} else walk(x, y, `${path}[${i}]`, out);
 		}
 		return;
 	}
-	if (a && typeof a === 'object' && b && typeof b === 'object') {
-		const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+	// A section recorded for only one of the two years is walked leaf by leaf
+	// against nothing, so each value is reported on its own.
+	const isObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
+	if (isObj(a) || isObj(b)) {
+		const ao = isObj(a) ? a : {};
+		const bo = isObj(b) ? b : {};
+		const keys = new Set([...Object.keys(ao), ...Object.keys(bo)]);
 		for (const k of keys) {
-			if (['taxYear', 'label', 'starts', 'ends', 'nextScheduledChange', 'effectiveFrom'].includes(k) && path === '') continue;
-			walk((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k], path ? `${path}.${k}` : k, out);
+			if (['taxYear', 'label', 'starts', 'ends', 'nextScheduledChange'].includes(k) && path === '') continue;
+			if (k === 'effectiveFrom') continue;
+			walk(ao[k], bo[k], path ? `${path}.${k}` : k, out);
 		}
 		return;
 	}
 	if (a !== b && (a === null || b === null || typeof a !== 'object')) {
-		if (path && !path.endsWith('effectiveFrom')) out.push({ path, from: (a as number | string | null) ?? null, to: (b as number | string | null) ?? null, source: '', status: 'unset' });
+		if (path && !path.endsWith('effectiveFrom')) out.push({ path, from: (a as number | string | null) ?? null, to: (b as number | string | null) ?? null, source: '', status: 'unset', verified: '' });
 	}
 }
 

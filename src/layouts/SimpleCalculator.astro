@@ -5,11 +5,12 @@
 // The ruler and the pound bar are not shown: these tools have one
 // figure and a short ledger. Ad slots sit after the "how" section and
 // between the FAQ and the related links, never inside the result.
-import { compareYears, getYear, listYears, nextYear, pathLabel, RulesUnavailableError } from '@money-resilience-hub/rules';
+import { getYear, listYears, nextYear, RulesUnavailableError } from '@money-resilience-hub/rules';
 import { TOOLS, defaultForm, longDate, money, pct, renderLedger, renderRulesUsed, renderSimpleFigure, type SimpleForm } from '@money-resilience-hub/calculators';
 import AdSlot from '../components/AdSlot.astro';
 import Faq from '../components/Faq.astro';
 import Related from '../components/Related.astro';
+import WhatChanges from '../components/WhatChanges.astro';
 import { BUILD_DATE, CURRENT_YEAR, SITE_URL } from '../config/site';
 import type { FaqPair } from '../lib/schema';
 import Base from './Base.astro';
@@ -50,8 +51,6 @@ const year = getYear(result?.taxYear ?? values.taxYear ?? CURRENT_YEAR.taxYear);
 const following = nextYear(year.taxYear);
 const ratesPath = `/rates/${year.taxYear}/`;
 const years = listYears();
-const touching = following ? compareYears(year, following).filter((c) => tool.touches.test(c.path) && c.to !== null) : [];
-const fmt = (v: number | string | null) => (typeof v === 'number' ? (v < 1 ? pct(v) : money(v, 0)) : String(v ?? 'not set'));
 const fieldId = (id: string) => `f-${id}`;
 const visible = (f: (typeof tool.fields)[number]) => !f.showWhen || f.showWhen.values.includes(values[f.showWhen.field]);
 ---
@@ -125,21 +124,10 @@ const visible = (f: (typeof tool.fields)[number]) => !f.showWhen || f.showWhen.v
 
 	<section class="rules-used" data-rules-used aria-labelledby="rules-heading">
 		<h2 id="rules-heading">Rules used</h2>
-		<div set:html={result ? renderRulesUsed(result, { ratesPath }) : `<p>Tax year ${year.label}. Next scheduled change ${longDate(year.nextScheduledChange.date)}: ${year.nextScheduledChange.summary} Checked on ${longDate(year.nextScheduledChange.verified)}.</p>`} />
+		<div set:html={result ? renderRulesUsed(result, { ratesPath }) : `<p>Tax year ${year.label}. Next scheduled change ${longDate(year.nextScheduledChange.date)}. Checked on ${longDate(year.nextScheduledChange.verified)}.</p>`} />
 	</section>
 
-	<section class="calc-section" aria-labelledby="next-heading">
-		<h2 id="next-heading">What changes on {longDate(year.nextScheduledChange.date)}</h2>
-		<p>{year.nextScheduledChange.summary}</p>
-		{touching.length > 0 ? (
-			<ul>
-				{touching.map((c) => <li>{pathLabel(c.path).replace(/^(.)/, (m) => m.toUpperCase())}: {fmt(c.from)} to {fmt(c.to)} ({c.status})</li>)}
-			</ul>
-		) : (
-			<p>None of the figures this tool uses is set to change on that date{following ? `, as far as ${following.label} has been announced` : ''}.</p>
-		)}
-		{following && tool.hasTaxYear && <p>You can switch the tax year above to see the result under {following.label} as announced so far.</p>}
-	</section>
+	<WhatChanges year={year} following={following} touches={tool.touches} scope="" canSwitchYear={!!tool.hasTaxYear} />
 
 	<p class="status-note"><strong>What this does not do.</strong> {limits}</p>
 

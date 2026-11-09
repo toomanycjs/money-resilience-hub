@@ -1,7 +1,7 @@
 {
 	"generated": "2026-11-09",
 	"pages": {
-		"/about/": "2026-11-08",
+		"/about/": "2026-11-09",
 		"/budget/2026-autumn/": "2026-11-09",
 		"/calculators/": "2026-11-09",
 		"/calculators/landlord-tax/": "2026-11-09",
@@ -11,12 +11,22 @@
 		"/calculators/state-pension-tax/": "2026-11-09",
 		"/calculators/take-home-pay/": "2026-11-08",
 		"/corrections/": "2026-11-08",
-		"/editorial-policy/": "2026-11-08",
-		"/": "2026-11-08",
+		"/editorial-policy/": "2026-11-09",
+		"/hourly/": "2026-11-09",
+		"/": "2026-11-09",
 		"/methodology/": "2026-11-08",
-		"/privacy/": "2026-11-08",
+		"/monthly/": "2026-11-09",
+		"/privacy/": "2026-11-09",
 		"/rates/": "2026-11-08",
+		"/rates/scotland-2027-28/": "2026-11-09",
 		"/salary/": "2026-11-08"
+	},
+	"templates": {
+		"/hourly/*/": "2026-11-08",
+		"/monthly/*/": "2026-11-08",
+		"/rates/*/": "2026-11-08",
+		"/salary/*/scotland/": "2026-11-08",
+		"/salary/*/": "2026-11-08"
 	},
 	"rules": {
 		"2025-26": "2026-11-09",

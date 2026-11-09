@@ -48,7 +48,7 @@ const faqs = [
 <SimpleCalculator
 	tool="savings-tax"
 	title={`Savings tax calculator ${year.label}: tax on interest`}
-	description={`Work out the tax on savings interest for ${year.label} and under the ${next ? next.label : 'next'} rates announced at Budget 2026, with the personal savings allowance, the starting rate for savings and each rate shown with its gov.uk source.`}
+	description={`Tax on savings interest for ${year.label} and at the ${next ? next.label : 'next'} rates from Budget 2026, with the allowances and every rate sourced to gov.uk.`}
 	h1="Savings interest tax calculator"
 	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. Shows how much of your interest is tax free and what the rest costs, this year and from ${next ? longDate(next.starts) : 'the next tax year'}.`}
 	breadcrumb="Savings tax calculator"

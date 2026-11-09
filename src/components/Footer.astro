@@ -1,6 +1,6 @@
 ---
 import { GA_MEASUREMENT_ID } from '../config/analytics';
-import { SITE_NAME } from '../config/site';
+import { CONTACT_EMAIL, SITE_NAME } from '../config/site';
 
 const year = new Date().getFullYear();
 const LINKS = [
@@ -23,6 +23,7 @@ const LINKS = [
 		</nav>
 		<p>{SITE_NAME} gives information, not advice. A result tells you what the rules do to a number; it never tells you what to do with your money.</p>
 		<p>Every figure comes from a gov.uk page with the date it was checked. Your inputs stay in your browser.</p>
+		<p>Contact: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></p>
 		<p>&copy; {year} {SITE_NAME}</p>
 	</div>
 </footer>

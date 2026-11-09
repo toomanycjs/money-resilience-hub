@@ -3,18 +3,20 @@
 // build time with the default inputs, then re-rendered in the browser as the
 // inputs change. The markup comes from packages/calculators so both match.
 import { listYears, takeHome, yearOnYear } from '@money-resilience-hub/rules';
-import { DEFAULT_FORM, TAKE_HOME_FIELDS, parseForm, renderBar, renderFigure, renderLedger, renderRuler, type TakeHomeForm } from '@money-resilience-hub/calculators';
+import { DEFAULT_FORM, TAKE_HOME_FIELDS, ledgerHeading, money, parseForm, renderBar, renderFigure, renderLedger, renderRuler, type TakeHomeForm } from '@money-resilience-hub/calculators';
 import { BUILD_DATE, CURRENT_YEAR, SITE_URL } from '../config/site';
 
 interface Props {
 	form?: Partial<TakeHomeForm>;
 	/** Salary pages lock the salary into the heading. */
 	lockedGross?: number;
+	/** A page about one nation opens on it, whatever this browser saved. */
+	lockedNation?: string;
 	/** Open every arithmetic row by default. */
 	expanded?: boolean;
 }
 
-const { form = {}, lockedGross, expanded = false } = Astro.props;
+const { form = {}, lockedGross, lockedNation, expanded = false } = Astro.props;
 const values: TakeHomeForm = { ...DEFAULT_FORM, ...form, taxYear: form.taxYear ?? CURRENT_YEAR.taxYear };
 if (lockedGross != null) values.gross = String(lockedGross);
 const input = parseForm(values, BUILD_DATE);
@@ -25,7 +27,7 @@ const years = listYears();
 const fieldId = (id: string) => `f-${id}`;
 ---
 
-<div class="calc" data-calculator data-as-at={BUILD_DATE} data-locked-gross={lockedGross} data-expanded={String(expanded)} data-site-url={SITE_URL} data-tax-year={breakdown.taxYear}>
+<div class="calc" data-calculator data-as-at={BUILD_DATE} data-locked-gross={lockedGross} data-locked-nation={lockedNation} data-expanded={String(expanded)} data-site-url={SITE_URL} data-tax-year={breakdown.taxYear}>
 	<div class="calc-inputs">
 		<form novalidate aria-label="Your pay">
 			{TAKE_HOME_FIELDS.map((f) => (
@@ -88,7 +90,7 @@ const fieldId = (id: string) => `f-${id}`;
 		<p class="small quiet">Results update as you type. Your inputs are kept in this browser so other pages can pre-fill them, and are never sent anywhere.</p>
 	</div>
 
-	<div class="calc-result" data-calculator-core>
+	<div class="calc-result" id="result" data-calculator-core>
 		<div class="figure-block" data-figure aria-live="polite" set:html={renderFigure(breakdown)} />
 		<p class="what-changed" data-what-changed hidden={!yoy}>{yoy?.sentence}</p>
 		<div class="unavailable" data-unavailable hidden></div>
@@ -99,7 +101,7 @@ const fieldId = (id: string) => `f-${id}`;
 		</section>
 
 		<section class="ledger-wrap" aria-labelledby="ledger-heading">
-			<h2 id="ledger-heading">The breakdown</h2>
+			<h2 id="ledger-heading" data-ledger-heading>{ledgerHeading(breakdown)}</h2>
 			<div data-ledger set:html={renderLedger(breakdown, { ratesPath, expanded })} />
 		</section>
 
@@ -108,6 +110,7 @@ const fieldId = (id: string) => `f-${id}`;
 			<div data-bar set:html={renderBar(breakdown)} />
 		</section>
 	</div>
+	<p class="sticky-figure" data-sticky-figure hidden><a href="#result">Take-home <strong data-sticky-amount>{money(breakdown.periods.monthly, 0)}</strong> a month</a></p>
 </div>
 
 <style>

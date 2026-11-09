@@ -13,6 +13,8 @@ export default defineConfig({
 	build: { inlineStylesheets: 'auto' },
 	integrations: [mdx(), sitemaps(), linkCheck(), indexNow({ key: 'a7c3f0e1b94d4e2f8c6a5b1d3e7f9a0c' })],
 	vite: {
+		// Every script is a file of its own: the Content-Security-Policy in vercel.json allows no inline script.
+		build: { assetsInlineLimit: 0 },
 		ssr: { noExternal: ['@money-resilience-hub/rules', '@money-resilience-hub/calculators'] },
 	},
 });

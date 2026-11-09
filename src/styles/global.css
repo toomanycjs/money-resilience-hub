@@ -423,3 +423,19 @@ button.link {
 	.figure-block { position: static; }
 	main.frame { padding: 0; }
 }
+
+/* The take-home figure, kept in sight on a phone while the form is on screen. */
+.sticky-figure { display: none; }
+@media (max-width: 899px) {
+	.sticky-figure:not([hidden]) { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; margin: 0; padding: 0.6rem 1rem calc(0.6rem + env(safe-area-inset-bottom)); background: var(--ink); color: var(--page); text-align: center; font-size: 0.95rem; }
+	.sticky-figure a { color: inherit; text-decoration: none; display: block; }
+	.sticky-figure strong { font-family: var(--font-display); font-size: 1.2rem; }
+}
+@media print { .sticky-figure { display: none !important; } }
+
+/* Jump to a salary. */
+.jump form { max-width: 26rem; }
+.jump label { font-weight: 600; display: block; margin-bottom: 0.25rem; }
+.jump-row { display: flex; gap: 0.5rem; align-items: stretch; flex-wrap: wrap; }
+.jump-row .money-input { flex: 1 1 10rem; }
+.jump-row button { font: inherit; font-weight: 600; color: var(--page); background: var(--ink); border: 1px solid var(--ink); border-radius: 2px; padding: 0.5rem 0.9rem; cursor: pointer; }

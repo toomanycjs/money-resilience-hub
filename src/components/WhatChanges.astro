@@ -1,0 +1,57 @@
+---
+// "What changes on 6 April": only the figures this page's result is computed
+// from, in the rates tables' own labels and units. A figure not yet set for
+// the following year is named rather than shown as a change.
+import { STATUS_LABEL, type YearConfig } from '@money-resilience-hub/rules';
+import { longDate } from '@money-resilience-hub/calculators';
+import { changeList } from '../lib/changeList';
+
+interface Props {
+	year: YearConfig;
+	following: YearConfig | null | undefined;
+	/** Config paths the result reads. */
+	touches: RegExp;
+	/** Words for the kind of figure, e.g. "income tax, National Insurance or student loan". */
+	scope: string;
+	canSwitchYear?: boolean;
+}
+
+const { year, following, touches, scope, canSwitchYear = false } = Astro.props;
+const list = following ? changeList(year, following) : null;
+const rows = list ? list.changed.filter((c) => touches.test(c.path)) : [];
+const unset = list ? list.notYetSet.filter((c) => touches.test(c.path)) : [];
+// The Scottish bands are set together, by the Scottish Budget, so they are named once.
+const scottish = unset.filter((u) => /^incomeTax\.bands\.scotland/.test(u.path));
+const notYet = [...(scottish.length ? ['Scottish income tax bands and rates'] : []), ...unset.filter((u) => !/^incomeTax\.bands\.scotland/.test(u.path)).map((u) => u.label)];
+const NOTES: Record<string, string> = {
+	'nationalInsurance.employee.lowerEarningsLimit': 'It sets the pay at which National Insurance credits begin, not the amount deducted.',
+};
+const figures = scope ? `${scope} figures` : 'figures';
+---
+
+<section class="calc-section" id="next" aria-labelledby="next-heading">
+	<h2 id="next-heading">What changes on {longDate(year.nextScheduledChange.date)}</h2>
+	{rows.length > 0 ? (
+		<>
+			<p>Of the {figures} this result uses, {rows.length === 1 ? 'one changes' : `${rows.length} change`}{following ? ` in ${following.label}` : ''}.</p>
+			<table class="rates-table">
+				<thead><tr><th scope="col">Figure</th><th scope="col" class="num">{year.label}</th><th scope="col" class="num">{following!.label}</th><th scope="col">Source</th><th scope="col">Status</th></tr></thead>
+				<tbody>
+					{rows.map((c) => (
+						<tr>
+							<th scope="row">{c.label}{NOTES[c.path] ? <span class="small quiet"> {NOTES[c.path]}</span> : ''}</th>
+							<td class="num">{c.from}</td>
+							<td class="num">{c.to}</td>
+							<td class="src">{c.source ? <a href={c.source} rel="noopener">gov.uk</a> : ''}</td>
+							<td class={`status-${c.status}`}>{STATUS_LABEL[c.status]}</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+		</>
+	) : (
+		<p>None of the {figures} this result uses changes on that date{following ? `, as far as ${following.label} has been announced` : ''}.</p>
+	)}
+	{notYet.length > 0 && <p>Not yet set for {following!.label}: {notYet.join('; ')}.</p>}
+	{following && canSwitchYear && <p>Switch the tax year in the form to see the result under {following.label} as announced so far. The <a href="/budget/2026-autumn/">Budget 2026 page</a> lists every measure, including those that do not touch this result.</p>}
+</section>

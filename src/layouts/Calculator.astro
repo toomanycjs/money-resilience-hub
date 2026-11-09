@@ -3,12 +3,13 @@
 // 1 heading, 2 inputs, 3 result, 4 ruler, 5 ledger, 6 bar, 7 how it is
 // calculated, 8 rules used, 9 what changes next, 10 FAQ, 11 related,
 // 12 actions. Ad slots sit after 7 and between 10 and 11, never in 1 to 6.
-import { compareYears, getYear, nextYear, takeHome } from '@money-resilience-hub/rules';
-import { longDate, parseForm, renderRulesUsed, DEFAULT_FORM, type TakeHomeForm } from '@money-resilience-hub/calculators';
+import { getYear, nextYear, takeHome } from '@money-resilience-hub/rules';
+import { parseForm, renderRulesUsed, DEFAULT_FORM, type TakeHomeForm } from '@money-resilience-hub/calculators';
 import AdSlot from '../components/AdSlot.astro';
 import Faq from '../components/Faq.astro';
 import Related from '../components/Related.astro';
 import TakeHomeCalculator from '../components/TakeHomeCalculator.astro';
+import WhatChanges from '../components/WhatChanges.astro';
 import { BUILD_DATE, CURRENT_YEAR } from '../config/site';
 import type { FaqPair } from '../lib/schema';
 import Base from './Base.astro';
@@ -21,6 +22,8 @@ interface Props {
 	breadcrumb?: string;
 	form?: Partial<TakeHomeForm>;
 	lockedGross?: number;
+	/** A page about one nation opens on it, whatever this browser saved. */
+	lockedNation?: string;
 	expanded?: boolean;
 	faqs: FaqPair[];
 	related: { title: string; href: string; desc?: string }[];
@@ -29,7 +32,7 @@ interface Props {
 	extraNodes?: Record<string, unknown>[];
 }
 
-const { title, description, h1, subtitle, breadcrumb, form = {}, lockedGross, expanded = false, faqs, related, limits, extraNodes = [] } = Astro.props;
+const { title, description, h1, subtitle, breadcrumb, form = {}, lockedGross, lockedNation, expanded = false, faqs, related, limits, extraNodes = [] } = Astro.props;
 const values: TakeHomeForm = { ...DEFAULT_FORM, ...form, taxYear: form.taxYear ?? CURRENT_YEAR.taxYear };
 if (lockedGross != null) values.gross = String(lockedGross);
 const breakdown = takeHome(parseForm(values, BUILD_DATE));
@@ -37,18 +40,9 @@ const year = getYear(breakdown.taxYear);
 const following = nextYear(breakdown.taxYear);
 const ratesPath = `/rates/${breakdown.taxYear}/`;
 
-// Measures in the next year that touch this tool: income tax, NI and student loans.
-const touching = following
-	? compareYears(year, following).filter((c) => /^(incomeTax\.(personalAllowance|taperStart|bands)|nationalInsurance\.employee|studentLoans)/.test(c.path) && c.to !== null)
-	: [];
-const fmt = (v: number | string | null) => (typeof v === 'number' ? (v < 1 ? `${+(v * 100).toFixed(2)}%` : '£' + v.toLocaleString('en-GB')) : String(v ?? 'not set'));
-const humanise = (path: string) =>
-	path
-		.replace(/^incomeTax\.bands\.([a-z-]+)\[(\d+)\]\.(upTo|rate)$/, (_, n, i, k) => `${n === 'england-ni' ? 'England and Northern Ireland' : n === 'scotland' ? 'Scotland' : 'Wales'} band ${Number(i) + 1} ${k === 'upTo' ? 'limit' : 'rate'}`)
-		.replace(/^incomeTax\.personalAllowance$/, 'Personal allowance')
-		.replace(/^incomeTax\.taperStart$/, 'Allowance taper start')
-		.replace(/^nationalInsurance\.employee\.(\w+)$/, (_, k) => `National Insurance ${k.replace(/([A-Z])/g, ' $1').toLowerCase()}`)
-		.replace(/^studentLoans\.(\w+)\.(threshold|rate)$/, (_, p, k) => `${p === 'postgraduate' ? 'Postgraduate loan' : p.replace('plan', 'Plan ')} ${k}`);
+// Only the figures a take-home result is computed from: income tax, employee
+// National Insurance and student loans.
+const TOUCHES = /^(incomeTax\.(personalAllowance|taperStart|taperRate|bands)|nationalInsurance\.employee|studentLoans)/;
 ---
 
 <Base title={title} description={description} breadcrumb={breadcrumb} faqs={faqs} extraNodes={extraNodes} taxYears={[breakdown.taxYear, ...(following ? [following.taxYear] : [])]}>
@@ -58,7 +52,7 @@ const humanise = (path: string) =>
 		<p class="subtitle">{subtitle}</p>
 	</div>
 
-	<TakeHomeCalculator form={values} lockedGross={lockedGross} expanded={expanded} />
+	<TakeHomeCalculator form={values} lockedGross={lockedGross} lockedNation={lockedNation} expanded={expanded} />
 
 	<section class="calc-section" id="how" aria-labelledby="how-heading">
 		<h2 id="how-heading">How this is calculated</h2>
@@ -72,18 +66,7 @@ const humanise = (path: string) =>
 		<div set:html={renderRulesUsed(breakdown, { ratesPath })} />
 	</section>
 
-	<section class="calc-section" aria-labelledby="next-heading">
-		<h2 id="next-heading">What changes on {longDate(year.nextScheduledChange.date)}</h2>
-		<p>{year.nextScheduledChange.summary}</p>
-		{touching.length > 0 ? (
-			<ul>
-				{touching.map((c) => <li>{humanise(c.path)}: {fmt(c.from)} to {fmt(c.to)} ({c.status})</li>)}
-			</ul>
-		) : (
-			<p>None of the income tax, National Insurance or student loan figures this tool uses is set to change on that date{following ? `, as far as ${following.label} has been announced` : ''}.</p>
-		)}
-		{following && <p>You can switch the tax year above to see the result under {following.label} as announced so far.</p>}
-	</section>
+	<WhatChanges year={year} following={following} touches={TOUCHES} scope="income tax, National Insurance or student loan" canSwitchYear />
 
 	<p class="status-note"><strong>What this does not do.</strong> {limits}</p>
 
@@ -93,6 +76,10 @@ const humanise = (path: string) =>
 	</section>
 
 	<AdSlot id="before-related" />
+
+	<slot name="before-related" />
+
+	<slot name="before-related" />
 
 	<Related links={related} />
 

@@ -1,32 +1,82 @@
 ---
 import { takeHome } from '@money-resilience-hub/rules';
 import { money } from '@money-resilience-hub/calculators';
+import SalaryJump from '../../components/SalaryJump.astro';
 import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
 import Base from '../../layouts/Base.astro';
-import { liveAmounts } from '../../lib/pages';
+import { liveAmounts, thresholdAmounts } from '../../lib/pages';
+import { pagesPassingGuard } from '../../lib/salaryPage';
 
-const rows = liveAmounts('salary').map((amount) => {
+const live = pagesPassingGuard(liveAmounts('salary'), BUILD_DATE);
+const scottishLive = pagesPassingGuard(liveAmounts('salary'), BUILD_DATE, 'scotland');
+const row = (amount: number) => {
 	const b = takeHome({ gross: amount, nation: 'england-ni', asAt: BUILD_DATE }, { withMarginal: false });
-	return { amount, monthly: b.periods.monthly, annual: b.takeHome };
-});
+	let scotland: number | null = null;
+	try {
+		scotland = takeHome({ gross: amount, nation: 'scotland', asAt: BUILD_DATE }, { withMarginal: false }).periods.monthly;
+	} catch {
+		scotland = null;
+	}
+	return { amount, monthly: b.periods.monthly, annual: b.takeHome, scotland, label: b.thresholds.find((t) => t.value === amount)?.label };
+};
+const rows = live.map(row);
+const special = thresholdAmounts();
+// Round thousands in groups, each under its own heading.
+const GROUPS = [
+	[0, 30000],
+	[30000, 50000],
+	[50000, 75000],
+	[75000, 100000],
+	[100000, Infinity],
+];
+const round = rows.filter((r) => !special.includes(r.amount));
+const groups = GROUPS.map(([from, to]) => round.filter((r) => r.amount >= from && r.amount < to)).filter((g) => g.length);
+const onThreshold = rows.filter((r) => r.label);
 ---
 
-<Base title={`Salary after tax ${CURRENT_YEAR.label}: take-home by salary`} description={`Take-home pay for round-number UK salaries in ${CURRENT_YEAR.label}, each with the ruler, the ledger and the student loan row for every plan.`} breadcrumb="Salary pages" taxYears={[CURRENT_YEAR.taxYear]}>
+<Base title={`Salary after tax ${CURRENT_YEAR.label}: take-home by salary`} description={`Take-home pay for ${live.length} UK salaries in ${CURRENT_YEAR.label}, from ${money(live[0], 0)} to ${money(live.at(-1) as number, 0)}, with Scottish versions. Every deduction is sourced to gov.uk.`} breadcrumb="Salary pages" taxYears={[CURRENT_YEAR.taxYear]}>
 	<div class="page-head">
 		<h1>Salary after tax</h1>
-		<p class="subtitle">One page per salary, computed from the {CURRENT_YEAR.label} rules for England and Northern Ireland, with Scotland and Wales a tap away. More salaries are added as each wave is indexed.</p>
+		<p class="subtitle">One page per salary, computed from the {CURRENT_YEAR.label} rules, with a second page for each under the Scottish income tax bands. Standard tax code, no student loan, no pension.</p>
 	</div>
+
+	<SalaryJump live={live} />
+
+	<h2 id="thresholds">Salaries on a threshold</h2>
 	<table>
-		<thead><tr><th scope="col">Salary</th><th scope="col" class="num">A month</th><th scope="col" class="num">A year</th></tr></thead>
+		<thead><tr><th scope="col">Salary</th><th scope="col">What happens there</th><th scope="col" class="num">A month</th><th scope="col" class="num">A month in Scotland</th></tr></thead>
 		<tbody>
-			{rows.map((r) => (
+			{onThreshold.map((r) => (
 				<tr>
 					<th scope="row"><a href={`/salary/${r.amount}/`}>{money(r.amount, 0)} after tax</a></th>
+					<td>{r.label}</td>
 					<td class="num">{money(r.monthly, 0)}</td>
-					<td class="num">{money(r.annual, 0)}</td>
+					<td class="num">{r.scotland !== null && scottishLive.includes(r.amount) ? <a href={`/salary/${r.amount}/scotland/`}>{money(r.scotland, 0)}</a> : r.scotland !== null ? money(r.scotland, 0) : 'Not yet set'}</td>
 				</tr>
 			))}
 		</tbody>
 	</table>
-	<p class="small quiet">Standard tax code, no student loan, no pension. Use the <a href="/calculators/take-home-pay/">take-home pay calculator</a> for any salary and any combination of inputs.</p>
+
+	{groups.map((g) => (
+		<>
+			<h2 id={`from-${g[0].amount}`}>{money(g[0].amount, 0)} to {money(g.at(-1)!.amount, 0)}</h2>
+			<table>
+				<thead><tr><th scope="col">Salary</th><th scope="col" class="num">A month</th><th scope="col" class="num">A year</th><th scope="col" class="num">A month in Scotland</th></tr></thead>
+				<tbody>
+					{g.map((r) => (
+						<tr>
+							<th scope="row"><a href={`/salary/${r.amount}/`}>{money(r.amount, 0)} after tax</a></th>
+							<td class="num">{money(r.monthly, 0)}</td>
+							<td class="num">{money(r.annual, 0)}</td>
+							<td class="num">{r.scotland !== null && scottishLive.includes(r.amount) ? <a href={`/salary/${r.amount}/scotland/`}>{money(r.scotland, 0)}</a> : r.scotland !== null ? money(r.scotland, 0) : 'Not yet set'}</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+		</>
+	))}
+
+	<h2 id="other">Pay by the hour or by the month</h2>
+	<p>The same working starts from an hourly rate on the <a href="/hourly/">hourly pages</a> and from a monthly amount on the <a href="/monthly/">monthly pages</a>. For any other salary, or to add a pension, a tax code or a student loan, use the <a href="/calculators/take-home-pay/">take-home pay calculator</a>.</p>
+	<p class="small quiet">The first monthly column is for England, Wales and Northern Ireland, which share the same result. Each Scottish figure links to that salary's page under the Scottish bands.</p>
 </Base>

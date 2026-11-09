@@ -3,7 +3,7 @@
 // FAQPage only where the questions are visible, Article on guides.
 // No AggregateRating, no reviews.
 
-import { AUTHOR, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '../config/site';
+import { AUTHOR, CONTACT_EMAIL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '../config/site';
 
 type Node = Record<string, unknown>;
 
@@ -51,6 +51,8 @@ export const organisation: Node = {
 	name: SITE_NAME,
 	url: `${SITE_URL}/`,
 	logo: `${SITE_URL}/favicon.svg`,
+	email: CONTACT_EMAIL,
+	contactPoint: { '@type': 'ContactPoint', contactType: 'corrections and enquiries', email: CONTACT_EMAIL, availableLanguage: 'en-GB' },
 };
 
 export function websiteNode(): Node {

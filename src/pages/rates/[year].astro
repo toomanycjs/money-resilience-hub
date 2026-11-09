@@ -1,8 +1,9 @@
 ---
-import { compareYears, getYear, listYears, previousYear, STATUS_LABEL } from '@money-resilience-hub/rules';
+import { getYear, listYears, previousYear, STATUS_LABEL } from '@money-resilience-hub/rules';
 import { longDate, money, pct } from '@money-resilience-hub/calculators';
 import { CURRENT_YEAR, SITE_URL } from '../../config/site';
 import Base from '../../layouts/Base.astro';
+import { changeList } from '../../lib/changeList';
 import { bandTables, rateTables } from '../../lib/rates';
 import { datasetNode } from '../../lib/schema';
 import { rulesChangedOn } from '../../lib/lastmod.mjs';
@@ -15,7 +16,7 @@ const year = getYear(Astro.params.year as string);
 const prev = previousYear(year.taxYear);
 const tables = rateTables(year);
 const bands = bandTables(year);
-const changes = prev ? compareYears(prev, year) : [];
+const changes = prev ? changeList(prev, year) : null;
 const allRows = tables.flatMap((t) => t.rows);
 const verifiedDates = allRows.map((r) => r.verified).filter(Boolean).sort();
 const latest = verifiedDates.at(-1) ?? '';
@@ -33,7 +34,7 @@ const dataset = datasetNode({
 });
 ---
 
-<Base title={`Tax rates and allowances ${year.label}, with sources`} description={`Income tax bands for England, Scotland and Wales, National Insurance, student loan thresholds, child benefit and statutory pay for ${year.label}, each with its gov.uk source and the date it was checked.`} breadcrumb={`Rates ${year.label}`} extraNodes={[dataset]} taxYears={[year.taxYear]}>
+<Base title={`Tax rates and allowances ${year.label}, with sources`} description={`Income tax bands for each nation, National Insurance, student loans, child benefit and statutory pay for ${year.label}, each with its gov.uk source and check date.`} breadcrumb={`Rates ${year.label}`} extraNodes={[dataset]} taxYears={[year.taxYear]}>
 	<div class="page-head">
 		<p class="kicker"><a href="/rates/">Rates</a></p>
 		<h1>Rates and allowances {year.label}</h1>
@@ -98,10 +99,29 @@ const dataset = datasetNode({
 	))}
 
 	<h2 id="changelog">What changed from {prev ? prev.label : 'the previous year'}</h2>
-	{changes.length ? (
-		<ul>
-			{changes.map((c) => <li>{c.path}: {fmt(c.from)} to {fmt(c.to)}{c.status !== 'in-force' ? ` (${c.status})` : ''}</li>)}
-		</ul>
+	{changes ? (
+		<>
+			{changes.changed.length > 0 ? (
+				<table class="rates-table">
+					<thead><tr><th scope="col">Figure</th><th scope="col" class="num">{prev!.label}</th><th scope="col" class="num">{year.label}</th><th scope="col">Source</th><th scope="col">Status</th></tr></thead>
+					<tbody>
+						{changes.changed.map((c) => (
+							<tr>
+								<th scope="row">{c.label}</th>
+								<td class="num">{c.from}</td>
+								<td class="num">{c.to}</td>
+								<td class="src">{c.source ? <a href={c.source} rel="noopener">{new URL(c.source).hostname.replace(/^www\./, '')}</a> : ''}</td>
+								<td class={`status-${c.status}`}>{STATUS_LABEL[c.status]}</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			) : (
+				<p>No figure recorded for both years differs between them.</p>
+			)}
+			{changes.notYetSet.length > 0 && <p>Not yet set for {year.label}: {changes.notYetSet.map((n) => n.label.toLowerCase()).join(', ')}.</p>}
+			{changes.notCompared.length > 0 && <p class="small quiet">{changes.notCompared.length} figures on this page have no {prev!.label} value recorded here, so they are not compared: {changes.notCompared.map((n) => n.label.toLowerCase()).join(', ')}.</p>}
+		</>
 	) : (
 		<p>No earlier year is recorded to compare against.</p>
 	)}

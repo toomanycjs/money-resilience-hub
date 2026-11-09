@@ -1,0 +1,17 @@
+---
+// The Scottish version of each salary page. Wales has no version of its own:
+// its result is the same as England and Northern Ireland's, so a separate
+// page would repeat one already built.
+import SalaryPage from '../../../components/SalaryPage.astro';
+
+export async function getStaticPaths() {
+	const { BUILD_DATE } = await import('../../../config/site');
+	const { liveAmounts } = await import('../../../lib/pages');
+	const { pagesPassingGuard } = await import('../../../lib/salaryPage');
+	return pagesPassingGuard(liveAmounts('salary'), BUILD_DATE, 'scotland').map((amount) => ({ params: { amount: String(amount) } }));
+}
+
+const amount = Number(Astro.params.amount);
+---
+
+<SalaryPage amount={amount} nation="scotland" />

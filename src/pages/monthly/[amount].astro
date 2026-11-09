@@ -1,0 +1,80 @@
+---
+// "£2,500 a month after tax": a monthly pay before tax taken through the
+// same working as a salary page, and the reverse question, the salary that
+// leaves that amount as take-home.
+import { takeHome } from '@money-resilience-hub/rules';
+import { money } from '@money-resilience-hub/calculators';
+import SalaryDetail from '../../components/SalaryDetail.astro';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Calculator from '../../layouts/Calculator.astro';
+import { WEEKS_PER_YEAR, liveAmounts, neighbours, salaryForMonthlyPay } from '../../lib/pages';
+import { pagesPassingGuard, salaryForMonthly, salaryPage } from '../../lib/salaryPage';
+
+export async function getStaticPaths() {
+	const { liveAmounts } = await import('../../lib/pages');
+	return liveAmounts('monthly').map((amount) => ({ params: { amount: String(amount) } }));
+}
+
+const monthly = Number(Astro.params.amount);
+const amount = salaryForMonthlyPay(monthly);
+const page = salaryPage(amount, BUILD_DATE);
+const b = page.breakdown;
+const year = CURRENT_YEAR;
+const live = pagesPassingGuard(liveAmounts('salary'), BUILD_DATE);
+const scottishLive = pagesPassingGuard(liveAmounts('salary'), BUILD_DATE, 'scotland');
+const { below, above } = neighbours('monthly', monthly);
+const label = money(monthly, 0);
+
+// The reverse: the salary whose take-home is this amount a month.
+const needed = salaryForMonthly(monthly, BUILD_DATE);
+const neededBreakdown = takeHome({ gross: needed, nation: 'england-ni', asAt: BUILD_DATE }, { withMarginal: false });
+const neededScotland = (() => {
+	try {
+		return salaryForMonthly(monthly, BUILD_DATE, 'scotland');
+	} catch {
+		return null;
+	}
+})();
+const nearestNeeded = Math.round(needed / 1000) * 1000;
+const hasSalaryPage = live.includes(amount);
+
+const related = [
+	...(below ? [{ title: `${money(below, 0)} a month after tax`, href: `/monthly/${below}/` }] : []),
+	...(above ? [{ title: `${money(above, 0)} a month after tax`, href: `/monthly/${above}/` }] : []),
+	...(hasSalaryPage ? [{ title: `${money(amount, 0)} after tax`, href: `/salary/${amount}/`, desc: 'The same pay as a salary a year.' }] : []),
+	...(live.includes(nearestNeeded) && nearestNeeded !== amount ? [{ title: `${money(nearestNeeded, 0)} after tax`, href: `/salary/${nearestNeeded}/`, desc: `The nearest salary page to a take-home of ${label} a month.` }] : []),
+	{ title: 'Every monthly amount', href: '/monthly/' },
+	{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'Change the salary, add a pension or a tax code.' },
+];
+---
+
+<Calculator
+	title={`${label} a month after tax ${year.label}: take-home with sources`}
+	description={`${label} a month before tax is ${money(b.periods.monthly, 0)} a month after tax and National Insurance in ${year.label} (${money(amount, 0)} a year). Every deduction is shown with its gov.uk source.`}
+	h1={`${label} a month after tax`}
+	subtitle={`${money(b.periods.monthly, 0)} a month in ${year.label} from pay of ${label} a month before tax, which is ${money(amount, 0)} a year. England, Wales and Northern Ireland, before any pension or student loan.`}
+	breadcrumb={`${label} a month after tax`}
+	lockedGross={amount}
+	expanded
+	faqs={[
+		{ q: `How much is ${label} a month after tax?`, a: `${money(b.periods.monthly, 0)} a month in ${b.label} when ${label} is the pay before tax, with the standard tax code and no pension or student loan. Income tax takes ${money(b.incomeTax.total / 12, 0)} a month and National Insurance ${money(b.nationalInsurance.total / 12, 0)}.` },
+		{ q: `What salary do you need to take home ${label} a month?`, a: `${money(needed, 0)} a year, which is ${money(needed / 12, 0)} a month before tax, in England, Wales and Northern Ireland in ${b.label}.${neededScotland ? ` In Scotland it is ${money(neededScotland, 0)} a year.` : ''}` },
+		...page.faqs.slice(1),
+	]}
+	limits="It assumes the same pay every month for a full tax year, with no benefits in kind, one job and National Insurance category A. A single month with a bonus or a mid-year start is taxed differently in that month."
+	related={related}
+>
+	<Fragment slot="how">
+		<h3>{label} a month, before tax and after</h3>
+		<table>
+			<thead><tr><th scope="col">If {label} a month is</th><th scope="col" class="num">Salary a year</th><th scope="col" class="num">Before tax a month</th><th scope="col" class="num">Take-home a month</th></tr></thead>
+			<tbody>
+				<tr><th scope="row">Your pay before tax</th><td class="num">{hasSalaryPage ? <a href={`/salary/${amount}/`}>{money(amount, 0)}</a> : money(amount, 0)}</td><td class="num">{label}</td><td class="num">{money(b.periods.monthly, 0)}</td></tr>
+				<tr><th scope="row">The take-home you want</th><td class="num">{money(needed, 0)}</td><td class="num">{money(needed / 12, 0)}</td><td class="num">{money(neededBreakdown.periods.monthly, 0)}</td></tr>
+			</tbody>
+		</table>
+		<p>{label} a month before tax is {money(amount / WEEKS_PER_YEAR, 0)} a week. The second row works backwards: it is the salary whose income tax and National Insurance leave {label} a month.</p>
+
+		<SalaryDetail page={page} live={live} scottishLive={scottishLive} />
+	</Fragment>
+</Calculator>

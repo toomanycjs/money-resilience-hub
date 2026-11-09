@@ -1,0 +1,107 @@
+---
+// "£15 an hour after tax": the salary an hourly rate gives on a standard
+// week, with the same working as a salary page, plus the same rate over
+// other weekly hours and against the minimum wage rates.
+import { getYear, resolve, takeHome } from '@money-resilience-hub/rules';
+import { money } from '@money-resilience-hub/calculators';
+import SalaryDetail from '../../components/SalaryDetail.astro';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Calculator from '../../layouts/Calculator.astro';
+import { HOURS_PER_WEEK, WEEKS_PER_YEAR, liveAmounts, neighbours, salaryForHourly } from '../../lib/pages';
+import { pagesPassingGuard, salaryPage } from '../../lib/salaryPage';
+
+export async function getStaticPaths() {
+	const { liveAmounts } = await import('../../lib/pages');
+	return liveAmounts('hourly').map((rate) => ({ params: { rate: String(rate) } }));
+}
+
+const rate = Number(Astro.params.rate);
+const amount = salaryForHourly(rate);
+const page = salaryPage(amount, BUILD_DATE);
+const b = page.breakdown;
+const year = CURRENT_YEAR;
+const live = pagesPassingGuard(liveAmounts('salary'), BUILD_DATE);
+const scottishLive = pagesPassingGuard(liveAmounts('salary'), BUILD_DATE, 'scotland');
+const { below, above } = neighbours('hourly', rate);
+const label = money(rate, 0);
+const nearest = Math.round(amount / 1000) * 1000;
+const hasConverter = Object.keys(import.meta.glob('../calculators/hourly-to-salary.astro')).length > 0;
+
+const hoursRows = [20, 30, 35, HOURS_PER_WEEK, 40].map((hours) => {
+	const gross = salaryForHourly(rate, hours);
+	const r = takeHome({ gross, nation: 'england-ni', asAt: BUILD_DATE }, { withMarginal: false });
+	return { hours, gross, monthly: r.periods.monthly, weekly: r.periods.weekly, perHour: r.takeHome / (hours * WEEKS_PER_YEAR) };
+});
+
+const cfg = getYear(b.taxYear).minimumWage;
+const wageRows = cfg
+	? ([
+			['People aged 21 and over (the National Living Wage)', cfg.age21AndOver, 'minimumWage.age21AndOver'],
+			['People aged 18 to 20', cfg.age18To20, 'minimumWage.age18To20'],
+			['People under 18', cfg.under18, 'minimumWage.under18'],
+			['Apprentices', cfg.apprentice, 'minimumWage.apprentice'],
+		] as const).flatMap(([who, leaf, path]) => {
+			try {
+				const r = resolve(leaf, path, BUILD_DATE);
+				return [{ who, value: r.value, gap: Math.round((rate - r.value) * 100) / 100, source: r.provenance.source }];
+			} catch {
+				return [];
+			}
+		})
+	: [];
+
+const related = [
+	...(below ? [{ title: `${money(below, 0)} an hour after tax`, href: `/hourly/${below}/` }] : []),
+	...(above ? [{ title: `${money(above, 0)} an hour after tax`, href: `/hourly/${above}/` }] : []),
+	...(live.includes(nearest) ? [{ title: `${money(nearest, 0)} after tax`, href: `/salary/${nearest}/`, desc: 'The nearest salary with a page of its own.' }] : []),
+	...(hasConverter ? [{ title: 'Hourly rate to salary converter', href: '/calculators/hourly-to-salary/', desc: 'Any rate, any hours and any number of weeks.' }] : []),
+	{ title: 'Every hourly rate', href: '/hourly/' },
+	{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'Change the salary, add a pension or a tax code.' },
+];
+---
+
+<Calculator
+	title={`${label} an hour after tax ${year.label}: take-home on a ${HOURS_PER_WEEK}-hour week`}
+	description={`${label} an hour is ${money(amount, 0)} a year on a ${HOURS_PER_WEEK}-hour week, or ${money(b.periods.monthly, 0)} a month after tax and National Insurance in ${year.label}, with each deduction sourced to gov.uk.`}
+	h1={`${label} an hour after tax`}
+	subtitle={`${money(b.periods.monthly, 0)} a month in ${year.label} on a ${HOURS_PER_WEEK}-hour week, which is ${money(amount, 0)} a year before tax. England, Wales and Northern Ireland, before any pension or student loan.`}
+	breadcrumb={`${label} an hour after tax`}
+	lockedGross={amount}
+	expanded
+	faqs={[
+		{ q: `How much is ${label} an hour a year?`, a: `${money(amount, 0)} before tax for ${HOURS_PER_WEEK} hours a week over ${WEEKS_PER_YEAR} weeks, and ${money(b.takeHome, 0)} after income tax and National Insurance in ${b.label}.` },
+		{ q: `How much is ${label} an hour a month after tax?`, a: `${money(b.periods.monthly, 0)} a month, or ${money(b.periods.weekly, 0)} a week, on a ${HOURS_PER_WEEK}-hour week with the standard tax code and no pension or student loan.` },
+		...page.faqs.slice(1),
+	]}
+	limits="It assumes the same hours every week for a full tax year, paid holiday included, with no overtime, one job and National Insurance category A. Pay that varies from week to week is taxed on what each pay period brings, so a single week can differ."
+	related={related}
+>
+	<Fragment slot="how">
+		<h3>{label} an hour by hours worked</h3>
+		<table>
+			<thead><tr><th scope="col">Hours a week</th><th scope="col" class="num">Before tax a year</th><th scope="col" class="num">Take-home a month</th><th scope="col" class="num">Take-home a week</th><th scope="col" class="num">Kept per hour</th></tr></thead>
+			<tbody>
+				{hoursRows.map((r) => (
+					<tr><th scope="row">{r.hours}</th><td class="num">{money(r.gross, 0)}</td><td class="num">{money(r.monthly, 0)}</td><td class="num">{money(r.weekly, 0)}</td><td class="num">{money(r.perHour, 2)}</td></tr>
+				))}
+			</tbody>
+		</table>
+		<p>The rest of this page uses {HOURS_PER_WEEK} hours a week for {WEEKS_PER_YEAR} weeks: {label} × {HOURS_PER_WEEK} × {WEEKS_PER_YEAR} = {money(amount, 0)} a year.</p>
+
+		{wageRows.length > 0 && (
+			<>
+				<h3>{label} an hour against the minimum wage</h3>
+				<table>
+					<thead><tr><th scope="col">Rate for</th><th scope="col" class="num">An hour</th><th scope="col" class="num">{label} is</th><th scope="col">Source</th></tr></thead>
+					<tbody>
+						{wageRows.map((w) => (
+							<tr><th scope="row">{w.who}</th><td class="num">{money(w.value, 2)}</td><td class="num">{w.gap === 0 ? 'the same' : `${money(Math.abs(w.gap), 2)} ${w.gap > 0 ? 'above' : 'below'}`}</td><td class="src"><a href={w.source} rel="noopener">gov.uk</a></td></tr>
+						))}
+					</tbody>
+				</table>
+			</>
+		)}
+
+		<SalaryDetail page={page} live={live} scottishLive={scottishLive} />
+	</Fragment>
+</Calculator>

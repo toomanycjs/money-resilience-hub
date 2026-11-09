@@ -1,6 +1,7 @@
 ---
 import corrections from '../../docs/corrections.json' with { type: 'json' };
 import { longDate } from '@money-resilience-hub/calculators';
+import { CONTACT_EMAIL } from '../config/site';
 import Plain from '../layouts/Plain.astro';
 
 interface Correction {
@@ -31,5 +32,5 @@ const entries = (corrections as Correction[]).sort((a, b) => b.date.localeCompar
 			))}
 		</dl>
 	)}
-	<p>Found something wrong? The <a href="/about/">about page</a> has the address.</p>
+	<p>Found something wrong? Email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> with the page and the line. A confirmed error is fixed within a day and recorded here.</p>
 </Plain>
