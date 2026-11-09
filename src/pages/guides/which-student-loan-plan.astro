@@ -1,0 +1,142 @@
+---
+import { getYear, leastSettled, nextYear, resolve, takeHome, PLANS, PLAN_LABEL, RulesUnavailableError, STATUS_LABEL, type Plan } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Guide from '../../layouts/Guide.astro';
+import { guideBySlug, guideLink } from '../../lib/guides';
+import { liveAmounts } from '../../lib/pages';
+
+const guide = guideBySlug('which-student-loan-plan');
+const year = getYear(CURRENT_YEAR.taxYear);
+const following = nextYear(year.taxYear);
+const asAt = BUILD_DATE;
+
+// Thresholds and rates from the rules file, with next year's where it has been set.
+const plans = PLANS.map((plan) => {
+	const cfg = year.studentLoans[plan];
+	const threshold = resolve(cfg.threshold, `studentLoans.${plan}.threshold`, asAt).value;
+	const rate = resolve(cfg.rate, `studentLoans.${plan}.rate`, asAt).value;
+	let next: string = 'No later year in the rules file';
+	if (following) {
+		const leaf = following.studentLoans[plan].threshold;
+		try {
+			next = `${money(resolve(leaf, `studentLoans.${plan}.threshold`, following.starts).value, 0)} (${STATUS_LABEL[leaf.status].toLowerCase()})`;
+		} catch (e) {
+			if (!(e instanceof RulesUnavailableError)) throw e;
+			next = STATUS_LABEL.unset;
+		}
+	}
+	return { plan, label: PLAN_LABEL[plan], threshold, rate, status: cfg.threshold.status, next };
+});
+const byPlan = Object.fromEntries(plans.map((p) => [p.plan, p])) as Record<Plan, (typeof plans)[number]>;
+const status = leastSettled(plans.map((p) => p.status));
+const undergraduateRate = byPlan.plan1.rate;
+const postgraduateRate = byPlan.postgraduate.rate;
+
+// What each plan repays in a year at three salaries, from the take-home engine.
+const live = liveAmounts('salary');
+const salaries = [30000, 40000, 60000];
+const repay = (gross: number, selected: Plan[]) => takeHome({ gross, nation: 'england-ni', studentLoanPlans: selected, taxYear: year.taxYear, asAt }, { withMarginal: false }).studentLoans.total;
+const rows = [
+	...plans.map((p) => ({ label: p.label, amounts: salaries.map((s) => repay(s, [p.plan])) })),
+	{ label: `${PLAN_LABEL.plan2} with a postgraduate loan`, amounts: salaries.map((s) => repay(s, ['plan2', 'postgraduate'])) },
+];
+
+// Who is on which plan. Read on the gov.uk page named in `source` on the date in `read`.
+const WHO = {
+	source: 'https://www.gov.uk/repaying-your-student-loan/which-repayment-plan-you-are-on',
+	read: guide.reviewedOn,
+	plan5From: '2023-08-01',
+	plan2From: '2012-09-01',
+	plan2To: '2023-07-31',
+};
+const who = [
+	{ body: 'Student Finance England', when: `Course started on or after ${longDate(WHO.plan5From)}`, plan: `${PLAN_LABEL.plan5} for an undergraduate course, a PGCE, an Advanced Learner Loan or the Lifelong Learning Entitlement. ${PLAN_LABEL.plan2} for a Higher Education Short Course Loan.` },
+	{ body: 'Student Finance England', when: `Course started between ${longDate(WHO.plan2From)} and ${longDate(WHO.plan2To)}`, plan: `${PLAN_LABEL.plan2} for an undergraduate course, a PGCE, an Advanced Learner Loan or a Higher Education Short Course Loan.` },
+	{ body: 'Student Finance England', when: `Course started before ${longDate(WHO.plan2From)}`, plan: `${PLAN_LABEL.plan1}.` },
+	{ body: 'Student Finance England', when: `A postgraduate master's or doctoral course in either of the first two periods`, plan: `${PLAN_LABEL.postgraduate}.` },
+	{ body: 'Student Finance Wales', when: `Course started on or after ${longDate(WHO.plan2From)}`, plan: `${PLAN_LABEL.plan2} for an undergraduate course or a PGCE. ${PLAN_LABEL.postgraduate} for a postgraduate master's or doctoral course.` },
+	{ body: 'Student Finance Wales', when: `Course started before ${longDate(WHO.plan2From)}`, plan: `${PLAN_LABEL.plan1}.` },
+	{ body: 'Student Awards Agency Scotland', when: 'Any start date', plan: `${PLAN_LABEL.plan4}, undergraduate or postgraduate.` },
+	{ body: 'Student Finance Northern Ireland', when: 'Any start date', plan: `${PLAN_LABEL.plan1}, undergraduate or postgraduate.` },
+];
+
+const sources = [
+	{ href: WHO.source, title: "Repaying your student loan: which repayment plan you're on" },
+	{ href: 'https://www.gov.uk/repaying-your-student-loan/what-you-pay', title: 'Repaying your student loan: how much you repay' },
+	{ href: 'https://www.gov.uk/repaying-your-student-loan/how-you-repay', title: 'Repaying your student loan: how to repay' },
+];
+---
+
+<Guide
+	slug="which-student-loan-plan"
+	taxYears={[year.taxYear]}
+	alsoReads={following ? [following.taxYear] : []}
+	status={status}
+	related={[
+		guideLink('why-your-payslip-differs', 'The loan plan on the payroll is one of six reasons a payslip moves.'),
+		{ title: `What ${money(live.includes(salaries[0]) ? salaries[0] : live[0], 0)} looks like after tax`, href: `/salary/${live.includes(salaries[0]) ? salaries[0] : live[0]}/`, desc: 'A worked salary page with the student loan row for every plan.' },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'Every threshold on this page with its source and the date it was checked.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>Your plan is set by which student finance body you applied to and when your course started; you cannot choose it. In {year.label}, {PLAN_LABEL.plan1} repays {pct(byPlan.plan1.rate)} of pay above {money(byPlan.plan1.threshold, 0)}, {PLAN_LABEL.plan2} above {money(byPlan.plan2.threshold, 0)}, {PLAN_LABEL.plan4} above {money(byPlan.plan4.threshold, 0)} and {PLAN_LABEL.plan5} above {money(byPlan.plan5.threshold, 0)}, and the postgraduate loan repays {pct(postgraduateRate)} above {money(byPlan.postgraduate.threshold, 0)}.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>Who is on which plan</h2>
+		<div class="table-wrap">
+			<table>
+				<caption>Repayment plans by student finance body and course start date, as gov.uk lists them</caption>
+				<thead><tr><th scope="col">You applied to</th><th scope="col">Course</th><th scope="col">Plan</th></tr></thead>
+				<tbody>
+					{who.map((w) => (
+						<tr><th scope="row">{w.body}</th><td>{w.when}</td><td>{w.plan}</td></tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+		<p>Someone with more than one loan can be on more than one plan. The plan is shown in the online repayment account, where an active plan type letter can be downloaded and compared with the plan an employer is using. gov.uk says a refund is available if too much was repaid because the payroll had the wrong plan.</p>
+	</Fragment>
+
+	<h2>Thresholds and rates for {year.label}</h2>
+	<p>Repayments are a percentage of income above the plan's threshold, counted before tax and other deductions and including bonuses and overtime. The amount owed makes no difference to the amount repaid each year.</p>
+	<div class="table-wrap">
+		<table>
+			<thead><tr><th scope="col">Plan</th><th scope="col" class="num">Threshold a year</th><th scope="col" class="num">Rate above it</th><th scope="col">Status</th>{following && <th scope="col">Threshold for {following.label}</th>}</tr></thead>
+			<tbody>
+				{plans.map((p) => (
+					<tr><th scope="row">{p.label}</th><td class="num">{money(p.threshold, 0)}</td><td class="num">{pct(p.rate)}</td><td class={`status-${p.status}`}>{STATUS_LABEL[p.status]}</td>{following && <td>{p.next}</td>}</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>Payroll uses weekly or monthly versions of these thresholds, which gov.uk lists beside the annual ones.</p>
+
+	<h2>What each plan repays</h2>
+	<p>A year of repayments on a steady salary, worked out as the rate on pay above the threshold and rounded down to the pound.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>Student loan repayments in {year.label} at three salaries</caption>
+			<thead><tr><th scope="col">Plan</th>{salaries.map((s) => <th scope="col" class="num">{live.includes(s) ? <a href={`/salary/${s}/`}>{money(s, 0)}</a> : money(s, 0)}</th>)}</tr></thead>
+			<tbody>
+				{rows.map((r) => (
+					<tr><th scope="row">{r.label}</th>{r.amounts.map((a) => <td class="num">{money(a, 0)}</td>)}</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>A salary under a plan's threshold repays nothing on that plan, though interest is still added to the balance.</p>
+
+	<h2>More than one plan</h2>
+	<ul>
+		<li><strong>Two plans, no postgraduate loan.</strong> One repayment is taken: {pct(undergraduateRate)} of income above the lowest threshold among the plans held. It is then split between the loans.</li>
+		<li><strong>A postgraduate loan with another plan.</strong> {pct(postgraduateRate)} of income above the postgraduate threshold, plus {pct(undergraduateRate)} of income above the lowest threshold among the other plans. The last row of the table shows this.</li>
+		<li><strong>More than one job.</strong> Repayments come only from a job that pays over the threshold. Pay from separate jobs is not added together.</li>
+		<li><strong>Self Assessment.</strong> HMRC works out the repayment from the tax return, and it is paid along with the tax.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{sources.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
+	</Fragment>
+</Guide>

@@ -1,0 +1,114 @@
+---
+import { bandsFor, defaultTaxCode, getYear, resolve, takeHome, PENSION_LABEL, PLAN_LABEL, type PensionType, type Plan } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+import { liveAmounts } from '../../lib/pages';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const pa = resolve(year.incomeTax.personalAllowance, 'incomeTax.personalAllowance', asAt).value;
+const ni = year.nationalInsurance.employee;
+const mainRate = resolve(ni.mainRate, 'nationalInsurance.employee.mainRate', asAt).value;
+const upperRate = resolve(ni.upperRate, 'nationalInsurance.employee.upperRate', asAt).value;
+const pt = resolve(ni.primaryThreshold, 'nationalInsurance.employee.primaryThreshold', asAt).value;
+const uel = resolve(ni.upperEarningsLimit, 'nationalInsurance.employee.upperEarningsLimit', asAt).value;
+const basicRate = bandsFor(year, 'england-ni')[0].rate ?? 0;
+const std = defaultTaxCode(year, asAt);
+
+// One salary throughout: a full year, England and Northern Ireland, the standard code.
+const salary = 35000;
+const percent = 5;
+const base = { gross: salary, nation: 'england-ni' as const, taxYear: year.taxYear, asAt };
+const plain = takeHome(base, { withMarginal: false });
+
+const methods = (['salary-sacrifice', 'net-pay', 'relief-at-source'] as PensionType[]).map((type) => {
+	const b = takeHome({ ...base, pension: { type, percent } }, { withMarginal: false });
+	return { label: PENSION_LABEL[type], tax: b.incomeTax.total, ni: b.nationalInsurance.total, fromPay: b.pension?.fromPay ?? 0, added: b.pension?.providerAdds ?? 0, monthly: b.periods.monthly };
+});
+const contribution = salary * (percent / 100);
+
+// A tax code lowered by a company benefit.
+const benefit = 2000;
+const benefitCode = `${Math.round((pa - benefit) / 10)}L`;
+const withBenefit = takeHome({ ...base, taxCode: benefitCode }, { withMarginal: false });
+
+// Two loan plans on the same salary.
+const loan = (plan: Plan) => takeHome({ ...base, studentLoanPlans: [plan] }, { withMarginal: false }).studentLoans.total;
+const loans = { plan5: loan('plan5'), plan2: loan('plan2') };
+
+// Half a year at the same salary.
+const halfYear = takeHome({ ...base, gross: salary / 2 }, { withMarginal: false });
+
+const salaryPage = liveAmounts('salary').includes(salary) ? `/salary/${salary}/` : null;
+
+const sources = [
+	{ href: 'https://www.gov.uk/income-tax/how-you-pay-income-tax', title: 'Income Tax: how you pay Income Tax' },
+	{ href: 'https://www.gov.uk/tax-codes/emergency-tax-codes', title: 'Tax codes: emergency tax codes' },
+	{ href: 'https://www.gov.uk/tax-codes/why-tax-code-change', title: 'Tax codes: why your tax code might change' },
+	{ href: 'https://www.gov.uk/tax-codes/what-your-tax-code-means', title: 'Tax codes: what your tax code means' },
+	{ href: 'https://www.gov.uk/national-insurance/how-much-you-pay', title: 'National Insurance: how much you pay' },
+	{ href: 'https://www.gov.uk/workplace-pensions/managing-your-pension', title: 'Workplace pensions: managing your pension' },
+	{ href: 'https://www.gov.uk/guidance/salary-sacrifice-and-the-effects-on-paye', title: 'Salary sacrifice for employers' },
+	{ href: 'https://www.gov.uk/repaying-your-student-loan/what-you-pay', title: 'Repaying your student loan: how much you repay' },
+	{ href: 'https://www.gov.uk/tax-company-benefits', title: 'Tax on company benefits' },
+];
+---
+
+<Guide
+	slug="why-your-payslip-differs"
+	taxYears={[year.taxYear]}
+	status={plain.rulesUsed.status}
+	related={[
+		guideLink('tax-codes-explained', 'What each number and letter in a code does to the tax on a payslip.'),
+		guideLink('which-student-loan-plan', 'Who is on which plan, and what each repays at three salaries.'),
+		guideLink('100000-personal-allowance-trap', 'Where a pension contribution changes the allowance as well as the tax.'),
+	]}
+>
+	<Fragment slot="answer">
+		<p>The calculator turns {money(salary, 0)} into {money(plain.periods.monthly, 2)} a month in {year.label} by working out a full year on the standard code {std} and dividing by twelve. A payslip is worked out one pay period at a time with your own tax code, pension scheme and loan plan, and each of the six things below moves it away from that figure.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>PAYE works one pay period at a time</h2>
+		<p>Under PAYE an employer takes income tax and National Insurance before paying wages, and the tax code tells them how much. Income tax is usually worked out on total income so far in the tax year, so a bonus, overtime or unpaid leave changes that month's tax. National Insurance is charged on each week's or month's pay. The calculator applies {pct(mainRate)} between {money(pt, 0)} and {money(uel, 0)} a year and {pct(upperRate)} above; payroll applies the weekly or monthly equivalents of those limits, so one large month is not charged the same as twelve even ones.</p>
+
+		<h2>Your tax code carries adjustments</h2>
+		<p>The calculator assumes {std} unless you enter another code. HMRC changes a code when income or circumstances change: gov.uk lists a new job, a second job or pension, taxable state benefits, savings interest above the Personal Savings Allowance, starting or stopping benefits from a job, Marriage Allowance, expenses with tax relief, the High Income Child Benefit Charge collected through pay, and tax owed from being on the wrong code. A code that ends in W1, M1 or X is an emergency code, taxed on each payslip alone.</p>
+	</Fragment>
+
+	<h2>Three pension methods, three payslips</h2>
+	<p>The same {pct(percent / 100)} contribution of {money(contribution, 0)} a year gives three results, depending on how the scheme takes it.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>{money(salary, 0)} a year with a {pct(percent / 100)} pension contribution in {year.label}, England and Northern Ireland</caption>
+			<thead><tr><th scope="col">Method</th><th scope="col" class="num">Income tax</th><th scope="col" class="num">National Insurance</th><th scope="col" class="num">Taken from pay</th><th scope="col" class="num">Take-home a month</th></tr></thead>
+			<tbody>
+				<tr><th scope="row">No pension</th><td class="num">{money(plain.incomeTax.total, 0)}</td><td class="num">{money(plain.nationalInsurance.total, 0)}</td><td class="num">{money(0, 0)}</td><td class="num">{money(plain.periods.monthly, 2)}</td></tr>
+				{methods.map((m) => (
+					<tr><th scope="row">{m.label}</th><td class="num">{money(m.tax, 0)}</td><td class="num">{money(m.ni, 0)}</td><td class="num">{money(m.fromPay, 0)}</td><td class="num">{money(m.monthly, 2)}</td></tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<ul>
+		<li><strong>Salary sacrifice.</strong> An agreement to give up part of cash pay in return for a non-cash benefit, here an employer pension contribution. Tax and National Insurance are worked out on the lower pay.</li>
+		<li><strong>Net pay.</strong> The employer takes the contribution before pay is taxed, so tax is due on what is left. The National Insurance column does not move.</li>
+		<li><strong>Relief at source.</strong> The employer takes the contribution after tax and National Insurance, and the provider adds relief at the basic rate of {pct(basicRate)} to the pot: {money(methods[2].added, 0)} here. The payslip shows only your own contribution.</li>
+	</ul>
+
+	<h2>The student loan plan on the payroll</h2>
+	<p>Each plan has its own threshold. On {money(salary, 0)}, {PLAN_LABEL.plan5} repays {money(loans.plan5, 0)} a year and {PLAN_LABEL.plan2} repays {money(loans.plan2, 0)}, so an employer holding the wrong plan takes the wrong amount. Payroll also tests each payslip against a weekly or monthly threshold: a bonus can trigger a repayment in one month even when the year's pay ends up under the annual threshold, and gov.uk says a refund can then be requested after the tax year ends.</p>
+
+	<h2>Benefits in kind</h2>
+	<p>Company benefits such as cars, accommodation and loans are taxed, and the employer collects that tax from wages through PAYE. One route is the tax code: the value of the benefit comes off the allowance. The calculator does not model benefits, but a code can stand in for one. A {money(benefit, 0)} benefit turns {std} into {benefitCode}, and income tax on {money(salary, 0)} rises from {money(plain.incomeTax.total, 0)} to {money(withBenefit.incomeTax.total, 0)}.</p>
+
+	<h2>A part year</h2>
+	<p>The calculator assumes the salary is paid for the whole tax year, {longDate(year.starts)} to {longDate(year.ends)}. Six months at {money(salary, 0)} is {money(salary / 2, 0)} of pay in the year, and the income tax on that is {money(halfYear.incomeTax.total, 0)}, not half of the full-year {money(plain.incomeTax.total, 0)}, because the {money(pa, 0)} allowance is an amount for the year. How that reaches each payslip depends on the code. On an ordinary code tax follows income so far in the tax year. On an emergency code each payslip stands alone, and gov.uk says tax overpaid that way can be refunded.</p>
+	{salaryPage && <p>The <a href={salaryPage}>{money(salary, 0)} salary page</a> has the full-year ledger these comparisons start from.</p>}
+
+	<Fragment slot="sources">
+		{sources.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
+	</Fragment>
+</Guide>

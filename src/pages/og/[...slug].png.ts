@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import satori from 'satori';
 import sharp from 'sharp';
 import { BUILD_DATE, SITE_NAME } from '../../config/site';
+import { GUIDES } from '../../lib/guides';
 import { HOURS_PER_WEEK, liveAmounts, salaryForHourly, salaryForMonthlyPay } from '../../lib/pages';
 import { pagesPassingGuard } from '../../lib/salaryPage';
 
@@ -46,6 +47,7 @@ export function getStaticPaths() {
 		{ slug: 'corrections', title: 'Corrections', tail: 'What was wrong, when, and what changed' },
 	];
 	for (const y of listYears()) cards.push({ slug: `rates/${y.taxYear}`, title: `Rates and allowances ${y.label}`, tail: 'Every figure with its source and the date it was checked' });
+	for (const g of [{ slug: '', h1: 'Guides', description: 'One question each, answered with the number first and the gov.uk sources listed' }, ...GUIDES]) cards.push({ slug: g.slug ? `guides/${g.slug}` : 'guides', title: g.h1, tail: g.description });
 	const figureCard = (slug: string, title: string, gross: number, nation: Nation, tail: string): Card => {
 		const b = takeHome({ gross, nation, asAt: BUILD_DATE }, { withMarginal: false });
 		return { slug, title, tail: `a month in ${b.label}, ${tail}`, figure: money(b.periods.monthly, 0), ruler: { marks: b.thresholds.map((t) => t.value), you: gross, top: Math.max(150000, gross * 1.1) } };
