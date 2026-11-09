@@ -1,0 +1,184 @@
+---
+// The template for a single-purpose tool, in the same order as the
+// take-home calculator: heading, inputs, figure, ledger, how it is
+// calculated, rules used, what changes next, FAQ, related, actions.
+// The ruler and the pound bar are not shown: these tools have one
+// figure and a short ledger. Ad slots sit after the "how" section and
+// between the FAQ and the related links, never inside the result.
+import { compareYears, getYear, listYears, nextYear, pathLabel, RulesUnavailableError } from '@money-resilience-hub/rules';
+import { TOOLS, defaultForm, longDate, money, pct, renderLedger, renderRulesUsed, renderSimpleFigure, type SimpleForm } from '@money-resilience-hub/calculators';
+import AdSlot from '../components/AdSlot.astro';
+import Faq from '../components/Faq.astro';
+import Related from '../components/Related.astro';
+import { BUILD_DATE, CURRENT_YEAR, SITE_URL } from '../config/site';
+import type { FaqPair } from '../lib/schema';
+import Base from './Base.astro';
+
+interface Props {
+	tool: string;
+	title: string;
+	description: string;
+	h1: string;
+	subtitle: string;
+	breadcrumb?: string;
+	/** Page defaults for the form, as strings; also what "Forget my inputs" restores. */
+	form?: Partial<SimpleForm>;
+	formLabel: string;
+	faqs: FaqPair[];
+	related: { title: string; href: string; desc?: string }[];
+	/** One line on what the tool does not do, shown above the FAQ. */
+	limits: string;
+}
+
+const { tool: toolId, title, description, h1, subtitle, breadcrumb, form = {}, formLabel, faqs, related, limits } = Astro.props;
+const tool = TOOLS[toolId];
+if (!tool) throw new Error(`No tool with id ${toolId}`);
+const values: SimpleForm = defaultForm(tool, form);
+for (const f of tool.fields) {
+	if (f.type === 'taxYear' && !values[f.id]) values[f.id] = CURRENT_YEAR.taxYear;
+	if (f.type === 'date' && !values[f.id]) values[f.id] = BUILD_DATE;
+}
+let result;
+let unavailable = '';
+try {
+	result = tool.compute(values, BUILD_DATE);
+} catch (e) {
+	if (e instanceof RulesUnavailableError) unavailable = e.message.replace(/^[\w.[\]-]+: /, '');
+	else throw e;
+}
+const year = getYear(result?.taxYear ?? values.taxYear ?? CURRENT_YEAR.taxYear);
+const following = nextYear(year.taxYear);
+const ratesPath = `/rates/${year.taxYear}/`;
+const years = listYears();
+const touching = following ? compareYears(year, following).filter((c) => tool.touches.test(c.path) && c.to !== null) : [];
+const fmt = (v: number | string | null) => (typeof v === 'number' ? (v < 1 ? pct(v) : money(v, 0)) : String(v ?? 'not set'));
+const fieldId = (id: string) => `f-${id}`;
+const visible = (f: (typeof tool.fields)[number]) => !f.showWhen || f.showWhen.values.includes(values[f.showWhen.field]);
+---
+
+<Base title={title} description={description} breadcrumb={breadcrumb} faqs={faqs} taxYears={[year.taxYear, ...(following ? [following.taxYear] : [])]}>
+	<div class="page-head">
+		<p class="kicker"><a href="/calculators/">Calculators</a></p>
+		<h1>{h1}</h1>
+		<p class="subtitle">{subtitle}</p>
+	</div>
+
+	<div class="calc" data-calculator data-tool={tool.id} data-as-at={BUILD_DATE} data-site-url={SITE_URL} data-defaults={JSON.stringify(values)}>
+		<div class="calc-inputs">
+			<form novalidate aria-label={formLabel}>
+				{tool.fields.map((f) => (
+					<div class="field" data-field={f.id} hidden={!visible(f)}>
+						{f.type === 'money' ? (
+							<>
+								<label for={fieldId(f.id)}>{f.label}</label>
+								<div class="money-input">
+									<span class="prefix" aria-hidden="true">£</span>
+									<input type="text" inputmode="numeric" id={fieldId(f.id)} name={f.id} value={values[f.id]} placeholder={f.placeholder} autocomplete="off" />
+									{f.unit && <span class="unit">{f.unit}</span>}
+								</div>
+							</>
+						) : f.type === 'select' ? (
+							<>
+								<label for={fieldId(f.id)}>{f.label}</label>
+								<select id={fieldId(f.id)} name={f.id}>
+									{f.options!.map((o) => <option value={o.value} selected={values[f.id] === o.value}>{o.label}</option>)}
+								</select>
+							</>
+						) : f.type === 'date' ? (
+							<>
+								<label for={fieldId(f.id)}>{f.label}</label>
+								<input type="date" id={fieldId(f.id)} name={f.id} value={values[f.id]} min={years[0].starts} max={years[years.length - 1].ends} />
+							</>
+						) : (
+							<>
+								<label for={fieldId(f.id)}>{f.label}</label>
+								<select id={fieldId(f.id)} name={f.id}>
+									{years.map((y) => <option value={y.taxYear} selected={y.taxYear === values[f.id]}>{y.label}{y.taxYear === CURRENT_YEAR.taxYear ? ' (current)' : ''}</option>)}
+								</select>
+							</>
+						)}
+						{f.help && <p class="help">{f.help}</p>}
+					</div>
+				))}
+			</form>
+			<p class="small quiet">Results update as you type. Your inputs are kept in this browser and are never sent anywhere.</p>
+		</div>
+
+		<div class="calc-result" data-calculator-core>
+			<div class="figure-block" data-figure aria-live="polite" set:html={result ? renderSimpleFigure(result) : ''} />
+			<p class="what-changed" data-what-changed hidden={!result?.comparison}>{result?.comparison?.sentence}</p>
+			<div class="unavailable" data-unavailable hidden={!unavailable}>{unavailable ? `This result cannot be shown yet: ${unavailable}. Choose another nation or tax year, or check back once the rule is set.` : ''}</div>
+
+			<section class="ledger-wrap" aria-labelledby="ledger-heading">
+				<h2 id="ledger-heading">The working</h2>
+				<div data-ledger set:html={result ? renderLedger(result, { ratesPath, amountHeading: tool.amountHeading }) : ''} />
+			</section>
+		</div>
+	</div>
+
+	<section class="calc-section" id="how" aria-labelledby="how-heading">
+		<h2 id="how-heading">How this is calculated</h2>
+		<slot name="how" />
+	</section>
+
+	<AdSlot id="after-how" />
+
+	<section class="rules-used" data-rules-used aria-labelledby="rules-heading">
+		<h2 id="rules-heading">Rules used</h2>
+		<div set:html={result ? renderRulesUsed(result, { ratesPath }) : `<p>Tax year ${year.label}. Next scheduled change ${longDate(year.nextScheduledChange.date)}: ${year.nextScheduledChange.summary} Checked on ${longDate(year.nextScheduledChange.verified)}.</p>`} />
+	</section>
+
+	<section class="calc-section" aria-labelledby="next-heading">
+		<h2 id="next-heading">What changes on {longDate(year.nextScheduledChange.date)}</h2>
+		<p>{year.nextScheduledChange.summary}</p>
+		{touching.length > 0 ? (
+			<ul>
+				{touching.map((c) => <li>{pathLabel(c.path).replace(/^(.)/, (m) => m.toUpperCase())}: {fmt(c.from)} to {fmt(c.to)} ({c.status})</li>)}
+			</ul>
+		) : (
+			<p>None of the figures this tool uses is set to change on that date{following ? `, as far as ${following.label} has been announced` : ''}.</p>
+		)}
+		{following && tool.hasTaxYear && <p>You can switch the tax year above to see the result under {following.label} as announced so far.</p>}
+	</section>
+
+	<p class="status-note"><strong>What this does not do.</strong> {limits}</p>
+
+	<section class="calc-section" aria-labelledby="faq-heading">
+		<h2 id="faq-heading">Questions people ask</h2>
+		<Faq faqs={faqs} />
+	</section>
+
+	<AdSlot id="before-related" />
+
+	<Related links={related} />
+
+	<section class="calc-section" aria-labelledby="actions-heading">
+		<h2 id="actions-heading">Keep this result</h2>
+		<div class="actions" data-calculator-actions>
+			<button type="button" data-action="copy">Copy as text</button>
+			<button type="button" data-action="print">Print or save as PDF</button>
+			<button type="button" data-action="share">Copy a link with these inputs</button>
+			<button type="button" data-action="forget">Forget my inputs</button>
+			<p class="note" data-status role="status">A link carries your inputs in the part after the # sign, which stays in your browser and is never sent to us.</p>
+		</div>
+	</section>
+</Base>
+
+<style>
+	.calc-result section { margin-top: 1.5rem; }
+	.calc-result section h2 { margin-top: 0; font-size: 1.15rem; }
+	input[type='date'] {
+		font: inherit;
+		color: var(--ink);
+		background: var(--page);
+		border: 1px solid var(--quiet);
+		border-radius: 2px;
+		padding: 0.5rem 0.6rem;
+		width: 100%;
+		max-width: 22rem;
+	}
+</style>
+
+<script>
+	import '../scripts/simple';
+</script>

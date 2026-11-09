@@ -1,0 +1,73 @@
+---
+import { getYear, nextYear, resolve, NATION_LABEL } from '@money-resilience-hub/rules';
+import { money, pct, longDate } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const next = nextYear(year.taxYear);
+const asAt = BUILD_DATE;
+const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value;
+const s = year.incomeTax.savings;
+const pa = v(year.incomeTax.personalAllowance);
+const srl = v(s.startingRateLimit);
+const ceiling = v(s.startingRateIncomeCeiling);
+const psa = { basic: v(s.personalSavingsAllowance.basic), higher: v(s.personalSavingsAllowance.higher), additional: v(s.personalSavingsAllowance.additional) };
+const rates = { basic: v(s.rates.basic), higher: v(s.rates.higher), additional: v(s.rates.additional) };
+const nextRates = next ? { basic: v(next.incomeTax.savings.rates.basic, next.starts), higher: v(next.incomeTax.savings.rates.higher, next.starts), additional: v(next.incomeTax.savings.rates.additional, next.starts) } : null;
+const basicLimit = year.incomeTax.bands['england-ni'][0].upTo as number;
+const higherLimit = year.incomeTax.bands['england-ni'][1].upTo as number;
+const fullCover = pa + srl + psa.basic;
+
+const faqs = [
+	{
+		q: 'How much interest can I earn before paying tax?',
+		a: `It depends on your other income. With none, the personal allowance of ${money(pa, 0)}, the ${money(srl, 0)} starting rate for savings and the ${money(psa.basic, 0)} personal savings allowance together cover ${money(fullCover, 0)} of interest in ${year.label}. With pay or a pension above ${money(ceiling, 0)} the starting rate is gone and a basic rate taxpayer has ${money(psa.basic, 0)}, a higher rate taxpayer ${money(psa.higher, 0)} and an additional rate taxpayer ${money(psa.additional, 0)}.`,
+	},
+	{
+		q: 'What is the starting rate for savings?',
+		a: `A ${money(srl, 0)} band of interest taxed at 0%, available when your other taxable income is below ${money(ceiling, 0)}. Every pound of other income above the personal allowance reduces the band by a pound, so it is used up once pay or pension reaches ${money(ceiling, 0)}. The ledger shows how much of it is left for you.`,
+	},
+	{
+		q: 'What changes for savings interest in April 2027?',
+		a: nextRates
+			? `The savings rates rise from ${pct(rates.basic)}, ${pct(rates.higher)} and ${pct(rates.additional)} to ${pct(nextRates.basic)}, ${pct(nextRates.higher)} and ${pct(nextRates.additional)} from ${longDate(next!.starts)}, as announced at Budget 2026. The personal savings allowance and the starting rate are unchanged. The line under the figure shows the same interest under ${next!.label}.`
+			: 'No later tax year is recorded yet.',
+	},
+	{
+		q: 'How does HMRC collect tax on savings interest?',
+		a: 'Banks and building societies report the interest they paid after 5 April each year. HMRC then adjusts a tax code or sends a calculation for the previous year. Interest from an ISA is not taxed and is not reported.',
+	},
+	{
+		q: 'Is savings interest taxed differently in Scotland?',
+		a: 'No. Savings rates, the starting rate and the personal savings allowance are set for the whole UK. Scottish income tax bands apply to pay and pensions, which is what sets how much allowance and starting rate is left for interest.',
+	},
+];
+---
+
+<SimpleCalculator
+	tool="savings-tax"
+	title={`Savings tax calculator ${year.label}: tax on interest`}
+	description={`Work out the tax on savings interest for ${year.label} and under the ${next ? next.label : 'next'} rates announced at Budget 2026, with the personal savings allowance, the starting rate for savings and each rate shown with its gov.uk source.`}
+	h1="Savings interest tax calculator"
+	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. Shows how much of your interest is tax free and what the rest costs, this year and from ${next ? longDate(next.starts) : 'the next tax year'}.`}
+	breadcrumb="Savings tax calculator"
+	formLabel="Your interest and income"
+	faqs={faqs}
+	limits="It treats other income as pay or pensions taxed at the main rates and does not model dividends, a marriage allowance transfer, a tax code adjustment, Gift Aid, or interest from an ISA or from abroad. It never suggests what to do with the result."
+	related={[
+		{ title: 'Side hustle tax calculator', href: '/calculators/side-hustle-tax/', desc: 'The trading allowance this year and from April 2027.' },
+		{ title: 'Landlord tax calculator', href: '/calculators/landlord-tax/', desc: 'Rental profit at the property rates that start in April 2027.' },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'Every figure this tool uses, with its source and the date it was checked.' },
+	]}
+>
+	<Fragment slot="how">
+		<ol>
+			<li><strong>Personal allowance.</strong> Your other income uses the {money(pa, 0)} allowance first. Whatever is left goes against interest at 0%. Above {money(v(year.incomeTax.taperStart), 0)} of total income the allowance tapers.</li>
+			<li><strong>Starting rate for savings.</strong> A {money(srl, 0)} band at 0%, reduced by every pound of other income above the allowance.</li>
+			<li><strong>Personal savings allowance.</strong> {money(psa.basic, 0)} if your total taxable income is within the basic rate limit of {money(basicLimit, 0)}, {money(psa.higher, 0)} up to {money(higherLimit, 0)}, and nothing above that.</li>
+			<li><strong>Savings rates.</strong> Interest left after those is stacked on top of your other income and taxed at {pct(rates.basic)}, {pct(rates.higher)} or {pct(rates.additional)} depending on which band it lands in. Taxable amounts are rounded down to the pound.</li>
+		</ol>
+		<p>The rounding conventions are listed in the <a href="/methodology/">methodology</a>, and the formulas run from the open rules file for {year.label}.</p>
+	</Fragment>
+</SimpleCalculator>

@@ -3,7 +3,7 @@
 // default result into the page and the browser renders the same markup when
 // inputs change. Every string that is not a number or a known label is escaped.
 
-import { NATION_LABEL, STATUS_LABEL, type Breakdown, type LedgerLine, type RulerThreshold } from '@money-resilience-hub/rules';
+import { NATION_LABEL, STATUS_LABEL, type Breakdown, type LedgerLine, type RulerThreshold, type RulesUsed, type SimpleResult } from '@money-resilience-hub/rules';
 import { escapeHtml as esc, longDate, money, pct } from './format.ts';
 
 export interface RenderOptions {
@@ -11,6 +11,8 @@ export interface RenderOptions {
 	ratesPath: string;
 	/** Show the ledger's arithmetic rows open by default (salary pages). */
 	expanded?: boolean;
+	/** Heading of the amount column; "A year" unless the tool is about a one-off amount. */
+	amountHeading?: string;
 }
 
 export function renderFigure(b: Breakdown): string {
@@ -59,7 +61,7 @@ export function renderRuler(b: Breakdown): string {
 }
 
 function lineRow(l: LedgerLine, i: number, expanded: boolean): string {
-	const sign = l.sign === -1 ? '−' : '';
+	const sign = l.sign === -1 && l.amount !== 0 ? '−' : '';
 	const cls = l.sign === -1 ? 'deduction' : l.kind === 'total' ? 'total' : l.kind === 'allowance' || l.kind === 'info' ? 'info' : 'income';
 	const rate = l.rate != null ? pct(l.rate) : '';
 	const slice = l.slice != null ? money(l.slice) : '';
@@ -77,13 +79,17 @@ function lineRow(l: LedgerLine, i: number, expanded: boolean): string {
 <tr class="ledger-arith" id="${id}"${expanded ? '' : ' hidden'}><td colspan="5">${esc(l.arithmetic)}${l.provenance ? ` <span class="arith-meta">Checked ${longDate(l.provenance.verified)}, ${STATUS_LABEL[l.provenance.status].toLowerCase()}.</span>` : ''}</td></tr>`;
 }
 
-export function renderLedger(b: Breakdown, opts: RenderOptions): string {
+/** What the ledger needs: the lines, the notes under them and a caption. */
+export type LedgerSource = Pick<Breakdown, 'lines' | 'warnings' | 'label'> & Partial<Pick<Breakdown, 'gross' | 'takeHome'>> & { caption?: string };
+
+export function renderLedger(b: LedgerSource, opts: RenderOptions): string {
 	const expanded = !!opts.expanded;
 	const rows = b.lines.map((l, i) => lineRow(l, i, expanded)).join('');
+	const caption = b.caption ?? `How ${money(b.gross ?? 0, 0)} becomes ${money(b.takeHome ?? 0, 0)} in ${b.label}`;
 	return `
 <table class="ledger">
-	<caption class="visually-hidden">How ${money(b.gross, 0)} becomes ${money(b.takeHome, 0)} in ${esc(b.label)}</caption>
-	<thead><tr><th scope="col">Line</th><th scope="col" class="num">Rate</th><th scope="col" class="num">On</th><th scope="col" class="num">A year</th><th scope="col" class="src">Source</th></tr></thead>
+	<caption class="visually-hidden">${esc(caption)}</caption>
+	<thead><tr><th scope="col">Line</th><th scope="col" class="num">Rate</th><th scope="col" class="num">On</th><th scope="col" class="num">${esc(opts.amountHeading ?? 'A year')}</th><th scope="col" class="src">Source</th></tr></thead>
 	<tbody>${rows}</tbody>
 </table>
 ${b.warnings.length ? `<ul class="ledger-notes">${b.warnings.map((w) => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}`;
@@ -112,7 +118,7 @@ export function renderBar(b: Breakdown): string {
 <ul class="bar-legend">${legend}</ul>`;
 }
 
-export function renderRulesUsed(b: Breakdown, opts: RenderOptions): string {
+export function renderRulesUsed(b: { rulesUsed: RulesUsed }, opts: RenderOptions): string {
 	const r = b.rulesUsed;
 	const checked = r.verifiedFrom === r.verifiedTo ? `Checked on ${longDate(r.verifiedTo)}` : `Checked between ${longDate(r.verifiedFrom)} and ${longDate(r.verifiedTo)}`;
 	return `
@@ -140,3 +146,26 @@ export function toText(b: Breakdown, siteUrl: string, path: string): string {
 }
 
 export type { RulerThreshold };
+
+/** The headline of a single-purpose tool: the amount, its unit, the secondary figures and one sentence. */
+export function renderSimpleFigure(r: SimpleResult): string {
+	const figures = r.figures.map((f) => `<div><dt>${esc(f.label)}</dt><dd>${f.rate ? pct(f.amount) : money(f.amount, 0)}</dd></div>`).join('');
+	return `
+<p class="figure-label">${esc(r.headline.label)}</p>
+<p class="figure"><span class="figure-amount">${money(r.headline.amount, 0)}</span><span class="figure-period">${esc(r.headline.unit)}</span></p>
+<dl class="figure-periods">${figures}</dl>
+<p class="figure-rates">${esc(r.note)}</p>`;
+}
+
+/** Plain text of a simple result, for the copy action. */
+export function simpleToText(r: SimpleResult, siteUrl: string, path: string): string {
+	const lines = [`${r.headline.label}: ${money(r.headline.amount)} ${r.headline.unit} in ${r.label}`, r.note, ''];
+	for (const l of r.lines) {
+		const amount = `${l.sign === -1 ? '-' : ''}${money(l.amount)}`;
+		lines.push(`${l.label}${l.rate != null ? ` at ${pct(l.rate)}` : ''}${l.slice != null ? ` on ${money(l.slice)}` : ''}: ${amount}`);
+	}
+	if (r.comparison) lines.push('', r.comparison.sentence);
+	lines.push('', `Rules: ${r.label}, checked ${longDate(r.rulesUsed.verifiedTo)}. Sources: ${r.rulesUsed.sources.map((s) => s.source).join(', ')}`);
+	lines.push(`${siteUrl}${path}`);
+	return lines.join('\n');
+}

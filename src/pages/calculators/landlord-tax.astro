@@ -1,0 +1,71 @@
+---
+import { getYear, nextYear, resolve, NATION_LABEL } from '@money-resilience-hub/rules';
+import { money, pct, longDate } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const next = nextYear(year.taxYear);
+const asAt = BUILD_DATE;
+const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value;
+const allowance = v(year.incomeTax.propertyAllowance!);
+const pa = v(year.incomeTax.personalAllowance);
+const rates = { basic: v(year.incomeTax.property.rates.basic), higher: v(year.incomeTax.property.rates.higher), additional: v(year.incomeTax.property.rates.additional) };
+const nextRates = next ? { basic: v(next.incomeTax.property.rates.basic, next.starts), higher: v(next.incomeTax.property.rates.higher, next.starts), additional: v(next.incomeTax.property.rates.additional, next.starts) } : null;
+const basicLimit = year.incomeTax.bands['england-ni'][0].upTo as number;
+const scotlandNote = next?.incomeTax.property.scotlandRates?.note ?? '';
+
+const faqs = [
+	{
+		q: 'How much rent can I receive before paying tax?',
+		a: `The first ${money(allowance, 0)} of property income in a tax year is covered by the property allowance. Above that, rent less allowable expenses is added to your other income and taxed in the band it lands in. Rent over ${money(allowance, 0)} has to be reported to HMRC even when no tax is due.`,
+	},
+	{
+		q: 'What changes for landlords in April 2027?',
+		a: nextRates
+			? `From ${longDate(next!.starts)} rental profit in England, Wales and Northern Ireland is taxed at the property rates of ${pct(nextRates.basic)}, ${pct(nextRates.higher)} and ${pct(nextRates.additional)} instead of the main rates of ${pct(rates.basic)}, ${pct(rates.higher)} and ${pct(rates.additional)}. The line under the figure shows the same rent under ${next!.label}.`
+			: 'No later tax year is recorded yet.',
+	},
+	{
+		q: 'Can I claim expenses and the property allowance?',
+		a: `No. You deduct either the ${money(allowance, 0)} allowance or your actual expenses, whichever you choose. This tool deducts the larger of the two, and the ledger says which it used.`,
+	},
+	{
+		q: 'Is mortgage interest an allowable expense?',
+		a: 'Not for an individual landlord. Finance costs are relieved separately as a reduction of 20% of the interest, which this tool does not model, so a landlord with a mortgage pays less than the figure shown.',
+	},
+	{
+		q: 'What about Scotland?',
+		a: scotlandNote
+			? `In ${year.label} a Scottish taxpayer pays Scottish income tax on rental profit, which the tool shows. ${scotlandNote} Until then the tool shows ${next!.label} for Scotland as not set.`
+			: `In ${year.label} a Scottish taxpayer pays Scottish income tax on rental profit, which the tool shows.`,
+	},
+];
+---
+
+<SimpleCalculator
+	tool="landlord-tax"
+	title={`Landlord tax calculator ${year.label}: tax on rental profit`}
+	description={`Work out the tax on rental profit for ${year.label} and under the property rates that start in April 2027, with the property allowance, expenses and each rate shown with its gov.uk source.`}
+	h1="Landlord tax calculator"
+	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. Rent less expenses or the property allowance, taxed on top of your other income, this year and from ${next ? longDate(next.starts) : 'the next tax year'}.`}
+	breadcrumb="Landlord tax calculator"
+	formLabel="Your rent, expenses and income"
+	faqs={faqs}
+	limits="It does not model mortgage interest relief, losses carried forward, furnished holiday lettings, the rent a room scheme, jointly owned property, or a tax code adjustment. Scotland is shown as not set from April 2027 until the Scottish rates are published. It never suggests what to do with the result."
+	related={[
+		{ title: 'Savings interest tax calculator', href: '/calculators/savings-tax/', desc: 'The savings rates rise on the same day as the property rates.' },
+		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'The pay that the rental profit sits on top of.' },
+		{ title: 'Budget 2026: what changes on 6 April 2027', href: '/budget/2026-autumn/', desc: 'The measures that touch savings, property and allowances, with worked examples.' },
+	]}
+>
+	<Fragment slot="how">
+		<ol>
+			<li><strong>Profit.</strong> Rent received less either your allowable expenses or the {money(allowance, 0)} property allowance, never both. The tool deducts whichever is larger.</li>
+			<li><strong>Personal allowance.</strong> Your other income uses the {money(pa, 0)} allowance first. Whatever is left goes against the profit at 0%. Above {money(v(year.incomeTax.taperStart), 0)} of total income the allowance tapers.</li>
+			<li><strong>Rates.</strong> The taxable profit is stacked on top of your other income. In {year.label} it is taxed at the main rates: {pct(rates.basic)} within the basic rate limit of {money(basicLimit, 0)}, then {pct(rates.higher)} and {pct(rates.additional)}. {nextRates ? `From ${longDate(next!.starts)} the property rates of ${pct(nextRates.basic)}, ${pct(nextRates.higher)} and ${pct(nextRates.additional)} apply in England, Wales and Northern Ireland.` : ''} Taxable amounts are rounded down to the pound.</li>
+			<li><strong>Scotland.</strong> Scottish taxpayers pay Scottish income tax on rental profit at the Scottish bands. {scotlandNote}</li>
+		</ol>
+		<p>The rounding conventions are listed in the <a href="/methodology/">methodology</a>, and the formulas run from the open rules file for {year.label}.</p>
+	</Fragment>
+</SimpleCalculator>

@@ -36,14 +36,14 @@ const examples = [30000, 50000, 80000].map((gross) => {
 	return { gross, now: now.takeHome, next: next.takeHome, diff: Math.round((next.takeHome - now.takeHome) * 100) / 100 };
 });
 
-const measures = [
-	{ measure: 'Savings income rates', from: `${pct(savingsNow.basic)}, ${pct(savingsNow.higher)}, ${pct(savingsNow.additional)}`, to: `${pct(savings.basic)}, ${pct(savings.higher)}, ${pct(savings.additional)}`, effective: y27.starts, tool: 'Savings tax (coming)', status: y27.incomeTax.savings.rates.basic.status },
-	{ measure: 'Property income rates (England, Wales and Northern Ireland)', from: 'Main rates', to: `${pct(savings.basic)}, ${pct(savings.higher)}, ${pct(savings.additional)}`, effective: y27.starts, tool: 'Landlord tax (coming)', status: y27.incomeTax.property.rates.basic.status },
-	{ measure: 'Trading allowance', from: money(trading.now, 0), to: money(trading.next, 0), effective: y27.starts, tool: 'Side hustle tax (coming)', status: y27.incomeTax.tradingAllowance.status },
-	{ measure: 'Pension Tax Allowance', from: 'None', to: `Up to ${money(ptaMax, 0)} for people over State Pension age with income up to ${money(nsp, 2)}`, effective: y27.starts, tool: 'State pension tax (coming)', status: pta.rate.status },
-	{ measure: `Mileage rate above ${mileage.miles.toLocaleString('en-GB')} miles`, from: `${Math.round(mileage.now * 100)}p`, to: `${Math.round(mileage.next * 100)}p`, effective: y27.starts, tool: 'Mileage allowance (coming)', status: y27.mileage!.carAfterRate.status },
-	{ measure: `Lifetime ISA charge on a first home over ${money(lisa.cap, 0)}`, from: pct(lisa.std), to: pct(lisa.over), effective: lisa.from, tool: 'Lifetime ISA penalty (coming)', status: y26.isa!.lifetimeIsa!.firstHomeOverCapCharge.status },
-	{ measure: 'National Insurance lower earnings limit', from: money(lel.now, 0), to: money(lel.next, 0), effective: y27.starts, tool: 'Take-home pay (no effect on deductions)', status: y27.nationalInsurance.employee.lowerEarningsLimit.status },
+const measures: { measure: string; from: string; to: string; effective: string; tool: { title: string; href?: string }; status: string }[] = [
+	{ measure: 'Savings income rates', from: `${pct(savingsNow.basic)}, ${pct(savingsNow.higher)}, ${pct(savingsNow.additional)}`, to: `${pct(savings.basic)}, ${pct(savings.higher)}, ${pct(savings.additional)}`, effective: y27.starts, tool: { title: 'Savings tax', href: '/calculators/savings-tax/' }, status: y27.incomeTax.savings.rates.basic.status },
+	{ measure: 'Property income rates (England, Wales and Northern Ireland)', from: 'Main rates', to: `${pct(savings.basic)}, ${pct(savings.higher)}, ${pct(savings.additional)}`, effective: y27.starts, tool: { title: 'Landlord tax', href: '/calculators/landlord-tax/' }, status: y27.incomeTax.property.rates.basic.status },
+	{ measure: 'Trading allowance', from: money(trading.now, 0), to: money(trading.next, 0), effective: y27.starts, tool: { title: 'Side hustle tax', href: '/calculators/side-hustle-tax/' }, status: y27.incomeTax.tradingAllowance.status },
+	{ measure: 'Pension Tax Allowance', from: 'None', to: `Up to ${money(ptaMax, 0)} for people over State Pension age with income up to ${money(nsp, 2)}`, effective: y27.starts, tool: { title: 'State Pension tax', href: '/calculators/state-pension-tax/' }, status: pta.rate.status },
+	{ measure: `Mileage rate above ${mileage.miles.toLocaleString('en-GB')} miles`, from: `${Math.round(mileage.now * 100)}p`, to: `${Math.round(mileage.next * 100)}p`, effective: y27.starts, tool: { title: 'Mileage allowance (coming)' }, status: y27.mileage!.carAfterRate.status },
+	{ measure: `Lifetime ISA charge on a first home over ${money(lisa.cap, 0)}`, from: pct(lisa.std), to: pct(lisa.over), effective: lisa.from, tool: { title: 'Lifetime ISA penalty', href: '/calculators/lifetime-isa-penalty/' }, status: y26.isa!.lifetimeIsa!.firstHomeOverCapCharge.status },
+	{ measure: 'National Insurance lower earnings limit', from: money(lel.now, 0), to: money(lel.next, 0), effective: y27.starts, tool: { title: 'Take-home pay (no effect on deductions)', href: '/calculators/take-home-pay/' }, status: y27.nationalInsurance.employee.lowerEarningsLimit.status },
 ];
 
 const sources = [...new Set([...changes.map((c) => c.source), y26.nextScheduledChange.source].filter(Boolean))];
@@ -64,7 +64,7 @@ const sources = [...new Set([...changes.map((c) => c.source), y26.nextScheduledC
 			<thead><tr><th scope="col">Measure</th><th scope="col">Before</th><th scope="col">After</th><th scope="col">Effective</th><th scope="col">Status</th><th scope="col">Tool</th></tr></thead>
 			<tbody>
 				{measures.map((m) => (
-					<tr><th scope="row">{m.measure}</th><td>{m.from}</td><td>{m.to}</td><td>{longDate(m.effective)}</td><td class={`status-${m.status}`}>{m.status}</td><td>{m.tool}</td></tr>
+					<tr><th scope="row">{m.measure}</th><td>{m.from}</td><td>{m.to}</td><td>{longDate(m.effective)}</td><td class={`status-${m.status}`}>{m.status}</td><td>{m.tool.href ? <a href={m.tool.href}>{m.tool.title}</a> : m.tool.title}</td></tr>
 				))}
 			</tbody>
 		</table>
@@ -79,7 +79,7 @@ const sources = [...new Set([...changes.map((c) => c.source), y26.nextScheduledC
 				))}
 			</tbody>
 		</table>
-		<p>The differences are nil because every figure that touches a salary is frozen. Anyone with savings interest above their allowance, rental income or a trade will see a change; those tools follow once each rule is verified.</p>
+		<p>The differences are nil because every figure that touches a salary is frozen. Anyone with savings interest above their allowance, rental income or a trade will see a change: the <a href="/calculators/savings-tax/">savings</a>, <a href="/calculators/landlord-tax/">landlord</a> and <a href="/calculators/side-hustle-tax/">side hustle</a> tools show the same inputs under both years, and the <a href="/calculators/state-pension-tax/">State Pension tool</a> shows what the Pension Tax Allowance removes.</p>
 
 		<h2>What has not changed</h2>
 		<ul>

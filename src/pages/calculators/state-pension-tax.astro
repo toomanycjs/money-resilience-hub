@@ -1,0 +1,74 @@
+---
+import { getYear, nextYear, resolve, round2, NATION_LABEL } from '@money-resilience-hub/rules';
+import { money, pct, longDate } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const next = nextYear(year.taxYear);
+const asAt = BUILD_DATE;
+const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value;
+const pa = v(year.incomeTax.personalAllowance);
+const weekly = v(year.statePension!.fullNewWeekly);
+const annual = round2(weekly * 52);
+const ptaYear = year.pensionTaxAllowance ? year : next?.pensionTaxAllowance ? next : null;
+const pta = ptaYear?.pensionTaxAllowance ?? null;
+const ptaAt = ptaYear?.starts ?? asAt;
+const nsp = pta ? v(pta.fullNewStatePension, ptaAt) : null;
+const ptaMax = pta && nsp !== null ? Math.ceil(v(pta.rate, ptaAt) * (nsp - v(ptaYear!.incomeTax.personalAllowance, ptaAt))) : null;
+const withdrawnAt = pta && nsp !== null && ptaMax !== null ? round2(nsp + ptaMax * v(pta.taperDivisor, ptaAt)) : null;
+const basicRate = year.incomeTax.bands['england-ni'][0].rate as number;
+
+const faqs = [
+	{
+		q: 'Is the State Pension taxable?',
+		a: `Yes. The State Pension counts as income, but it is paid without tax taken off. In ${year.label} the full new State Pension is ${money(weekly, 2)} a week, ${money(annual, 2)} a year, which is ${annual > pa ? 'above' : 'below'} the ${money(pa, 0)} personal allowance. Any tax due is collected through the tax code on another pension or earnings, or by an assessment from HMRC.`,
+	},
+	{
+		q: 'What is the Pension Tax Allowance?',
+		a: pta && ptaYear && nsp !== null && ptaMax !== null && withdrawnAt !== null
+			? `A reduction in income tax for people over State Pension age from ${longDate(ptaYear.starts)}, worth up to ${money(ptaMax, 0)} in ${ptaYear.label}. Anyone with total income up to the full new State Pension of ${money(nsp, 2)} gets the full amount; above that it falls by £1 for every £3 of income and is gone at ${money(withdrawnAt, 0)}. HMRC applies it automatically.`
+			: 'No Pension Tax Allowance is recorded for a tax year this tool covers.',
+	},
+	{
+		q: 'Does the Pension Tax Allowance change my personal allowance?',
+		a: `No. The ${money(pa, 0)} personal allowance stays the same. The Pension Tax Allowance reduces the tax worked out after the personal allowance, so it only matters when total income is above ${money(pa, 0)}.`,
+	},
+	{
+		q: 'What counts as income for the Pension Tax Allowance?',
+		a: 'All of it: the State Pension, private pensions, earnings, self-employment profits, savings interest, property income and dividends. The tool adds the State Pension to the other income you enter and tests the total.',
+	},
+	{
+		q: 'How much tax do I pay on a private pension on top of the State Pension?',
+		a: `Each pound of total income above the ${money(pa, 0)} allowance is taxed at ${pct(basicRate)} until the higher rate starts. The ledger shows the band each slice lands in, and the Pension Tax Allowance line shows what it removes.`,
+	},
+];
+---
+
+<SimpleCalculator
+	tool="state-pension-tax"
+	title={`State Pension tax calculator ${year.label} and April 2027`}
+	description={`Work out the income tax on the State Pension and other pension income for ${year.label}, and what the Pension Tax Allowance removes from April 2027, with every figure shown with its gov.uk source.`}
+	h1="State Pension tax calculator"
+	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. The State Pension plus other income against the personal allowance, and the Pension Tax Allowance that begins on ${pta && ptaYear ? longDate(ptaYear.starts) : 'a later date'}.`}
+	breadcrumb="State Pension tax calculator"
+	form={{ statePension: String(annual) }}
+	formLabel="Your pension and income"
+	faqs={faqs}
+	limits="It treats other income as pensions or earnings taxed at the main rates and does not model savings allowances, dividends, a marriage allowance transfer, a tax code adjustment, National Insurance on earnings (none is due over State Pension age) or the year someone reaches State Pension age. It never suggests what to do with the result."
+	related={[
+		{ title: 'Savings interest tax calculator', href: '/calculators/savings-tax/', desc: 'Interest on top of a pension, with the starting rate for savings.' },
+		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'Earnings before State Pension age, with National Insurance.' },
+		{ title: 'Budget 2026: what changes on 6 April 2027', href: '/budget/2026-autumn/', desc: 'The Pension Tax Allowance and the other measures, with worked examples.' },
+	]}
+>
+	<Fragment slot="how">
+		<ol>
+			<li><strong>Total income.</strong> The State Pension plus the other income you enter. The full new State Pension in {year.label} is {money(weekly, 2)} a week, pre-filled as {money(annual, 2)} a year.</li>
+			<li><strong>Personal allowance.</strong> The first {money(pa, 0)} is taxed at 0%. Above {money(v(year.incomeTax.taperStart), 0)} of income the allowance tapers.</li>
+			<li><strong>Income tax.</strong> Income above the allowance is taxed band by band at the rates for where you live. Taxable income is rounded down to the pound.</li>
+			<li><strong>Pension Tax Allowance.</strong> {pta && ptaYear && nsp !== null && ptaMax !== null && withdrawnAt !== null ? `From ${longDate(ptaYear.starts)}, up to ${money(ptaMax, 0)} comes off the tax for anyone over State Pension age. The full amount applies when total income is at or below ${money(nsp, 2)}; it then falls by £1 for every £3 of income and reaches zero at ${money(withdrawnAt, 0)}. It cannot reduce the tax below nil.` : 'None is recorded for the years this tool covers.'}</li>
+		</ol>
+		<p>The rounding conventions are listed in the <a href="/methodology/">methodology</a>, and the formulas run from the open rules file for {year.label}.</p>
+	</Fragment>
+</SimpleCalculator>

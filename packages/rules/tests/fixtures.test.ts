@@ -6,21 +6,30 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { getYear, incomeTax, marriageAllowanceSaving, pensionTaxAllowance, takeHome, type Nation, type Plan } from '../src/index';
+import { getYear, incomeTax, landlordTax, lifetimeIsaPenalty, marriageAllowanceSaving, pensionTaxAllowance, savingsTax, sideHustleTax, statePensionTax, takeHome, type Nation, type Plan, type SimpleResult } from '../src/index';
 
 const DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures');
 
 interface Fixture {
 	id: string;
 	title: string;
-	fn?: 'takeHome' | 'pensionTaxAllowance' | 'marriageAllowanceSaving';
+	fn?: 'takeHome' | 'pensionTaxAllowance' | 'marriageAllowanceSaving' | keyof typeof SIMPLE;
 	taxYear: string;
 	asAt?: string;
 	sources: string[];
-	input: { gross?: number; nation: Nation; taxCode?: string; studentLoanPlans?: Plan[] };
-	expected: Record<string, number>;
+	input: { gross?: number; nation: Nation; taxCode?: string; studentLoanPlans?: Plan[] } & Record<string, unknown>;
+	expected: Record<string, number | string>;
 	tolerance?: number;
 }
+
+/** The single-purpose tools: each takes its fixture input plus the year and date, and reports named facts. */
+const SIMPLE: Record<string, (input: Record<string, unknown>, taxYear: string, asAt: string) => SimpleResult> = {
+	savingsTax: (i, taxYear, asAt) => savingsTax({ ...(i as unknown as Parameters<typeof savingsTax>[0]), taxYear, asAt }),
+	landlordTax: (i, taxYear, asAt) => landlordTax({ ...(i as unknown as Parameters<typeof landlordTax>[0]), taxYear, asAt }),
+	statePensionTax: (i, taxYear, asAt) => statePensionTax({ ...(i as unknown as Parameters<typeof statePensionTax>[0]), taxYear, asAt }),
+	sideHustleTax: (i, taxYear, asAt) => sideHustleTax({ ...(i as unknown as Parameters<typeof sideHustleTax>[0]), taxYear, asAt }),
+	lifetimeIsaPenalty: (i) => lifetimeIsaPenalty(i as unknown as Parameters<typeof lifetimeIsaPenalty>[0]),
+};
 
 const files = readdirSync(DIR).filter((f) => f.endsWith('.json'));
 
@@ -44,7 +53,20 @@ for (const file of files) {
 					return;
 				}
 				if (f.fn === 'marriageAllowanceSaving') {
-					expect(marriageAllowanceSaving(getYear(f.taxYear), f.input.nation, asAt)).toBeCloseTo(f.expected.saving, 2);
+					expect(marriageAllowanceSaving(getYear(f.taxYear), f.input.nation, asAt)).toBeCloseTo(f.expected.saving as number, 2);
+					return;
+				}
+				if (f.fn && f.fn in SIMPLE) {
+					const r = SIMPLE[f.fn](f.input, f.taxYear, asAt);
+					expect(r.taxYear).toBe(f.taxYear);
+					for (const [k, v] of Object.entries(f.expected)) {
+						const got = r.facts[k];
+						if (typeof v === 'string') expect(got, k).toBe(v);
+						else expect(Math.abs((got as number) - v), `${k}: expected ${v}, got ${got}`).toBeLessThanOrEqual(tol);
+					}
+					for (const line of r.lines.filter((l) => l.kind === 'band' || l.kind === 'deduction')) {
+						expect(line.provenance?.source, `${f.id}: ${line.label}`).toMatch(/^https:\/\//);
+					}
 					return;
 				}
 				const r = takeHome({ gross: f.input.gross as number, nation: f.input.nation, taxCode: f.input.taxCode, studentLoanPlans: f.input.studentLoanPlans ?? [], taxYear: f.taxYear, asAt });
@@ -56,7 +78,7 @@ for (const file of files) {
 					takeHome: r.takeHome,
 				};
 				for (const [k, v] of Object.entries(f.expected)) {
-					expect(Math.abs(got[k] - v), `${k}: expected ${v}, got ${got[k]}`).toBeLessThanOrEqual(tol);
+					expect(Math.abs(got[k] - (v as number)), `${k}: expected ${v}, got ${got[k]}`).toBeLessThanOrEqual(tol);
 				}
 			});
 		}

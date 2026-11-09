@@ -283,6 +283,14 @@
       "verified": "2026-11-07",
       "status": "in-force",
       "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-increasing-the-trading-allowance-increasing-the-trading-allowance.html"
+    },
+    "propertyAllowance": {
+      "value": 1000,
+      "source": "https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income",
+      "verified": "2026-11-08",
+      "status": "in-force",
+      "note": "The first £1,000 of property income is tax free; it cannot be used together with expenses",
+      "archived": "archive/2026-11-08/www-gov-uk-guidance-tax-free-allowances-on-property-and-trading-income.html"
     }
   },
   "nationalInsurance": {
@@ -652,7 +660,8 @@
         "source": "https://www.gov.uk/government/publications/tax-free-savings-newsletter-24/tax-free-savings-newsletter-24-october-2026",
         "verified": "2026-11-07",
         "status": "in-force",
-        "archived": "archive/2026-11-07/www-gov-uk-government-publications-tax-free-savings-newsletter-24-tax-free-savings-newsletter-24-october-2026.html"
+        "archived": "archive/2026-11-07/www-gov-uk-government-publications-tax-free-savings-newsletter-24-tax-free-savings-newsletter-24-october-2026.html",
+        "note": "Applies to any withdrawal other than a first home at or under the price cap, age 60 or over, terminal illness or death"
       },
       "firstHomeOverCapCharge": {
         "value": 0.2,
@@ -668,8 +677,33 @@
           "archived": "archive/2026-11-07/www-gov-uk-government-publications-tax-free-savings-newsletter-24-tax-free-savings-newsletter-24-october-2026.html"
         },
         "archived": "archive/2026-11-07/www-gov-uk-government-publications-tax-free-savings-newsletter-24-tax-free-savings-newsletter-24-october-2026.html"
+      },
+      "bonusRate": {
+        "value": 0.25,
+        "source": "https://www.gov.uk/lifetime-isa",
+        "verified": "2026-11-08",
+        "status": "in-force",
+        "note": "Government bonus on money paid in, up to £1,000 a year",
+        "archived": "archive/2026-11-08/www-gov-uk-lifetime-isa.html"
+      },
+      "annualLimit": {
+        "value": 4000,
+        "source": "https://www.gov.uk/lifetime-isa",
+        "verified": "2026-11-08",
+        "status": "in-force",
+        "archived": "archive/2026-11-08/www-gov-uk-lifetime-isa.html"
       }
     }
   },
-  "pensionTaxAllowance": null
+  "pensionTaxAllowance": null,
+  "statePension": {
+    "fullNewWeekly": {
+      "value": 241.3,
+      "source": "https://www.gov.uk/government/publications/benefit-and-pension-rates-2026-to-2027/proposed-benefit-and-pension-rates-2026-to-2027",
+      "verified": "2026-11-08",
+      "status": "in-force",
+      "note": "Full rate of the new State Pension, 2026 to 2027",
+      "archived": "archive/2026-11-08/www-gov-uk-government-publications-benefit-and-pension-rates-2026-to-2027-proposed-benefit-and-pension-rates-2026-to-2027.html"
+    }
+  }
 }

@@ -98,6 +98,7 @@ export interface YearConfig {
 		property: { rates: { basic: Leaf; higher: Leaf; additional: Leaf }; scotlandRates?: Leaf<unknown> };
 		dividends: { allowance: Leaf; rates: { basic: Leaf; higher: Leaf; additional: Leaf } };
 		tradingAllowance: Leaf;
+		propertyAllowance?: Leaf;
 	};
 	nationalInsurance: {
 		employee: { mainRate: Leaf; upperRate: Leaf; lowerEarningsLimit: Leaf; primaryThreshold: Leaf; upperEarningsLimit: Leaf };
@@ -109,8 +110,47 @@ export interface YearConfig {
 	statutoryPay: { ssp: { weekly: Leaf; earningsFraction: Leaf; maxWeeks: Leaf }; smp?: { weekly: Leaf; earningsFraction: Leaf; fullRateWeeks: Leaf } };
 	minimumWage?: { effectiveFrom: string; age21AndOver: Leaf; age18To20: Leaf; under18: Leaf; apprentice: Leaf };
 	mileage?: { carFirstRate: Leaf; carFirstMiles: Leaf; carAfterRate: Leaf; motorcycle?: Leaf; cycle?: Leaf };
-	isa?: { annualLimit: Leaf; cashLimit?: Leaf; lifetimeIsa?: { propertyCap: Leaf; withdrawalCharge: Leaf; firstHomeOverCapCharge: Leaf } };
+	isa?: { annualLimit: Leaf; cashLimit?: Leaf; lifetimeIsa?: { propertyCap: Leaf; withdrawalCharge: Leaf; firstHomeOverCapCharge: Leaf; bonusRate?: Leaf; annualLimit?: Leaf } };
 	pensionTaxAllowance: null | { effectiveFrom: string; fullNewStatePension: Leaf; rate: Leaf; taperDivisor: Leaf; lastYear: Leaf<string> };
+	statePension?: { fullNewWeekly: Leaf };
+}
+
+/** A figure shown under the headline of a simple tool. */
+export interface SimpleFigure {
+	label: string;
+	amount: number;
+	/** Shown as a rate rather than money when true. */
+	rate?: boolean;
+}
+
+/** The same inputs under the following tax year, or why that cannot be shown. */
+export interface YearComparison {
+	taxYear: string;
+	label: string;
+	amount: number | null;
+	difference: number | null;
+	sentence: string;
+}
+
+/** What the single-purpose tools return: a headline, a ledger and the rules used. */
+export interface SimpleResult {
+	tool: string;
+	taxYear: string;
+	label: string;
+	nation: Nation;
+	asAt: string;
+	headline: { label: string; amount: number; unit: string };
+	figures: SimpleFigure[];
+	/** One sentence under the figure on the rule that decided the result. */
+	note: string;
+	lines: LedgerLine[];
+	/** Caption for the ledger table. */
+	caption: string;
+	comparison: YearComparison | null;
+	rulesUsed: RulesUsed;
+	warnings: string[];
+	/** Named figures for the fixtures and the copy action. */
+	facts: Record<string, number | string>;
 }
 
 export interface PensionInput {

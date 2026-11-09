@@ -1,0 +1,57 @@
+[
+  {
+    "id": "lisa-govuk-example-1000",
+    "title": "gov.uk: £800 paid in earns a £200 bonus; withdrawing the £1,000 for another reason costs a £250 charge and leaves £750",
+    "fn": "lifetimeIsaPenalty",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/lifetime-isa/withdrawing-money-from-your-lifetime-isa"],
+    "input": { "amount": 1000, "reason": "other", "date": "2026-11-08" },
+    "expected": { "rate": 0.25, "charge": 250, "received": 750, "lossVsPaidIn": 50 },
+    "working": "1,000 x 25% = 250. 1,000 - 250 = 750, which is 50 less than the 800 paid in."
+  },
+  {
+    "id": "lisa-govuk-example-160",
+    "title": "gov.uk: withdrawing £160 to cover a £120 bill costs a £40 charge",
+    "fn": "lifetimeIsaPenalty",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/lifetime-isa/withdrawing-money-from-your-lifetime-isa"],
+    "input": { "amount": 160, "reason": "other", "date": "2026-11-08" },
+    "expected": { "rate": 0.25, "charge": 40, "received": 120 }
+  },
+  {
+    "id": "lisa-first-home-under-cap",
+    "title": "gov.uk: a first home at or under the £450,000 cap carries no charge",
+    "fn": "lifetimeIsaPenalty",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/lifetime-isa/withdrawing-money-from-your-lifetime-isa"],
+    "input": { "amount": 20000, "reason": "first-home", "homePrice": 450000, "date": "2026-11-08" },
+    "expected": { "rate": 0, "charge": 0, "received": 20000 }
+  },
+  {
+    "id": "lisa-first-home-over-cap-after-29-october-2026",
+    "title": "HMRC newsletter 24: from 29 October 2026 a first home over £450,000 carries a 20% charge rather than 25%",
+    "fn": "lifetimeIsaPenalty",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/government/publications/tax-free-savings-newsletter-24/tax-free-savings-newsletter-24-october-2026", "https://www.gov.uk/lifetime-isa/withdrawing-money-from-your-lifetime-isa"],
+    "input": { "amount": 20000, "reason": "first-home", "homePrice": 500000, "date": "2026-10-29" },
+    "expected": { "rate": 0.2, "charge": 4000, "received": 16000 }
+  },
+  {
+    "id": "lisa-first-home-over-cap-before-29-october-2026",
+    "title": "HMRC newsletter 24: the reduced charge is not retrospective; the day before, the same withdrawal carried the 25% charge",
+    "fn": "lifetimeIsaPenalty",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/government/publications/tax-free-savings-newsletter-24/tax-free-savings-newsletter-24-october-2026"],
+    "input": { "amount": 20000, "reason": "first-home", "homePrice": 500000, "date": "2026-10-28" },
+    "expected": { "rate": 0.25, "charge": 5000, "received": 15000 }
+  },
+  {
+    "id": "lisa-age-60-no-charge",
+    "title": "gov.uk: from age 60 money can be taken out with no charge",
+    "fn": "lifetimeIsaPenalty",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/lifetime-isa/withdrawing-money-from-your-lifetime-isa"],
+    "input": { "amount": 5000, "reason": "age-60", "date": "2026-11-08" },
+    "expected": { "rate": 0, "charge": 0, "received": 5000 }
+  }
+]

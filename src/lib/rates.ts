@@ -43,6 +43,7 @@ const LABELS: Record<string, string> = {
 	'incomeTax.dividends.rates.higher': 'Dividend upper rate',
 	'incomeTax.dividends.rates.additional': 'Dividend additional rate',
 	'incomeTax.tradingAllowance': 'Trading allowance',
+	'incomeTax.propertyAllowance': 'Property allowance',
 	'nationalInsurance.employee.mainRate': 'Employee main rate',
 	'nationalInsurance.employee.upperRate': 'Employee rate above the upper earnings limit',
 	'nationalInsurance.employee.lowerEarningsLimit': 'Lower earnings limit',
@@ -92,6 +93,9 @@ const LABELS: Record<string, string> = {
 	'isa.lifetimeIsa.propertyCap': 'Lifetime ISA property price cap',
 	'isa.lifetimeIsa.withdrawalCharge': 'Lifetime ISA withdrawal charge',
 	'isa.lifetimeIsa.firstHomeOverCapCharge': 'Lifetime ISA charge, first home above the cap',
+	'isa.lifetimeIsa.bonusRate': 'Lifetime ISA government bonus',
+	'isa.lifetimeIsa.annualLimit': 'Lifetime ISA annual limit',
+	'statePension.fullNewWeekly': 'Full new State Pension, weekly',
 	'pensionTaxAllowance.fullNewStatePension': 'Full new State Pension, annual',
 	'pensionTaxAllowance.rate': 'Pension Tax Allowance rate on the gap above the personal allowance',
 	'pensionTaxAllowance.taperDivisor': 'Pension Tax Allowance: income per £1 withdrawn',
@@ -107,6 +111,7 @@ const SECTIONS: { id: string; heading: string; prefix: string }[] = [
 	{ id: 'minimum-wage', heading: 'Minimum wage', prefix: 'minimumWage.' },
 	{ id: 'mileage', heading: 'Mileage allowance', prefix: 'mileage.' },
 	{ id: 'isa', heading: 'ISAs', prefix: 'isa.' },
+	{ id: 'state-pension', heading: 'State Pension', prefix: 'statePension.' },
 	{ id: 'pension-tax-allowance', heading: 'Pension Tax Allowance', prefix: 'pensionTaxAllowance.' },
 ];
 
@@ -121,7 +126,7 @@ function format(path: string, value: unknown): string {
 	if (/mileage\.\w+Rate$|mileage\.(motorcycle|cycle)$/.test(path)) return `${Math.round(value * 100)}p`;
 	if (/Miles$|maxWeeks$|fullRateWeeks$|taperDivisor$|chargeStep$/.test(path)) return path.endsWith('chargeStep') ? money(value, 0) : String(value);
 	if (/[rR]ate$|[fF]raction$|Charge$|rates\.(basic|higher|additional)$/.test(path)) return pct(value);
-	if (/minimumWage|class2Weekly|weekly$|weeklyEldest|weeklyAdditional|fullNewStatePension/.test(path)) return money(value, 2);
+	if (/minimumWage|class2Weekly|weekly$|[wW]eekly$|weeklyEldest|weeklyAdditional|fullNewStatePension/.test(path)) return money(value, 2);
 	return money(value, 0);
 }
 

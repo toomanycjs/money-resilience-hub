@@ -1,0 +1,51 @@
+[
+  {
+    "id": "side-hustle-within-allowance",
+    "title": "gov.uk: trading income of £900 is within the £1,000 trading allowance, so nothing is taxed and it need not be reported",
+    "fn": "sideHustleTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income"],
+    "input": { "income": 900, "expenses": 0, "otherIncome": 30000, "nation": "england-ni" },
+    "expected": { "profit": 0, "incomeTax": 0, "class4": 0, "total": 0, "deducted": 900 }
+  },
+  {
+    "id": "side-hustle-allowance-route-2026-27",
+    "title": "gov.uk: £2,500 of income with £200 of expenses uses the £1,000 allowance instead; £1,500 of profit on top of £30,000 of pay is taxed at 20%, £300",
+    "fn": "sideHustleTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income", "https://www.gov.uk/income-tax-rates"],
+    "input": { "income": 2500, "expenses": 200, "otherIncome": 30000, "nation": "england-ni" },
+    "expected": { "profit": 1500, "incomeTax": 300, "class4": 0, "total": 300, "deducted": 1000 },
+    "working": "2,500 - 1,000 = 1,500 x 20% = 300. Profit is below the 12,570 Class 4 lower profits limit."
+  },
+  {
+    "id": "side-hustle-allowance-route-2027-28",
+    "title": "Budget 2026: the trading allowance rises to £3,000 from April 2027, so the same £2,500 of income is covered in full",
+    "fn": "sideHustleTax",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": ["https://www.gov.uk/government/publications/income-tax-increasing-the-trading-allowance/increasing-the-trading-allowance"],
+    "input": { "income": 2500, "expenses": 200, "otherIncome": 30000, "nation": "england-ni" },
+    "expected": { "profit": 0, "incomeTax": 0, "total": 0, "deducted": 2500 }
+  },
+  {
+    "id": "side-hustle-expenses-route-with-class-4",
+    "title": "gov.uk: £20,000 of income with £4,000 of expenses and no other income; £16,000 of profit owes 20% on £3,430 and Class 4 at 6% on the same £3,430 above £12,570",
+    "fn": "sideHustleTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/self-employed-national-insurance-rates", "https://www.gov.uk/income-tax-rates", "https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income"],
+    "input": { "income": 20000, "expenses": 4000, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "profit": 16000, "taxableProfit": 3430, "incomeTax": 686, "class4": 205.8, "total": 891.8, "deducted": 4000 },
+    "working": "Expenses 4,000 exceed the allowance. Profit 16,000 - 12,570 allowance = 3,430 x 20% = 686. Class 4: (16,000 - 12,570) x 6% = 205.80."
+  },
+  {
+    "id": "side-hustle-class-4-above-upper-limit",
+    "title": "gov.uk: Class 4 is 6% between £12,570 and £50,270 and 2% above; £60,000 of profit with no other income",
+    "fn": "sideHustleTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/self-employed-national-insurance-rates", "https://www.gov.uk/income-tax-rates"],
+    "input": { "income": 70000, "expenses": 10000, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "profit": 60000, "taxableProfit": 47430, "incomeTax": 11432, "class4": 2456.6, "deducted": 10000 },
+    "working": "Taxable 47,430: 37,700 x 20% = 7,540 plus 9,730 x 40% = 3,892, total 11,432. Class 4: 37,700 x 6% = 2,262 plus 9,730 x 2% = 194.60, total 2,456.60."
+  }
+]

@@ -1,0 +1,70 @@
+---
+import { getYear, resolve } from '@money-resilience-hub/rules';
+import { money, pct, longDate } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const lisa = year.isa!.lifetimeIsa!;
+const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value;
+const cap = v(lisa.propertyCap);
+const charge = v(lisa.withdrawalCharge);
+const overCap = v(lisa.firstHomeOverCapCharge);
+const overCapFrom = lisa.firstHomeOverCapCharge.effectiveFrom ?? year.starts;
+const overCapBefore = lisa.firstHomeOverCapCharge.previous?.value ?? null;
+const bonus = v(lisa.bonusRate!);
+const limit = v(lisa.annualLimit!);
+const lossShare = 1 - (1 - charge) * (1 + bonus);
+
+const faqs = [
+	{
+		q: 'How much is the Lifetime ISA withdrawal charge?',
+		a: `${pct(charge)} of the amount taken out, unless the money goes towards a first home costing up to ${money(cap, 0)}, you are 60 or over, or you are terminally ill. The charge is taken from the whole withdrawal, bonus included, so it takes back more than the ${pct(bonus)} bonus: ${pct(lossShare)} of what you paid in, before any growth.`,
+	},
+	{
+		q: `What happens if my first home costs more than ${money(cap, 0)}?`,
+		a: overCapBefore !== null
+			? `From ${longDate(overCapFrom)} a first home over the ${money(cap, 0)} cap carries a reduced charge of ${pct(overCap)} rather than ${pct(overCapBefore)}, as announced at Budget 2026. The change is not retrospective: a withdrawal made before that date carried the ${pct(overCapBefore)} charge, which the date field reflects.`
+			: `A first home over the ${money(cap, 0)} cap carries a charge of ${pct(overCap)}.`,
+	},
+	{
+		q: 'When can I withdraw from a Lifetime ISA without a charge?',
+		a: `To buy a first home costing ${money(cap, 0)} or less at least 12 months after your first payment in, using a conveyancer and a mortgage; from age 60; or if you are terminally ill with less than 12 months to live. On death the account closes and the funds pass with no charge.`,
+	},
+	{
+		q: 'How does the government bonus work?',
+		a: `You can pay in up to ${money(limit, 0)} a year until you are 50 and the government adds ${pct(bonus)}, up to ${money(limit * bonus, 0)} a year. The bonus is paid into the account, so a withdrawal includes it, and the charge applies to the whole amount.`,
+	},
+	{
+		q: 'Does the charge depend on the tax year?',
+		a: `Only through the date of the withdrawal: the tool reads the rules as at the date you enter, so a first home over the cap is charged at ${pct(overCapBefore ?? overCap)} before ${longDate(overCapFrom)} and ${pct(overCap)} from that day.`,
+	},
+];
+---
+
+<SimpleCalculator
+	tool="lifetime-isa-penalty"
+	title="Lifetime ISA withdrawal charge calculator"
+	description={`Work out the Lifetime ISA withdrawal charge on any amount: ${pct(charge)} for an unlisted withdrawal, ${pct(overCap)} for a first home over the ${money(cap, 0)} cap from ${longDate(overCapFrom)}, and nothing for a first home within the cap, at 60 or on terminal illness.`}
+	h1="Lifetime ISA withdrawal charge calculator"
+	subtitle={`The charge on a withdrawal by reason and date, with what you receive and how it compares with what you paid in. The reduced charge for a first home over the price cap applies from ${longDate(overCapFrom)}.`}
+	breadcrumb="Lifetime ISA charge calculator"
+	formLabel="Your withdrawal"
+	faqs={faqs}
+	limits="It does not model interest or investment growth inside the account, a withdrawal split across several purposes, transfers between ISAs, the 12 month rule after the first payment, or the Help to Buy ISA. It never suggests what to do with the result."
+	related={[
+		{ title: 'Savings interest tax calculator', href: '/calculators/savings-tax/', desc: 'Interest outside an ISA, with the personal savings allowance.' },
+		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'Pay after tax, National Insurance and student loans.' },
+		{ title: 'Budget 2026: what changes on 6 April 2027', href: '/budget/2026-autumn/', desc: 'The reduced Lifetime ISA charge and the other measures.' },
+	]}
+>
+	<Fragment slot="how">
+		<ol>
+			<li><strong>Reason.</strong> A first home costing up to {money(cap, 0)}, age 60 or over, or terminal illness: no charge. A first home over {money(cap, 0)}: {pct(overCap)} from {longDate(overCapFrom)}{overCapBefore !== null ? `, ${pct(overCapBefore)} before` : ''}. Anything else: {pct(charge)}.</li>
+			<li><strong>Charge.</strong> The rate times the whole amount withdrawn, bonus included, rounded to the penny.</li>
+			<li><strong>What was paid in.</strong> If the pot grew only from the {pct(bonus)} bonus, the amount withdrawn divided by {1 + bonus} is what you paid in. The last line compares that with what you receive.</li>
+		</ol>
+		<p>The date field reads the rules as they stood on that day, so the change on {longDate(overCapFrom)} shows through the rules file rather than a special case. The formulas run from the open rules file for {year.label}.</p>
+	</Fragment>
+</SimpleCalculator>

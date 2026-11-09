@@ -1,0 +1,66 @@
+[
+  {
+    "id": "savings-starting-rate-example",
+    "title": "gov.uk: £16,000 of wages and £200 of interest; the starting rate for savings left after wages is £1,570, so no tax is due on the interest",
+    "fn": "savingsTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free"],
+    "input": { "interest": 200, "otherIncome": 16000, "nation": "england-ni" },
+    "expected": { "tax": 0, "startingRateUsed": 200, "taxableInterest": 0 },
+    "working": "Personal allowance 12,570 is used by wages. Wages above it: 16,000 - 12,570 = 3,430, which reduces the 5,000 starting rate to 1,570. The 200 of interest sits in it at 0%."
+  },
+  {
+    "id": "savings-psa-basic-rate-example",
+    "title": "gov.uk: £1,300 of interest for a basic rate taxpayer; the first £1,000 is covered by the personal savings allowance and £300 is taxed at 20%, £60",
+    "fn": "savingsTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free"],
+    "input": { "interest": 1300, "otherIncome": 30000, "nation": "england-ni" },
+    "expected": { "tax": 60, "personalSavingsAllowance": 1000, "personalSavingsAllowanceUsed": 1000, "taxableInterest": 300 },
+    "working": "Other income uses the whole starting rate. PSA 1,000 at 0%. 1,300 - 1,000 = 300 x 20% = 60."
+  },
+  {
+    "id": "savings-psa-basic-rate-2027-28",
+    "title": "Budget 2026: the same £300 of taxable interest is charged at the 24% savings basic rate from April 2027, £72",
+    "fn": "savingsTax",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": [
+      "https://www.gov.uk/government/publications/income-tax-changes-to-tax-rates-for-property-and-savings-income/income-tax-changes-to-tax-rates-for-property-and-savings-income",
+      "https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free"
+    ],
+    "input": { "interest": 1300, "otherIncome": 30000, "nation": "england-ni" },
+    "expected": { "tax": 72, "taxableInterest": 300 },
+    "working": "300 x 24% = 72."
+  },
+  {
+    "id": "savings-higher-rate-psa",
+    "title": "gov.uk: a higher rate taxpayer has a £500 personal savings allowance; £2,000 of interest on £60,000 of other income leaves £1,500 at 40%, £600",
+    "fn": "savingsTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free", "https://www.gov.uk/income-tax-rates"],
+    "input": { "interest": 2000, "otherIncome": 60000, "nation": "england-ni" },
+    "expected": { "tax": 600, "personalSavingsAllowance": 500, "taxableInterest": 1500 },
+    "working": "Taxable other income 47,430 is above the 37,700 basic rate limit, so the PSA is 500 and the remaining 1,500 is in the higher rate band at 40%."
+  },
+  {
+    "id": "savings-no-other-income",
+    "title": "gov.uk: with no other income, the personal allowance, then the £5,000 starting rate, then the £1,000 personal savings allowance cover £18,570 of interest",
+    "fn": "savingsTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free"],
+    "input": { "interest": 18570, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "tax": 0, "allowanceOnSavings": 12570, "startingRateUsed": 5000, "personalSavingsAllowanceUsed": 1000, "taxableInterest": 0 },
+    "working": "12,570 + 5,000 + 1,000 = 18,570 at 0%."
+  },
+  {
+    "id": "savings-scotland-same-as-uk",
+    "title": "gov.uk: Scottish taxpayers pay the same tax as the rest of the UK on savings interest",
+    "fn": "savingsTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/scottish-income-tax", "https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free"],
+    "input": { "interest": 1300, "otherIncome": 30000, "nation": "scotland" },
+    "expected": { "tax": 60, "taxableInterest": 300 },
+    "working": "Same as the England example: 300 x 20% = 60."
+  }
+]

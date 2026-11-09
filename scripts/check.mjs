@@ -95,7 +95,7 @@ if (!existsSync(DIST)) {
 		for (const m of text.matchAll(/\b(color|colors|organize[ds]?|center|centered|favorite|analyze|behavior|catalog|gotten)\b/g)) errors.push(`${page}: American spelling "${m[0]}"`);
 
 		const coreStart = html.indexOf('data-calculator-core');
-		const coreEnd = coreStart >= 0 ? html.indexOf('</section>', html.lastIndexOf('data-bar')) : -1;
+		const coreEnd = coreStart >= 0 ? html.indexOf('</section>', Math.max(html.lastIndexOf('data-bar'), html.lastIndexOf('data-ledger'))) : -1;
 		for (const m of html.matchAll(/<aside class="ad-slot"[^>]*>/g)) {
 			const tag = m[0];
 			if (!/data-width="\d+"/.test(tag) || !/data-height="\d+"/.test(tag)) errors.push(`${page}: ad slot without a reserved size`);

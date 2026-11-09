@@ -256,6 +256,14 @@
       "verified": "2026-11-07",
       "status": "announced",
       "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-increasing-the-trading-allowance-increasing-the-trading-allowance.html"
+    },
+    "propertyAllowance": {
+      "value": 1000,
+      "source": "https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income",
+      "verified": "2026-11-08",
+      "status": "legislated",
+      "note": "Set by Part 6A of the Income Tax (Trading and Other Income) Act 2005; no change was announced at Budget 2026",
+      "archived": "archive/2026-11-08/www-gov-uk-guidance-tax-free-allowances-on-property-and-trading-income.html"
     }
   },
   "nationalInsurance": {
@@ -584,6 +592,22 @@
         "verified": "2026-11-07",
         "status": "in-force",
         "archived": "archive/2026-11-07/www-gov-uk-government-publications-tax-free-savings-newsletter-24-tax-free-savings-newsletter-24-october-2026.html"
+      },
+      "bonusRate": {
+        "value": 0.25,
+        "source": "https://www.gov.uk/lifetime-isa",
+        "verified": "2026-11-08",
+        "status": "legislated",
+        "note": "No change announced at Budget 2026; the First Time Buyer ISA replaces new Lifetime ISAs from April 2029",
+        "archived": "archive/2026-11-08/www-gov-uk-lifetime-isa.html"
+      },
+      "annualLimit": {
+        "value": 4000,
+        "source": "https://www.gov.uk/lifetime-isa",
+        "verified": "2026-11-08",
+        "status": "legislated",
+        "note": "No change announced at Budget 2026",
+        "archived": "archive/2026-11-08/www-gov-uk-lifetime-isa.html"
       }
     }
   },
@@ -618,6 +642,16 @@
       "verified": "2026-11-07",
       "status": "announced",
       "archived": "archive/2026-11-07/www-gov-uk-government-publications-income-tax-reduction-for-eligible-pensioners-reduction-in-income-tax-for-eligible-pensioners.html"
+    }
+  },
+  "statePension": {
+    "fullNewWeekly": {
+      "value": 250.7,
+      "source": "https://www.gov.uk/government/publications/pension-tax-allowance-explainer/pension-tax-allowance-explainer",
+      "verified": "2026-11-08",
+      "status": "announced",
+      "note": "The explainer gives the full annual value as £13,036.40, which is £250.70 a week",
+      "archived": "archive/2026-11-08/www-gov-uk-government-publications-pension-tax-allowance-explainer-pension-tax-allowance-explainer.html"
     }
   }
 }

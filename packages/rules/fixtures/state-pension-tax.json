@@ -1,0 +1,62 @@
+[
+  {
+    "id": "spt-explainer-tom",
+    "title": "HMRC explainer, Tom: £10,300 of State Pension is below the personal allowance, so no tax and no need for the Pension Tax Allowance",
+    "fn": "statePensionTax",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": ["https://www.gov.uk/government/publications/pension-tax-allowance-explainer/pension-tax-allowance-explainer"],
+    "input": { "statePension": 10300, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "incomeTaxBefore": 0, "incomeTaxAfter": 0 }
+  },
+  {
+    "id": "spt-explainer-steph",
+    "title": "HMRC explainer, Steph: the full new State Pension of £13,036.40 alone owes £93.28 before the allowance (the engine rounds taxable income down to £466, a difference of 8p) and nothing after it",
+    "fn": "statePensionTax",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": ["https://www.gov.uk/government/publications/pension-tax-allowance-explainer/pension-tax-allowance-explainer"],
+    "input": { "statePension": 13036.4, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "incomeTaxBefore": 93.28, "pensionTaxAllowance": 94, "incomeTaxAfter": 0 },
+    "tolerance": 0.1
+  },
+  {
+    "id": "spt-explainer-anne",
+    "title": "HMRC explainer, Anne: a partial State Pension and a small private pension totalling £12,970 owe £80, all removed by the allowance",
+    "fn": "statePensionTax",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": ["https://www.gov.uk/government/publications/pension-tax-allowance-explainer/pension-tax-allowance-explainer"],
+    "input": { "statePension": 10000, "otherIncome": 2970, "nation": "england-ni" },
+    "expected": { "incomeTaxBefore": 80, "incomeTaxAfter": 0 }
+  },
+  {
+    "id": "spt-explainer-jonathan",
+    "title": "HMRC explainer, Jonathan: £13,186.40 of salary and property income with a deferred pension is in the withdrawal range, so the allowance is £44",
+    "fn": "statePensionTax",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": ["https://www.gov.uk/government/publications/pension-tax-allowance-explainer/pension-tax-allowance-explainer"],
+    "input": { "statePension": 0, "otherIncome": 13186.4, "nation": "england-ni" },
+    "expected": { "pensionTaxAllowance": 44 }
+  },
+  {
+    "id": "spt-explainer-nadia",
+    "title": "HMRC explainer, Nadia: £13,400 owes £166 and gets no allowance because income is £13,319 or more",
+    "fn": "statePensionTax",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": ["https://www.gov.uk/government/publications/pension-tax-allowance-explainer/pension-tax-allowance-explainer"],
+    "input": { "statePension": 10000, "otherIncome": 3400, "nation": "england-ni" },
+    "expected": { "incomeTaxBefore": 166, "pensionTaxAllowance": 0, "incomeTaxAfter": 166, "withdrawnAt": 13318.4 }
+  },
+  {
+    "id": "spt-2026-27-no-allowance",
+    "title": "gov.uk: in 2026/27 there is no Pension Tax Allowance; the full new State Pension of £241.30 a week (£12,547.60) is below the personal allowance, so no tax",
+    "fn": "statePensionTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/government/publications/benefit-and-pension-rates-2026-to-2027/proposed-benefit-and-pension-rates-2026-to-2027", "https://www.gov.uk/tax-on-pension"],
+    "input": { "statePension": 12547.6, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "incomeTaxBefore": 0, "pensionTaxAllowance": 0, "incomeTaxAfter": 0 }
+  }
+]

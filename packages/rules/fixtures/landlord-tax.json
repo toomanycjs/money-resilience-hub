@@ -1,0 +1,67 @@
+[
+  {
+    "id": "landlord-within-property-allowance",
+    "title": "gov.uk: the first £1,000 of property income is tax free, so £900 of rent gives no taxable profit",
+    "fn": "landlordTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/renting-out-a-property/paying-tax", "https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income"],
+    "input": { "rent": 900, "expenses": 0, "otherIncome": 30000, "nation": "england-ni" },
+    "expected": { "profit": 0, "tax": 0, "deducted": 900 },
+    "working": "Rent 900 is below the 1,000 property allowance."
+  },
+  {
+    "id": "landlord-expenses-route-basic-rate",
+    "title": "gov.uk: profit is rent less allowable expenses; £12,000 of rent less £3,000 of expenses is £9,000, taxed at the basic rate on top of £30,000 of pay, £1,800 in 2026/27",
+    "fn": "landlordTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/renting-out-a-property/paying-tax", "https://www.gov.uk/income-tax-rates"],
+    "input": { "rent": 12000, "expenses": 3000, "otherIncome": 30000, "nation": "england-ni" },
+    "expected": { "profit": 9000, "taxableProfit": 9000, "tax": 1800, "deducted": 3000 },
+    "working": "Expenses 3,000 exceed the 1,000 allowance so they are used. Profit 9,000. Pay uses the allowance; 17,430 + 9,000 = 26,430 stays within the 37,700 basic rate limit. 9,000 x 20% = 1,800."
+  },
+  {
+    "id": "landlord-allowance-beats-small-expenses",
+    "title": "gov.uk: the £1,000 allowance is used instead of £400 of expenses, since they cannot both be deducted",
+    "fn": "landlordTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income"],
+    "input": { "rent": 6000, "expenses": 400, "otherIncome": 30000, "nation": "england-ni" },
+    "expected": { "profit": 5000, "tax": 1000, "deducted": 1000 },
+    "working": "6,000 - 1,000 = 5,000 x 20% = 1,000."
+  },
+  {
+    "id": "landlord-property-basic-rate-2027-28",
+    "title": "Budget 2026: the same £9,000 of profit is charged at the 24% property basic rate from April 2027, £2,160",
+    "fn": "landlordTax",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": ["https://www.gov.uk/government/publications/income-tax-changes-to-tax-rates-for-property-and-savings-income/income-tax-changes-to-tax-rates-for-property-and-savings-income"],
+    "input": { "rent": 12000, "expenses": 3000, "otherIncome": 30000, "nation": "england-ni" },
+    "expected": { "profit": 9000, "tax": 2160 },
+    "working": "9,000 x 24% = 2,160."
+  },
+  {
+    "id": "landlord-straddles-higher-rate-2027-28",
+    "title": "Budget 2026: profit that straddles the basic rate limit is split between the 24% and 44% property rates, in Wales as in England",
+    "fn": "landlordTax",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": [
+      "https://www.gov.uk/government/publications/income-tax-changes-to-tax-rates-for-property-and-savings-income/income-tax-changes-to-tax-rates-for-property-and-savings-income",
+      "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances"
+    ],
+    "input": { "rent": 15000, "expenses": 5000, "otherIncome": 45000, "nation": "wales" },
+    "expected": { "profit": 10000, "tax": 3346 },
+    "working": "Pay above the allowance: 45,000 - 12,570 = 32,430. Basic rate room left: 37,700 - 32,430 = 5,270 x 24% = 1,264.80. The other 4,730 x 44% = 2,081.20. Total 3,346.00."
+  },
+  {
+    "id": "landlord-scotland-2026-27-scottish-rates",
+    "title": "gov.uk: in 2026/27 rental profit for a Scottish taxpayer is taxed at the Scottish rates; £9,000 on top of £30,000 of pay is in the intermediate rate band at 21%",
+    "fn": "landlordTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/scottish-income-tax"],
+    "input": { "rent": 12000, "expenses": 3000, "otherIncome": 30000, "nation": "scotland" },
+    "expected": { "profit": 9000, "tax": 1890 },
+    "working": "Pay above the allowance 17,430 sits in the Scottish basic rate band (up to 16,956 taxable is basic; 17,430 is already intermediate). Profit 9,000 from 17,430 to 26,430 is all within the intermediate band (16,957 to 31,092) at 21% = 1,890."
+  }
+]
