@@ -1,0 +1,72 @@
+---
+import { childBenefitCharge, getYear, resolve, weeksStarting } from '@money-resilience-hub/rules';
+import { money } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value as number;
+const cb = year.childBenefit;
+const from = v(cb.chargeFrom);
+const to = v(cb.chargeTo);
+const step = v(cb.chargeStep);
+const eldest = v(cb.weeklyEldest);
+const additional = v(cb.weeklyAdditional);
+const weekDay = resolve(cb.weekStartsOn!, 'p', asAt).value;
+const weeks = weeksStarting(weekDay, year.starts, year.ends);
+const one = childBenefitCharge({ income: 0, children: 1, taxYear: year.taxYear, asAt, compare: false }).facts.childBenefit as number;
+const two = childBenefitCharge({ income: 0, children: 2, taxYear: year.taxYear, asAt, compare: false }).facts.childBenefit as number;
+const exIncome = from + (to - from) / 2;
+const ex = childBenefitCharge({ income: exIncome, children: 2, taxYear: year.taxYear, asAt, compare: false });
+
+const faqs = [
+	{
+		q: `How much child benefit do I pay back if I earn over ${money(from, 0)}?`,
+		a: `1% of the child benefit for every ${money(step, 0)} of adjusted net income above ${money(from, 0)}. With two children in ${year.label}, child benefit is ${money(two)} for the year. At ${money(exIncome, 0)} the charge is ${ex.facts.percent}% of it, ${money(ex.facts.charge as number, 0)}, leaving ${money(ex.facts.kept as number)}.`,
+	},
+	{
+		q: 'At what income is all child benefit paid back?',
+		a: `At ${money(to, 0)} of adjusted net income or more the charge equals the whole of the child benefit. Between ${money(from, 0)} and ${money(to, 0)} part of it is kept. Below ${money(from + step, 0)} nothing is charged, because the percentage is rounded down to a whole number.`,
+	},
+	{
+		q: `How much is child benefit in ${year.label}?`,
+		a: `${money(eldest)} a week for the eldest or only child and ${money(additional)} a week for each other child. A week counts in the tax year its ${weekDay} falls in, and ${year.label} has ${weeks} of them, so the year's total is ${money(one)} for one child and ${money(two)} for two.`,
+	},
+	{
+		q: 'What is adjusted net income?',
+		a: 'Total taxable income before the personal allowance: pay, profits, pensions, savings interest, dividends and rental income, plus taxable benefits from a job. Pension contributions and Gift Aid donations are taken off, grossed up where the provider or charity has already claimed basic rate tax. It is the income of one person, never the household.',
+	},
+	{
+		q: 'Whose income counts for the charge?',
+		a: `The charge falls on whichever partner has the higher adjusted net income, if it is above ${money(from, 0)}, whoever claims the child benefit. Two partners each on ${money(from, 0)} pay nothing; one partner above ${money(to, 0)} pays it all back whatever the other earns. Enter the higher of the two incomes.`,
+	},
+];
+---
+
+<SimpleCalculator
+	tool="child-benefit-charge"
+	title={`Child benefit tax charge calculator ${year.label}`}
+	description={`Work out child benefit for ${year.label}, the High Income Child Benefit Charge on income over ${money(from, 0)} and how much is kept, with each step sourced.`}
+	h1="High Income Child Benefit Charge calculator"
+	subtitle={`Tax year ${year.label}, for the whole UK. Shows child benefit for the year, the charge on adjusted net income above ${money(from, 0)} and what is kept after it.`}
+	breadcrumb="Child benefit tax charge calculator"
+	formLabel="Your income and children"
+	faqs={faqs}
+	limits="It assumes child benefit is paid for every child for the whole tax year at the standard rates, and does not model a claim that starts or stops part way through, Guardian's Allowance, or how the charge is collected. It takes adjusted net income as entered. It never suggests whether to claim or opt out."
+	related={[
+		{ title: 'Pension contribution calculator', href: '/calculators/pension-contributions/', desc: 'What a contribution costs; contributions reduce adjusted net income.' },
+		{ title: 'Maternity pay calculator', href: '/calculators/maternity-pay/', desc: 'Statutory Maternity Pay week by week from average earnings.' },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'Every figure this tool uses, with its source and the date it was checked.' },
+	]}
+>
+	<Fragment slot="how">
+		<ol>
+			<li><strong>Child benefit for the year.</strong> {money(eldest)} a week for the eldest or only child plus {money(additional)} for each other child, for each week whose {weekDay} falls in the tax year: {weeks} in {year.label}.</li>
+			<li><strong>The percentage.</strong> Adjusted net income above {money(from, 0)}, divided by {money(step, 0)} and rounded down to a whole number, up to 100% at {money(to, 0)}.</li>
+			<li><strong>The charge.</strong> The child benefit rounded down to a whole pound, times the percentage, rounded down to a whole pound.</li>
+			<li><strong>What is kept.</strong> Child benefit for the year less the charge.</li>
+		</ol>
+		<p>The rounding follows section 681C of the Income Tax (Earnings and Pensions) Act 2003. The Child Benefit tax calculator on gov.uk applies the percentage before rounding the child benefit down, so its estimate can be a pound higher; the working notes it when the two differ. The other rounding conventions are in the <a href="/methodology/">methodology</a>.</p>
+	</Fragment>
+</SimpleCalculator>

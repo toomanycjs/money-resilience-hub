@@ -84,6 +84,14 @@ const visible = (f: (typeof tool.fields)[number]) => !f.showWhen || f.showWhen.v
 									{f.options!.map((o) => <option value={o.value} selected={values[f.id] === o.value}>{o.label}</option>)}
 								</select>
 							</>
+						) : f.type === 'number' ? (
+							<>
+								<label for={fieldId(f.id)}>{f.label}</label>
+								<div class="money-input">
+									<input type="text" inputmode="decimal" id={fieldId(f.id)} name={f.id} value={values[f.id]} placeholder={f.placeholder} autocomplete="off" />
+									{f.unit && <span class="unit">{f.unit}</span>}
+								</div>
+							</>
 						) : f.type === 'date' ? (
 							<>
 								<label for={fieldId(f.id)}>{f.label}</label>

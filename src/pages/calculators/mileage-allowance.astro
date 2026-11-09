@@ -1,0 +1,82 @@
+---
+import { getYear, mileageAllowance, nextYear, resolve, NATION_LABEL } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const next = nextYear(year.taxYear);
+const asAt = BUILD_DATE;
+const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value as number;
+const p = (rate: number) => `${+(rate * 100).toFixed(2)}p`;
+const n = (x: number) => x.toLocaleString('en-GB');
+const m = year.mileage!;
+const first = v(m.carFirstRate);
+const band = v(m.carFirstMiles);
+const after = v(m.carAfterRate);
+const motorcycle = v(m.motorcycle!);
+const cycle = v(m.cycle!);
+const nextAfter = next?.mileage ? v(next.mileage.carAfterRate, next.starts) : null;
+const basic = year.incomeTax.bands['england-ni'][0].rate as number;
+const higher = year.incomeTax.bands['england-ni'][1].rate as number;
+const exMiles = band + band / 5;
+const ex = mileageAllowance({ vehicle: 'car', miles: exMiles, employerPaid: 0, income: 0, nation: 'england-ni', taxYear: year.taxYear, asAt, compare: false });
+const exNext = next?.mileage ? mileageAllowance({ vehicle: 'car', miles: exMiles, employerPaid: 0, income: 0, nation: 'england-ni', taxYear: next.taxYear, asAt: next.starts, compare: false }) : null;
+const lowPaid = 0.25;
+const exLow = mileageAllowance({ vehicle: 'car', miles: band / 2, employerPaid: (band / 2) * lowPaid, income: 40000, nation: 'england-ni', taxYear: year.taxYear, asAt, compare: false });
+
+const faqs = [
+	{
+		q: `What is the mileage allowance rate in ${year.label}?`,
+		a: `For a car or van, ${p(first)} a mile for the first ${n(band)} business miles in the tax year and ${p(after)} a mile after that. Motorcycles are ${p(motorcycle)} and cycles ${p(cycle)} for every mile. ${n(exMiles)} business miles by car gives an approved amount of ${money(ex.facts.approved as number, 0)}.`,
+	},
+	{
+		q: 'What if my employer pays less than the approved rate?',
+		a: `The difference between the approved amount and what the employer paid can be claimed as Mileage Allowance Relief, a deduction from taxable income. It is worth the tax on that amount: ${pct(basic)} for a basic rate taxpayer and ${pct(higher)} for a higher rate taxpayer in England, Wales and Northern Ireland. ${n(band / 2)} miles paid at ${p(lowPaid)} a mile leaves ${money(exLow.facts.relief as number, 0)} of relief, which takes ${money(exLow.facts.taxRelief as number, 0)} off a basic rate taxpayer's income tax.`,
+	},
+	{
+		q: 'What happens if my employer pays more than the approved amount?',
+		a: 'The part above the approved amount is taxed as pay. The employer reports it or adds it to pay through the payroll. The tool shows the excess when the amount paid is higher than the approved amount.',
+	},
+	{
+		q: next ? `What changes for mileage on ${longDate(next.starts)}?` : 'What changes for mileage next tax year?',
+		a:
+			nextAfter !== null && exNext
+				? nextAfter !== after
+					? `The car and van rate above ${n(band)} miles moves from ${p(after)} to ${p(nextAfter)}, as set out in the Budget 2026 overview of tax legislation and rates. The rate for the first ${n(band)} miles and the motorcycle and cycle rates are unchanged. ${n(exMiles)} miles by car gives ${money(exNext.facts.approved as number, 0)} in ${next!.label}, against ${money(ex.facts.approved as number, 0)} in ${year.label}.`
+					: `No change to the approved rates has been announced for ${next!.label}.`
+				: 'No later tax year is recorded yet.',
+	},
+	{
+		q: 'Can I claim mileage for commuting?',
+		a: 'No. Travel to and from your usual place of work is not business mileage. Travel to a temporary place of work counts. Only miles in your own vehicle are covered here; a company car has its own rules.',
+	},
+];
+---
+
+<SimpleCalculator
+	tool="mileage-allowance"
+	title={`Mileage allowance calculator ${year.label}: approved rates`}
+	description={`Work out the approved mileage amount for business miles by car, motorcycle or cycle in ${year.label}, and the tax relief when an employer pays less.`}
+	h1="Mileage allowance calculator"
+	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. Shows the approved amount for business miles in your own vehicle, and the Mileage Allowance Relief and tax taken off when an employer pays less.`}
+	breadcrumb="Mileage allowance calculator"
+	formLabel="Your business miles"
+	faqs={faqs}
+	limits="It covers employees using their own car, van, motorcycle or cycle, one vehicle type at a time. It does not model company cars, passenger payments, the self-employed simplified mileage rates, National Insurance on mileage payments or relief for earlier tax years. It never suggests whether to make a claim."
+	related={[
+		{ title: 'Hourly rate to salary calculator', href: '/calculators/hourly-to-salary/', desc: 'An hourly rate as a salary and take-home pay.' },
+		{ title: 'Side hustle tax calculator', href: '/calculators/side-hustle-tax/', desc: 'Trading income, expenses and the trading allowance.' },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'Every figure this tool uses, with its source and the date it was checked.' },
+	]}
+>
+	<Fragment slot="how">
+		<ol>
+			<li><strong>Approved amount.</strong> Business miles in the tax year times the rate for the vehicle: {p(first)} for the first {n(band)} miles by car or van and {p(after)} after that, {p(motorcycle)} by motorcycle, {p(cycle)} by cycle.</li>
+			<li><strong>What the employer paid.</strong> Mileage payments up to the approved amount are free of tax. Anything above it is taxed as pay.</li>
+			<li><strong>Mileage Allowance Relief.</strong> If the employer paid less, the unused balance of the approved amount is a deduction from taxable income.</li>
+			<li><strong>Tax taken off.</strong> Income tax on your taxable income with and without the deduction, at the bands for the nation chosen. The difference is what the relief is worth.</li>
+		</ol>
+		<p>The rounding conventions are listed in the <a href="/methodology/">methodology</a>, and the formulas run from the open rules file for {year.label}.</p>
+	</Fragment>
+</SimpleCalculator>

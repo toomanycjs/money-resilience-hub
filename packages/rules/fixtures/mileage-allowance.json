@@ -1,0 +1,63 @@
+[
+  {
+    "id": "mileage-govuk-example-12000-miles",
+    "title": "gov.uk: an employee travels 12,000 business miles in their car; the approved amount is £6,000 (10,000 x 55p plus 2,000 x 25p)",
+    "fn": "mileageAllowance",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/expenses-and-benefits-business-travel-mileage/rules-for-tax"],
+    "input": { "vehicle": "car", "miles": 12000, "employerPaid": 6000, "income": 40000, "nation": "england-ni" },
+    "expected": { "approved": 6000, "firstBand": 5500, "afterBand": 500, "relief": 0, "taxRelief": 0, "taxable": 0 },
+    "working": "10,000 x 0.55 = 5,500. 2,000 x 0.25 = 500."
+  },
+  {
+    "id": "mileage-2025-26-rates",
+    "title": "gov.uk 2025 to 2026: 45p for the first 10,000 business miles and 25p after, so 12,000 miles is £5,000",
+    "fn": "mileageAllowance",
+    "taxYear": "2025-26",
+    "sources": ["https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026"],
+    "input": { "vehicle": "car", "miles": 12000, "employerPaid": 0, "income": 0, "nation": "england-ni" },
+    "expected": { "approved": 5000, "firstBand": 4500, "afterBand": 500, "relief": 5000, "taxRelief": 0 },
+    "working": "10,000 x 0.45 = 4,500. 2,000 x 0.25 = 500. With no income there is no tax for the relief to take off."
+  },
+  {
+    "id": "mileage-2027-28-rate-above-10000",
+    "title": "Budget 2026: the rate above 10,000 miles rises from 25p to 35p on 6 April 2027, so 12,000 miles is £6,200",
+    "fn": "mileageAllowance",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": ["https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/budget-2026-overview-of-tax-legislation-and-rates-ootlar"],
+    "input": { "vehicle": "car", "miles": 12000, "employerPaid": 6200, "income": 40000, "nation": "england-ni" },
+    "expected": { "approved": 6200, "firstBand": 5500, "afterBand": 700 },
+    "working": "10,000 x 0.55 = 5,500. 2,000 x 0.35 = 700."
+  },
+  {
+    "id": "mileage-relief-higher-rate",
+    "title": "gov.uk: an employer paying less than the approved amount leaves an unused balance for Mileage Allowance Relief; 8,000 miles paid at 25p leaves £2,400, worth £960 at 40%",
+    "fn": "mileageAllowance",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/expenses-and-benefits-business-travel-mileage/rules-for-tax", "https://www.gov.uk/tax-relief-for-employees/vehicles-you-use-for-work", "https://www.gov.uk/income-tax-rates"],
+    "input": { "vehicle": "car", "miles": 8000, "employerPaid": 2000, "income": 60000, "nation": "england-ni" },
+    "expected": { "approved": 4400, "relief": 2400, "taxRelief": 960, "taxable": 0 },
+    "working": "8,000 x 0.55 = 4,400. 4,400 - 2,000 = 2,400. Taxable income 47,430 and 45,030 are both above 37,700, so 2,400 x 40% = 960."
+  },
+  {
+    "id": "mileage-motorcycle-flat-rate",
+    "title": "gov.uk: motorcycles are 24p for every business mile; 1,000 miles is £240, and £100 from the employer leaves £140 of relief, worth £28 at 20%",
+    "fn": "mileageAllowance",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027", "https://www.gov.uk/tax-relief-for-employees/vehicles-you-use-for-work"],
+    "input": { "vehicle": "motorcycle", "miles": 1000, "employerPaid": 100, "income": 30000, "nation": "england-ni" },
+    "expected": { "approved": 240, "relief": 140, "taxRelief": 28 },
+    "working": "1,000 x 0.24 = 240. 240 - 100 = 140. 140 x 20% = 28."
+  },
+  {
+    "id": "mileage-cycle-paid-above-approved",
+    "title": "gov.uk: cycles are 20p a mile; 500 miles is £100, and anything an employer pays above the approved amount is taxed",
+    "fn": "mileageAllowance",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/expenses-and-benefits-business-travel-mileage/rules-for-tax"],
+    "input": { "vehicle": "cycle", "miles": 500, "employerPaid": 200, "income": 30000, "nation": "england-ni" },
+    "expected": { "approved": 100, "relief": 0, "taxable": 100 },
+    "working": "500 x 0.20 = 100. 200 - 100 = 100 above the approved amount."
+  }
+]

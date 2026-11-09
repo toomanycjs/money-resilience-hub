@@ -305,6 +305,20 @@
         "status": "announced",
         "note": "£967 a week",
         "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      },
+      "primaryThresholdMonthly": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "Annex A to the Budget 2026 overview gives the 2027/28 thresholds per week only (£242 and £967). The monthly figure is published on the employer rates page before the tax year starts"
+      },
+      "upperEarningsLimitMonthly": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "Annex A to the Budget 2026 overview gives the 2027/28 thresholds per week only (£242 and £967). The monthly figure is published on the employer rates page before the tax year starts"
       }
     },
     "employer": {
@@ -485,18 +499,36 @@
       "archived": "archive/2026-11-07/www-gov-uk-child-benefit-tax-charge.html"
     },
     "weeklyEldest": {
-      "value": null,
-      "source": "",
-      "verified": "",
-      "status": "unset",
-      "note": "The 2027/28 weekly rate has not been read from a gov.uk page."
+      "value": 28,
+      "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+      "verified": "2026-11-09",
+      "status": "announced",
+      "note": "Annex A to the Budget 2026 overview, Child Benefit (£ per week), tax year 2027 to 2028",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
     },
     "weeklyAdditional": {
-      "value": null,
-      "source": "",
-      "verified": "",
-      "status": "unset",
-      "note": "The 2027/28 weekly rate has not been read from a gov.uk page."
+      "value": 18.55,
+      "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+      "verified": "2026-11-09",
+      "status": "announced",
+      "note": "Annex A to the Budget 2026 overview, Child Benefit (£ per week), tax year 2027 to 2028",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+    },
+    "weekStartsOn": {
+      "value": "Monday",
+      "source": "https://www.legislation.gov.uk/ukpga/2003/1/section/681H",
+      "verified": "2026-11-09",
+      "status": "legislated",
+      "note": "A week of child benefit begins on a Monday and belongs to the tax year its Monday falls in, so a tax year has 52 or 53 weeks",
+      "archived": "archive/2026-11-09/www-legislation-gov-uk-ukpga-2003-1-section-681h.html"
+    },
+    "chargeRounding": {
+      "value": "down",
+      "source": "https://www.legislation.gov.uk/ukpga/2003/1/section/681C",
+      "verified": "2026-11-09",
+      "status": "legislated",
+      "note": "The total child benefit, the percentage and the charge are each rounded down to a whole number",
+      "archived": "archive/2026-11-09/www-legislation-gov-uk-ukpga-2003-1-section-681c.html"
     }
   },
   "statutoryPay": {
@@ -521,6 +553,103 @@
         "verified": "2026-11-07",
         "status": "legislated",
         "archived": "archive/2026-11-07/www-gov-uk-statutory-sick-pay.html"
+      }
+    },
+    "smp": {
+      "weekly": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "The 2027/28 weekly rate is published in the winter before the tax year"
+      },
+      "earningsFraction": {
+        "value": 0.9,
+        "source": "https://www.gov.uk/maternity-pay-leave/pay",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "archived": "archive/2026-11-09/www-gov-uk-maternity-pay-leave-pay.html"
+      },
+      "fullRateWeeks": {
+        "value": 6,
+        "source": "https://www.gov.uk/maternity-pay-leave/pay",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "archived": "archive/2026-11-09/www-gov-uk-maternity-pay-leave-pay.html"
+      },
+      "maxWeeks": {
+        "value": 39,
+        "source": "https://www.gov.uk/maternity-pay-leave/pay",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "archived": "archive/2026-11-09/www-gov-uk-maternity-pay-leave-pay.html"
+      },
+      "earningsTestWeekly": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "gov.uk's eligibility pages show the current earnings test only; the figure for this tax year has not been read from a dated primary source"
+      }
+    },
+    "spp": {
+      "weekly": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "The 2027/28 weekly rate is published in the winter before the tax year"
+      },
+      "earningsFraction": {
+        "value": 0.9,
+        "source": "https://www.gov.uk/paternity-pay-leave/pay",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "archived": "archive/2026-11-09/www-gov-uk-paternity-pay-leave-pay.html"
+      },
+      "maxWeeks": {
+        "value": 2,
+        "source": "https://www.gov.uk/paternity-pay-leave/leave",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "archived": "archive/2026-11-09/www-gov-uk-paternity-pay-leave-leave.html"
+      },
+      "earningsTestWeekly": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "gov.uk's eligibility pages show the current earnings test only; the figure for this tax year has not been read from a dated primary source"
+      }
+    },
+    "shpp": {
+      "weekly": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "The 2027/28 weekly rate is published in the winter before the tax year"
+      },
+      "earningsFraction": {
+        "value": 0.9,
+        "source": "https://www.gov.uk/shared-parental-leave-and-pay/what-youll-get",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "archived": "archive/2026-11-09/www-gov-uk-shared-parental-leave-and-pay-what-youll-get.html"
+      },
+      "maxWeeks": {
+        "value": 37,
+        "source": "https://www.gov.uk/shared-parental-leave-and-pay/what-youll-get",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "archived": "archive/2026-11-09/www-gov-uk-shared-parental-leave-and-pay-what-youll-get.html"
+      },
+      "earningsTestWeekly": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "gov.uk's eligibility pages show the current earnings test only; the figure for this tax year has not been read from a dated primary source"
       }
     }
   },
@@ -553,6 +682,22 @@
         "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
       },
       "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-budget-2026-overview-of-tax-legislation-and-rates-ootlar.html"
+    },
+    "motorcycle": {
+      "value": 0.24,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-travel-mileage-and-fuel-allowances/travel-mileage-and-fuel-rates-and-allowances",
+      "verified": "2026-11-09",
+      "status": "legislated",
+      "note": "No change announced at Budget 2026; the published rate applies from tax year 2026 to 2027 onwards",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-travel-mileage-and-fuel-allowances-travel-mileage-and-fuel-rates-and-allowances.html"
+    },
+    "cycle": {
+      "value": 0.2,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-travel-mileage-and-fuel-allowances/travel-mileage-and-fuel-rates-and-allowances",
+      "verified": "2026-11-09",
+      "status": "legislated",
+      "note": "No change announced at Budget 2026; the published rate applies from tax year 2026 to 2027 onwards",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-travel-mileage-and-fuel-allowances-travel-mileage-and-fuel-rates-and-allowances.html"
     }
   },
   "isa": {

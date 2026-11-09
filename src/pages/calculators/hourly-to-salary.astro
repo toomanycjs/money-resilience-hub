@@ -1,0 +1,75 @@
+---
+import { getYear, hourlyToSalary, resolve, NATION_LABEL } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value as number;
+const pa = v(year.incomeTax.personalAllowance);
+const basic = year.incomeTax.bands['england-ni'][0].rate as number;
+const niMain = v(year.nationalInsurance.employee.mainRate);
+const pt = v(year.nationalInsurance.employee.primaryThreshold);
+const wage = year.minimumWage;
+const livingWage = wage ? v(wage.age21AndOver) : null;
+const exHours = 37.5;
+const exWeeks = 52;
+const exRate = livingWage ?? 15;
+const ex = hourlyToSalary({ rate: exRate, hours: exHours, weeks: exWeeks, nation: 'england-ni', taxYear: year.taxYear, asAt, compare: false });
+const hoursInYear = (exHours * exWeeks).toLocaleString('en-GB');
+const untaxedHours = Math.floor(pa / exRate).toLocaleString('en-GB');
+
+const faqs = [
+	{
+		q: 'How do I convert an hourly rate to an annual salary?',
+		a: `Multiply the hourly rate by the hours worked in a week and by the paid weeks in a year. ${money(exRate)} an hour for ${exHours} hours over ${exWeeks} weeks is ${money(ex.facts.salary as number)} a year, and ${money(ex.facts.takeHome as number)} after income tax and National Insurance in ${year.label}.`,
+	},
+	{
+		q: 'How many working hours are there in a year?',
+		a: `It depends on the contract. ${exHours} hours a week over ${exWeeks} paid weeks is ${hoursInYear} hours. Paid holiday counts as paid weeks, so a full-year job with paid leave uses ${exWeeks}. Term-time, seasonal or zero-hours work has fewer paid weeks: enter the number you are paid for.`,
+	},
+	{
+		q: `What is the minimum wage in ${year.label}?`,
+		a: wage
+			? `From ${longDate(wage.effectiveFrom)} the National Living Wage for people aged 21 and over is ${money(v(wage.age21AndOver))} an hour. The rate for 18 to 20 year olds is ${money(v(wage.age18To20))}, for under 18s ${money(v(wage.under18))} and for apprentices ${money(v(wage.apprentice))}. The tool adds a note when the rate entered is below the rate for people aged 21 and over.`
+			: `The minimum wage rates for ${year.label} are not recorded in the rules file, so the tool does not compare the rate entered with them.`,
+	},
+	{
+		q: 'Is tax worked out on hourly pay or on the year?',
+		a: `On the year. The first ${money(pa, 0)} of pay in ${year.label} is free of income tax and the first ${money(pt, 0)} is free of National Insurance, whatever the hourly rate. Above those, pay carries ${pct(basic)} income tax and ${pct(niMain)} National Insurance until the higher rate threshold. At ${money(exRate)} an hour the first ${untaxedHours} hours of the year fall within the personal allowance.`,
+	},
+	{
+		q: 'Why is my weekly pay different from the figure here?',
+		a: 'The weekly figure is the take-home pay for the year divided by 52. A payslip for a single week uses weekly thresholds, so a week with more or fewer hours than usual can show different deductions. Income tax evens out over the year through PAYE. National Insurance is settled pay period by pay period.',
+	},
+];
+---
+
+<SimpleCalculator
+	tool="hourly-to-salary"
+	title={`Hourly to salary calculator ${year.label}: take-home pay`}
+	description={`Turn an hourly rate into an annual salary and the take-home pay a year, month and week in ${year.label}, after income tax, National Insurance and student loan.`}
+	h1="Hourly rate to salary calculator"
+	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. Shows the annual salary for an hourly rate, hours a week and weeks a year, and the take-home pay a year, a month and a week.`}
+	breadcrumb="Hourly to salary calculator"
+	formLabel="Your hourly rate and hours"
+	faqs={faqs}
+	limits="It assumes the same hours every paid week, one job and the standard tax code. It does not model overtime rates, unpaid breaks, holiday pay rolled into the hourly rate, pension contributions or week-by-week PAYE on irregular hours. It never suggests what rate to ask for."
+	related={[
+		{ title: 'Pay rise calculator', href: '/calculators/pay-rise/', desc: 'What a higher rate of pay adds to take-home pay after tax.' },
+		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'The full breakdown for a salary, with a tax code and pension.' },
+		{ title: 'Mileage allowance calculator', href: '/calculators/mileage-allowance/', desc: 'The approved amount for business miles in your own vehicle.' },
+	]}
+>
+	<Fragment slot="how">
+		<ol>
+			<li><strong>Annual salary.</strong> Hourly rate × hours a week × paid weeks a year.</li>
+			<li><strong>Income tax.</strong> The salary less the {money(pa, 0)} personal allowance, taxed band by band for the nation chosen.</li>
+			<li><strong>National Insurance.</strong> {pct(niMain)} on pay above {money(pt, 0)} a year, and a lower rate above the upper earnings limit.</li>
+			<li><strong>Student loan.</strong> The plan rate on pay above the plan threshold, if a plan is chosen.</li>
+			<li><strong>Take-home pay.</strong> What is left for the year, divided by twelve for a month and by 52 for a week.</li>
+		</ol>
+		<p>The rounding conventions are listed in the <a href="/methodology/">methodology</a>, and the formulas run from the open rules file for {year.label}.</p>
+	</Fragment>
+</SimpleCalculator>

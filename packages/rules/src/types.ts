@@ -101,13 +101,18 @@ export interface YearConfig {
 		propertyAllowance?: Leaf;
 	};
 	nationalInsurance: {
-		employee: { mainRate: Leaf; upperRate: Leaf; lowerEarningsLimit: Leaf; primaryThreshold: Leaf; upperEarningsLimit: Leaf };
+		employee: { mainRate: Leaf; upperRate: Leaf; lowerEarningsLimit: Leaf; primaryThreshold: Leaf; upperEarningsLimit: Leaf; primaryThresholdMonthly?: Leaf; upperEarningsLimitMonthly?: Leaf };
 		employer: { rate: Leaf; secondaryThreshold: Leaf; employmentAllowance: Leaf };
 		selfEmployed: { class2Weekly: Leaf; smallProfitsThreshold: Leaf; class4: { lowerProfitsLimit: Leaf; upperProfitsLimit: Leaf; mainRate: Leaf; upperRate: Leaf } };
 	};
 	studentLoans: Record<Plan, { threshold: Leaf; rate: Leaf }>;
-	childBenefit: { chargeFrom: Leaf; chargeTo: Leaf; chargeStep: Leaf; weeklyEldest: Leaf; weeklyAdditional: Leaf };
-	statutoryPay: { ssp: { weekly: Leaf; earningsFraction: Leaf; maxWeeks: Leaf }; smp?: { weekly: Leaf; earningsFraction: Leaf; fullRateWeeks: Leaf } };
+	childBenefit: { chargeFrom: Leaf; chargeTo: Leaf; chargeStep: Leaf; weeklyEldest: Leaf; weeklyAdditional: Leaf; weekStartsOn?: Leaf<string>; chargeRounding?: Leaf<string> };
+	statutoryPay: {
+		ssp: { weekly: Leaf; earningsFraction: Leaf; maxWeeks: Leaf };
+		smp?: { weekly: Leaf; earningsFraction: Leaf; fullRateWeeks: Leaf; maxWeeks?: Leaf; earningsTestWeekly?: Leaf };
+		spp?: { weekly: Leaf; earningsFraction: Leaf; maxWeeks: Leaf; earningsTestWeekly?: Leaf };
+		shpp?: { weekly: Leaf; earningsFraction: Leaf; maxWeeks: Leaf; earningsTestWeekly?: Leaf };
+	};
 	minimumWage?: { effectiveFrom: string; age21AndOver: Leaf; age18To20: Leaf; under18: Leaf; apprentice: Leaf };
 	mileage?: { carFirstRate: Leaf; carFirstMiles: Leaf; carAfterRate: Leaf; motorcycle?: Leaf; cycle?: Leaf };
 	isa?: { annualLimit: Leaf; cashLimit?: Leaf; lifetimeIsa?: { propertyCap: Leaf; withdrawalCharge: Leaf; firstHomeOverCapCharge: Leaf; bonusRate?: Leaf; annualLimit?: Leaf } };
@@ -121,6 +126,8 @@ export interface SimpleFigure {
 	amount: number;
 	/** Shown as a rate rather than money when true. */
 	rate?: boolean;
+	/** Shown to the penny when true, for weekly amounts. */
+	pence?: boolean;
 }
 
 /** The same inputs under the following tax year, or why that cannot be shown. */

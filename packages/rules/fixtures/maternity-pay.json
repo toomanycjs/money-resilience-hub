@@ -1,0 +1,52 @@
+[
+  {
+    "id": "smp-govuk-example-300-a-week",
+    "title": "gov.uk: a woman who normally earns £300 a week is paid £270 (90%) as Statutory Maternity Pay for the first 6 weeks, then £194.32 a week",
+    "fn": "maternityPay",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/shared-parental-leave-and-pay/what-youll-get", "https://www.gov.uk/maternity-pay-leave/pay"],
+    "input": { "weeklyEarnings": 300 },
+    "expected": { "firstWeekly": 270, "laterWeekly": 194.32, "firstTotal": 1620, "laterTotal": 6412.56, "total": 8032.56, "weeks": 39, "eligible": "yes" },
+    "working": "300 x 90% = 270. 6 x 270 = 1,620. 33 x 194.32 = 6,412.56. Total 8,032.56 over 39 weeks."
+  },
+  {
+    "id": "smp-earnings-rate-below-weekly-rate",
+    "title": "gov.uk: after the first 6 weeks the rate is £194.32 or 90% of average weekly earnings, whichever is lower; on £150 a week that is £135 throughout",
+    "fn": "maternityPay",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/maternity-pay-leave/pay"],
+    "input": { "weeklyEarnings": 150 },
+    "expected": { "firstWeekly": 135, "laterWeekly": 135, "total": 5265, "eligible": "yes" },
+    "working": "150 x 90% = 135, below 194.32. 39 x 135 = 5,265."
+  },
+  {
+    "id": "smp-below-earnings-test",
+    "title": "gov.uk: to qualify for Statutory Maternity Pay you must earn on average at least £129 a week",
+    "fn": "maternityPay",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/maternity-pay-leave/eligibility"],
+    "input": { "weeklyEarnings": 120 },
+    "expected": { "total": 0, "eligible": "no" },
+    "working": "120 is below 129."
+  },
+  {
+    "id": "smp-rounds-up-to-the-penny",
+    "title": "SMP (General) Regulations 1986 reg 28: a weekly payment with a fraction of a penny is rounded up; 90% of £215.55 is £193.995, paid as £194.00",
+    "fn": "maternityPay",
+    "taxYear": "2026-27",
+    "sources": ["https://www.legislation.gov.uk/uksi/1986/1960/regulation/28", "https://www.gov.uk/maternity-pay-leave/pay"],
+    "input": { "weeklyEarnings": 215.55 },
+    "expected": { "firstWeekly": 194, "laterWeekly": 194, "total": 7566 },
+    "working": "215.55 x 0.9 = 193.995, rounded up to 194.00, which is below 194.32. 39 x 194 = 7,566."
+  },
+  {
+    "id": "smp-2025-26-rate",
+    "title": "gov.uk 2025 to 2026: the weekly rate after the first 6 weeks was £187.18; on £400 a week that is £360 for 6 weeks then £187.18 for 33",
+    "fn": "maternityPay",
+    "taxYear": "2025-26",
+    "sources": ["https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026"],
+    "input": { "weeklyEarnings": 400 },
+    "expected": { "firstWeekly": 360, "laterWeekly": 187.18, "total": 8336.94 },
+    "working": "6 x 360 = 2,160. 33 x 187.18 = 6,176.94. Total 8,336.94."
+  }
+]

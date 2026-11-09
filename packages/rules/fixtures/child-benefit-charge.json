@@ -1,0 +1,73 @@
+[
+  {
+    "id": "hicbc-govuk-calculator-two-children-70000",
+    "title": "gov.uk Child Benefit tax calculator: 2 children all year in 2026 to 2027 is £2,382.35 of child benefit, and £70,000 of adjusted net income gives a charge of £1,191",
+    "fn": "childBenefitCharge",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/child-benefit-tax-calculator", "https://www.gov.uk/child-benefit-rates", "https://www.gov.uk/child-benefit-tax-charge"],
+    "input": { "income": 70000, "children": 2 },
+    "expected": { "childBenefit": 2382.35, "weeks": 53, "percent": 50, "charge": 1191, "kept": 1191.35 },
+    "working": "Result page /child-benefit-tax-calculator/y/2/2026/no/70000.0/no read on 9 November 2026. 53 Mondays x (27.05 + 17.90) = 2,382.35. (70,000 - 60,000) / 200 = 50%. 50% of 2,382 = 1,191."
+  },
+  {
+    "id": "hicbc-govuk-calculator-three-children-85000",
+    "title": "gov.uk Child Benefit tax calculator: 3 children and £85,000 of adjusted net income; the whole £3,331.05 is charged, rounded down to £3,331",
+    "fn": "childBenefitCharge",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/child-benefit-tax-calculator", "https://www.gov.uk/child-benefit-tax-charge"],
+    "input": { "income": 85000, "children": 3 },
+    "expected": { "childBenefit": 3331.05, "percent": 100, "charge": 3331 },
+    "working": "Result page /y/3/2026/no/85000.0/no. 53 x (27.05 + 2 x 17.90) = 3,331.05. Over 80,000 so 100%."
+  },
+  {
+    "id": "hicbc-govuk-calculator-one-child-75500",
+    "title": "gov.uk Child Benefit tax calculator: 1 child and £75,500 of adjusted net income gives a charge of £1,103",
+    "fn": "childBenefitCharge",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/child-benefit-tax-calculator"],
+    "input": { "income": 75500, "children": 1 },
+    "expected": { "childBenefit": 1433.65, "percent": 77, "charge": 1103 },
+    "working": "Result page /y/1/2026/no/75500.0/no. 15,500 / 200 = 77.5, rounded down to 77%. 77% of 1,433 = 1,103.41, rounded down."
+  },
+  {
+    "id": "hicbc-govuk-calculator-below-first-step",
+    "title": "gov.uk Child Benefit tax calculator: there is no tax charge if income is below £60,200",
+    "fn": "childBenefitCharge",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/child-benefit-tax-calculator", "https://www.legislation.gov.uk/ukpga/2003/1/section/681C"],
+    "input": { "income": 60199, "children": 1 },
+    "expected": { "childBenefit": 1433.65, "percent": 0, "charge": 0, "kept": 1433.65 },
+    "working": "Result page /y/1/2026/no/60199.0/no. 199 / 200 rounds down to 0%."
+  },
+  {
+    "id": "hicbc-statutory-rounding-differs-from-calculator",
+    "title": "ITEPA 2003 s681C(3): the child benefit total is rounded down to whole pounds before the percentage, giving £128 where gov.uk's calculator estimates £129",
+    "fn": "childBenefitCharge",
+    "taxYear": "2026-27",
+    "sources": ["https://www.legislation.gov.uk/ukpga/2003/1/section/681C", "https://www.gov.uk/child-benefit-tax-calculator"],
+    "input": { "income": 61999, "children": 1 },
+    "expected": { "percent": 9, "charge": 128, "calculatorEstimate": 129 },
+    "working": "1,999 / 200 = 9.995, rounded down to 9%. Statute: 9% of 1,433 = 128.97, rounded down to 128. Calculator result page /y/1/2026/no/61999.0/no shows 129.00, which is 9% of 1,433.65 rounded down."
+  },
+  {
+    "id": "hicbc-govuk-calculator-2025-26",
+    "title": "gov.uk Child Benefit tax calculator: in 2025 to 2026, 2 children is £2,251.60 over 52 weeks and £70,000 gives a charge of £1,125",
+    "fn": "childBenefitCharge",
+    "taxYear": "2025-26",
+    "sources": ["https://www.gov.uk/child-benefit-tax-calculator", "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance"],
+    "input": { "income": 70000, "children": 2 },
+    "expected": { "childBenefit": 2251.6, "weeks": 52, "percent": 50, "charge": 1125 },
+    "working": "Result page /y/2/2025/no/70000.0/no. 52 x (26.05 + 17.25) = 2,251.60. 50% of 2,251 = 1,125.50, rounded down."
+  },
+  {
+    "id": "hicbc-2027-28-announced-rates",
+    "title": "Budget 2026 Annex A: child benefit of £28.00 and £18.55 a week in 2027 to 2028, a year with 52 Mondays",
+    "fn": "childBenefitCharge",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": ["https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances", "https://www.legislation.gov.uk/ukpga/2003/1/section/681H"],
+    "input": { "income": 70000, "children": 2 },
+    "expected": { "childBenefit": 2420.6, "weeks": 52, "charge": 1210 },
+    "working": "52 x 46.55 = 2,420.60. 50% of 2,420 = 1,210."
+  }
+]

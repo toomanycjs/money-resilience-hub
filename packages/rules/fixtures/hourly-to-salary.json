@@ -1,0 +1,42 @@
+[
+  {
+    "id": "hourly-national-living-wage-full-time",
+    "title": "gov.uk: the National Living Wage of £12.71 an hour for 37.5 hours over 52 weeks is £24,784.50 a year",
+    "fn": "hourlyToSalary",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027", "https://www.gov.uk/income-tax-rates", "https://www.gov.uk/national-insurance/how-much-you-pay"],
+    "input": { "rate": 12.71, "hours": 37.5, "weeks": 52, "nation": "england-ni" },
+    "expected": { "salary": 24784.5, "incomeTax": 2442.8, "nationalInsurance": 977.16, "takeHome": 21364.54, "monthly": 1780.38, "weekly": 410.86 },
+    "working": "12.71 x 37.5 x 52 = 24,784.50. Taxable 12,214 (rounded down) x 20% = 2,442.80. NI 12,214.50 x 8% = 977.16. 24,784.50 - 3,419.96 = 21,364.54; / 12 = 1,780.38; / 52 = 410.86."
+  },
+  {
+    "id": "hourly-part-time-below-allowance",
+    "title": "gov.uk: £10 an hour for 20 hours over 52 weeks is £10,400, below the £12,570 personal allowance and primary threshold, so nothing is deducted",
+    "fn": "hourlyToSalary",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/income-tax-rates", "https://www.gov.uk/national-insurance/how-much-you-pay"],
+    "input": { "rate": 10, "hours": 20, "weeks": 52, "nation": "england-ni" },
+    "expected": { "salary": 10400, "incomeTax": 0, "nationalInsurance": 0, "takeHome": 10400, "monthly": 866.67, "weekly": 200 },
+    "working": "10 x 20 x 52 = 10,400. Below 12,570."
+  },
+  {
+    "id": "hourly-above-higher-rate",
+    "title": "gov.uk rates: £25 an hour for 40 hours over 52 weeks is £52,000, with £1,730 above £50,270 taxed at 40% and 2% National Insurance",
+    "fn": "hourlyToSalary",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/income-tax-rates", "https://www.gov.uk/national-insurance/how-much-you-pay"],
+    "input": { "rate": 25, "hours": 40, "weeks": 52, "nation": "england-ni" },
+    "expected": { "salary": 52000, "incomeTax": 8232, "nationalInsurance": 3050.6, "takeHome": 40717.4, "monthly": 3393.12 },
+    "working": "Taxable 39,430: 37,700 x 20% = 7,540 plus 1,730 x 40% = 692. NI: 37,700 x 8% = 3,016 plus 1,730 x 2% = 34.60. 52,000 - 8,232 - 3,050.60 = 40,717.40."
+  },
+  {
+    "id": "hourly-term-time-weeks",
+    "title": "gov.uk rates: £15 an hour for 30 hours over 39 paid weeks is £17,550 a year",
+    "fn": "hourlyToSalary",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/income-tax-rates", "https://www.gov.uk/national-insurance/how-much-you-pay"],
+    "input": { "rate": 15, "hours": 30, "weeks": 39, "nation": "wales" },
+    "expected": { "salary": 17550, "incomeTax": 996, "nationalInsurance": 398.4, "takeHome": 16155.6 },
+    "working": "15 x 30 x 39 = 17,550. Taxable 4,980 x 20% = 996. NI 4,980 x 8% = 398.40."
+  }
+]

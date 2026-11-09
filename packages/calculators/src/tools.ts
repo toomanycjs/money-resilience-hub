@@ -21,12 +21,34 @@ import {
 	type Nation,
 	type SimpleResult,
 } from '@money-resilience-hub/rules';
+import {
+	bonusTax,
+	childBenefitCharge,
+	hourlyToSalary,
+	maternityPay,
+	mileageAllowance,
+	paternityPay,
+	payRise,
+	pensionContributions,
+	BONUS_TOUCHES,
+	CHILD_BENEFIT_TOUCHES,
+	MATERNITY_TOUCHES,
+	MILEAGE_TOUCHES,
+	MILEAGE_VEHICLE_LABEL,
+	MILEAGE_VEHICLES,
+	PATERNITY_TOUCHES,
+	PAY_TOUCHES,
+	PLAN_LABEL,
+	PLANS,
+	type MileageVehicle,
+	type Plan,
+} from '@money-resilience-hub/rules';
 import { isNation } from './schema.ts';
 
 export interface SimpleField {
 	id: string;
 	label: string;
-	type: 'money' | 'select' | 'date' | 'taxYear';
+	type: 'money' | 'select' | 'date' | 'taxYear' | 'number';
 	default: string;
 	unit?: string;
 	help?: string;
@@ -65,6 +87,23 @@ function nationOf(form: SimpleForm): Nation {
 
 function yearOf(form: SimpleForm): string | undefined {
 	return form.taxYear && /^\d{4}-\d{2}$/.test(form.taxYear) ? form.taxYear : undefined;
+}
+
+/** A plain number: miles, hours, children, a percentage. */
+export function parseNumber(raw: string | undefined, fallback = '0', max = 1_000_000): number {
+	const text = String(raw ?? '').trim() === '' ? fallback : String(raw);
+	const n = Number(text.replace(/[,\s%]/g, ''));
+	return Math.min(max, Math.max(0, Number.isFinite(n) ? n : 0));
+}
+
+const planField: SimpleField = { id: 'plan', label: 'Student loan', type: 'select', options: [{ value: 'none', label: 'None' }, ...PLANS.map((p) => ({ value: p, label: PLAN_LABEL[p] }))], default: 'none' };
+
+function planOf(form: SimpleForm): Plan | 'none' {
+	return (PLANS as string[]).includes(form.plan) ? (form.plan as Plan) : 'none';
+}
+
+function isVehicle(x: unknown): x is MileageVehicle {
+	return typeof x === 'string' && (MILEAGE_VEHICLES as string[]).includes(x);
 }
 
 function isReason(x: unknown): x is LisaReason {
@@ -135,6 +174,111 @@ export const TOOLS: Record<string, SimpleTool> = {
 		hasTaxYear: true,
 		compute: (f, asAt) => sideHustleTax({ income: parseMoney(f.income, '2500'), expenses: parseMoney(f.expenses, '200'), otherIncome: parseMoney(f.otherIncome, '30000'), nation: nationOf(f), taxYear: yearOf(f), asAt }),
 	},
+	'pay-rise': {
+		id: 'pay-rise',
+		fields: [
+			{ id: 'salary', label: 'Salary now', type: 'money', unit: 'a year', default: '30000', placeholder: '30000', help: 'Before tax.' },
+			{ id: 'riseType', label: 'The rise is given as', type: 'select', options: [{ value: 'percent', label: 'A percentage' }, { value: 'salary', label: 'A new salary' }], default: 'percent' },
+			{ id: 'risePercent', label: 'Pay rise', type: 'number', unit: '%', default: '5', placeholder: '5', showWhen: { field: 'riseType', values: ['percent'] } },
+			{ id: 'newSalary', label: 'New salary', type: 'money', unit: 'a year', default: '32000', placeholder: '32000', showWhen: { field: 'riseType', values: ['salary'] } },
+			nationField,
+			planField,
+			taxYearField,
+		],
+		touches: PAY_TOUCHES,
+		hasTaxYear: true,
+		compute: (f, asAt) =>
+			payRise({ salary: parseMoney(f.salary, '30000'), ...(f.riseType === 'salary' ? { newSalary: parseMoney(f.newSalary, '0') } : { risePercent: parseNumber(f.risePercent, '0', 1000) }), nation: nationOf(f), plan: planOf(f), taxYear: yearOf(f), asAt }),
+	},
+	'bonus-tax': {
+		id: 'bonus-tax',
+		fields: [
+			{ id: 'salary', label: 'Salary', type: 'money', unit: 'a year', default: '40000', placeholder: '40000', help: 'Before tax, paid monthly.' },
+			{ id: 'bonus', label: 'Bonus', type: 'money', unit: 'one-off', default: '5000', placeholder: '5000', help: 'Before tax, paid in one month.' },
+			nationField,
+			planField,
+			taxYearField,
+		],
+		touches: BONUS_TOUCHES,
+		hasTaxYear: true,
+		amountHeading: 'Amount',
+		compute: (f, asAt) => bonusTax({ salary: parseMoney(f.salary, '40000'), bonus: parseMoney(f.bonus, '5000'), nation: nationOf(f), plan: planOf(f), taxYear: yearOf(f), asAt }),
+	},
+	'pension-contributions': {
+		id: 'pension-contributions',
+		fields: [
+			{ id: 'salary', label: 'Salary', type: 'money', unit: 'a year', default: '40000', placeholder: '40000', help: 'Before tax.' },
+			{ id: 'percent', label: 'Your contribution', type: 'number', unit: '% of salary', default: '5', placeholder: '5', help: 'The gross amount going into the pension from you, before anything an employer adds.' },
+			nationField,
+			planField,
+			taxYearField,
+		],
+		touches: PAY_TOUCHES,
+		hasTaxYear: true,
+		compute: (f, asAt) => pensionContributions({ salary: parseMoney(f.salary, '40000'), percent: parseNumber(f.percent, '5', 100), nation: nationOf(f), plan: planOf(f), taxYear: yearOf(f), asAt }),
+	},
+	'hourly-to-salary': {
+		id: 'hourly-to-salary',
+		fields: [
+			{ id: 'rate', label: 'Hourly rate', type: 'money', unit: 'an hour', default: '15', placeholder: '15', help: 'Before tax.' },
+			{ id: 'hours', label: 'Hours', type: 'number', unit: 'a week', default: '37.5', placeholder: '37.5' },
+			{ id: 'weeks', label: 'Paid weeks', type: 'number', unit: 'a year', default: '52', placeholder: '52', help: 'Count paid holiday. Use fewer weeks for term-time or seasonal work.' },
+			nationField,
+			planField,
+			taxYearField,
+		],
+		touches: PAY_TOUCHES,
+		hasTaxYear: true,
+		compute: (f, asAt) => hourlyToSalary({ rate: parseMoney(f.rate, '15', 10_000), hours: parseNumber(f.hours, '37.5', 168), weeks: parseNumber(f.weeks, '52', 53), nation: nationOf(f), plan: planOf(f), taxYear: yearOf(f), asAt }),
+	},
+	'child-benefit-charge': {
+		id: 'child-benefit-charge',
+		fields: [
+			{ id: 'income', label: 'Adjusted net income', type: 'money', unit: 'a year', default: '70000', placeholder: '70000', help: 'Of whichever partner has the higher income: taxable income less pension contributions and Gift Aid.' },
+			{ id: 'children', label: 'Children', type: 'number', unit: 'getting child benefit', default: '2', placeholder: '2' },
+			taxYearField,
+		],
+		touches: CHILD_BENEFIT_TOUCHES,
+		hasTaxYear: true,
+		compute: (f, asAt) => childBenefitCharge({ income: parseMoney(f.income, '70000'), children: parseNumber(f.children, '2', 20), taxYear: yearOf(f), asAt }),
+	},
+	'mileage-allowance': {
+		id: 'mileage-allowance',
+		fields: [
+			{ id: 'vehicle', label: 'Vehicle', type: 'select', options: MILEAGE_VEHICLES.map((v) => ({ value: v, label: MILEAGE_VEHICLE_LABEL[v] })), default: 'car' },
+			{ id: 'miles', label: 'Business miles', type: 'number', unit: 'in the tax year', default: '12000', placeholder: '12000', help: 'In your own vehicle. Not commuting to a usual place of work.' },
+			{ id: 'employerPaid', label: 'Paid by your employer', type: 'money', unit: 'in the tax year', default: '3000', placeholder: '3000', help: 'Mileage payments for those miles. Enter 0 if none.' },
+			{ id: 'income', label: 'Your taxable income', type: 'money', unit: 'a year', default: '40000', placeholder: '40000', help: 'Sets the rate of tax the relief takes off.' },
+			nationField,
+			taxYearField,
+		],
+		touches: MILEAGE_TOUCHES,
+		hasTaxYear: true,
+		compute: (f, asAt) => mileageAllowance({ vehicle: isVehicle(f.vehicle) ? f.vehicle : 'car', miles: parseNumber(f.miles, '12000', 1_000_000), employerPaid: parseMoney(f.employerPaid, '3000'), income: parseMoney(f.income, '40000'), nation: nationOf(f), taxYear: yearOf(f), asAt }),
+	},
+	'maternity-pay': {
+		id: 'maternity-pay',
+		fields: [
+			{ id: 'weeklyEarnings', label: 'Average weekly earnings', type: 'money', unit: 'a week', default: '500', placeholder: '500', help: 'Before tax, averaged over the weeks an employer looks at before the qualifying week.' },
+			taxYearField,
+		],
+		touches: MATERNITY_TOUCHES,
+		hasTaxYear: true,
+		amountHeading: 'Amount',
+		compute: (f, asAt) => maternityPay({ weeklyEarnings: parseMoney(f.weeklyEarnings, '500', 100_000), taxYear: yearOf(f), asAt }),
+	},
+	'paternity-pay': {
+		id: 'paternity-pay',
+		fields: [
+			{ id: 'weeklyEarnings', label: 'Average weekly earnings', type: 'money', unit: 'a week', default: '500', placeholder: '500', help: 'Before tax, averaged over the weeks an employer looks at before the qualifying week.' },
+			{ id: 'weeks', label: 'Weeks of paternity pay', type: 'number', unit: 'weeks', default: '', help: 'Leave empty for the most the rules allow.' },
+			taxYearField,
+		],
+		touches: PATERNITY_TOUCHES,
+		hasTaxYear: true,
+		amountHeading: 'Amount',
+		compute: (f, asAt) => paternityPay({ weeklyEarnings: parseMoney(f.weeklyEarnings, '500', 100_000), weeks: parseNumber(f.weeks, '0', 52) || undefined, taxYear: yearOf(f), asAt }),
+	},
 };
 
 export function defaultForm(tool: SimpleTool, overrides: Partial<SimpleForm> = {}): SimpleForm {
@@ -154,6 +298,7 @@ function clean(tool: SimpleTool, raw: Record<string, unknown>): SimpleForm | nul
 		}
 		if (typeof v !== 'string' || v.length > 40) return null;
 		if (f.type === 'money' && !/^[\d,.]*$/.test(v)) return null;
+		if (f.type === 'number' && !/^[\d,.]*$/.test(v)) return null;
 		if (f.type === 'select' && !f.options?.some((o) => o.value === v)) return null;
 		if (f.type === 'date' && v !== '' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
 		if (f.type === 'taxYear' && v !== '' && !/^\d{4}-\d{2}$/.test(v)) return null;

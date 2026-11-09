@@ -1,0 +1,82 @@
+---
+import { bonusTax, getYear, nextYear, resolve, NATION_LABEL } from '@money-resilience-hub/rules';
+import { money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const next = nextYear(year.taxYear);
+const asAt = BUILD_DATE;
+const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value as number;
+const ni = year.nationalInsurance.employee;
+const niMain = v(ni.mainRate);
+const niUpper = v(ni.upperRate);
+const ptMonth = v(ni.primaryThresholdMonthly!);
+const uelMonth = v(ni.upperEarningsLimitMonthly!);
+const uelYear = v(ni.upperEarningsLimit);
+const bands = year.incomeTax.bands['england-ni'];
+const basic = bands[0].rate as number;
+const higher = bands[1].rate as number;
+const higherFrom = v(year.incomeTax.personalAllowance) + (bands[0].upTo as number);
+const plan2 = year.studentLoans.plan2;
+const loanRate = v(plan2.rate);
+const loanMonth = Math.floor((v(plan2.threshold) / 12) * 100) / 100;
+const example = bonusTax({ salary: 40000, bonus: 10000, nation: 'england-ni', taxYear: year.taxYear, asAt, compare: false });
+const exSalary = 40000;
+const exBonus = 10000;
+const nextMonthlySet = next ? next.nationalInsurance.employee.primaryThresholdMonthly?.value != null : false;
+
+const faqs = [
+	{
+		q: 'How much tax do I pay on a bonus?',
+		a: `A bonus is pay, so it carries income tax, National Insurance and any student loan repayment. Income tax is charged as if the bonus were the top slice of the year's pay: ${pct(basic)} up to ${money(higherFrom, 0)} of total pay and ${pct(higher)} above it in England, Wales and Northern Ireland in ${year.label}. A ${money(exBonus, 0)} bonus on a ${money(exSalary, 0)} salary leaves ${money(example.facts.kept as number, 0)} after ${money(example.facts.extraTax as number, 0)} of income tax and ${money(example.facts.extraNi as number)} of National Insurance.`,
+	},
+	{
+		q: 'Why is National Insurance on my bonus payslip different from the annual figure?',
+		a: `National Insurance is worked out on each pay period alone, not over the year. A monthly payslip uses the monthly thresholds: ${pct(niMain)} on pay between ${money(ptMonth, 0)} and ${money(uelMonth, 0)}, and ${pct(niUpper)} above ${money(uelMonth, 0)}. A bonus that lifts one month above ${money(uelMonth, 0)} is charged ${pct(niUpper)} on the part above it, even when pay for the whole year is below the annual limit of ${money(uelYear, 0)}. In the example above the bonus month carries ${money(example.facts.extraNi as number)} more National Insurance, where an annual calculation gives ${money(example.facts.annualMethodNi as number)}.`,
+	},
+	{
+		q: 'Is a bonus taxed at a higher rate than salary?',
+		a: `No. There is no separate bonus rate. A bonus can look heavily taxed on the payslip because it sits on top of salary, so more of it falls in a higher band, and because PAYE spreads allowances evenly through the year. Over the tax year the income tax is the same as on any other pay of that amount.`,
+	},
+	{
+		q: 'Do I repay more student loan in a bonus month?',
+		a: `Yes. Repayments are worked out on each month's pay against a twelfth of the annual threshold. For a Plan 2 loan in ${year.label} that is ${pct(loanRate)} of pay above ${money(loanMonth)} in the month, so a bonus month repays ${pct(loanRate)} of the whole bonus once normal pay is above that figure.`,
+	},
+	{
+		q: next ? `What changes for bonuses in ${next.label}?` : 'What changes for bonuses next tax year?',
+		a: next
+			? nextMonthlySet
+				? `The monthly National Insurance thresholds for ${next.label} are recorded, and the tax year switch in the form shows the result under them.`
+				: `The annual and weekly thresholds for ${next.label} have been announced, but the monthly National Insurance thresholds have not been published yet, so the tool does not show a ${next.label} result. It will once gov.uk publishes them.`
+			: 'No later tax year is recorded yet.',
+	},
+];
+---
+
+<SimpleCalculator
+	tool="bonus-tax"
+	title={`Bonus tax calculator ${year.label}: what you keep`}
+	description={`Work out the income tax, National Insurance and student loan taken from a one-off bonus in ${year.label}, using the monthly thresholds a bonus payslip uses.`}
+	h1="Bonus tax calculator"
+	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. Shows the income tax, National Insurance and student loan on a one-off bonus paid with a monthly salary, and what is left.`}
+	breadcrumb="Bonus tax calculator"
+	formLabel="Your salary and bonus"
+	faqs={faqs}
+	limits="It assumes a monthly-paid employee on the standard tax code with one job. It does not model company directors, whose National Insurance is worked out over the year, weekly or four-weekly pay, a bonus given up for pension contributions, or benefits in kind. It never suggests what to do with a bonus."
+	related={[
+		{ title: 'Pay rise calculator', href: '/calculators/pay-rise/', desc: 'What a permanent rise adds to take-home pay, and the thresholds it crosses.' },
+		{ title: 'Pension contribution calculator', href: '/calculators/pension-contributions/', desc: 'What a contribution costs under relief at source, net pay and salary sacrifice.' },
+		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'The full breakdown for a salary over the year.' },
+	]}
+>
+	<Fragment slot="how">
+		<ol>
+			<li><strong>Income tax.</strong> PAYE adds pay up over the tax year. The tax on the bonus is the tax on salary plus bonus, less the tax on salary alone.</li>
+			<li><strong>National Insurance.</strong> Each pay period stands alone. The bonus month is salary for one month plus the bonus, charged at {pct(niMain)} between {money(ptMonth, 0)} and {money(uelMonth, 0)} and {pct(niUpper)} above. The tool subtracts a normal month to leave the amount the bonus adds.</li>
+			<li><strong>Student loan.</strong> Also per pay period: the plan rate on the month's pay above a twelfth of the annual threshold, rounded down to a pound.</li>
+			<li><strong>What is kept.</strong> The bonus less those three.</li>
+		</ol>
+		<p>This is why a bonus payslip differs from a twelfth of the annual figures: income tax looks at the year so far, while National Insurance and student loan repayments look only at the month. The rounding conventions are listed in the <a href="/methodology/">methodology</a>.</p>
+	</Fragment>
+</SimpleCalculator>

@@ -1,0 +1,80 @@
+---
+import { getYear, payRise, resolve, NATION_LABEL } from '@money-resilience-hub/rules';
+import { money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value as number;
+const bands = year.incomeTax.bands['england-ni'];
+const basic = bands[0].rate as number;
+const higher = bands[1].rate as number;
+const pa = v(year.incomeTax.personalAllowance);
+const higherFrom = pa + (bands[0].upTo as number);
+const taperStart = v(year.incomeTax.taperStart);
+const taperRate = v(year.incomeTax.taperRate);
+const taperEnd = taperStart + pa / taperRate;
+const ni = year.nationalInsurance.employee;
+const niMain = v(ni.mainRate);
+const niUpper = v(ni.upperRate);
+const uel = v(ni.upperEarningsLimit);
+const plan2 = year.studentLoans.plan2;
+const loanRate = v(plan2.rate);
+const loanFrom = v(plan2.threshold);
+const taperBand = higher * (1 + taperRate);
+const exampleSalary = 30000;
+const example = payRise({ salary: exampleSalary, risePercent: 5, nation: 'england-ni', taxYear: year.taxYear, asAt, compare: false });
+const exampleRise = example.facts.rise as number;
+const exampleKept = example.facts.netGain as number;
+
+const faqs = [
+	{
+		q: 'How much of a pay rise do I keep?',
+		a: `It depends on the band the rise lands in. In ${year.label}, in England, Wales and Northern Ireland, pay between ${money(pa, 0)} and ${money(higherFrom, 0)} carries ${pct(basic)} income tax and ${pct(niMain)} National Insurance, so ${pct(1 - basic - niMain)} of a rise is kept. Above ${money(higherFrom, 0)} it is ${pct(higher)} tax and ${pct(niUpper)} National Insurance, so ${pct(1 - higher - niUpper)} is kept. A ${money(exampleRise, 0)} rise on ${money(exampleSalary, 0)} adds ${money(exampleKept, 0)} a year to take-home pay.`,
+	},
+	{
+		q: 'Does a pay rise push all my income into a higher tax band?',
+		a: `No. Each rate applies only to the slice of pay inside its band. A rise that crosses ${money(higherFrom, 0)} is taxed at ${pct(higher)} on the part above it; the pay below it is taxed as before. Take-home pay never falls because of a rise on income tax and National Insurance alone.`,
+	},
+	{
+		q: `What happens to a pay rise above ${money(taperStart, 0)}?`,
+		a: `Between ${money(taperStart, 0)} and ${money(taperEnd, 0)} the personal allowance falls by ${money(taperRate, 2)} for every pound of income, so each extra pound is taxed at ${pct(higher)} and also brings ${money(taperRate, 2)} more into tax. The effect is ${pct(taperBand)} income tax on that slice, plus ${pct(niUpper)} National Insurance. The tool names this threshold when a rise crosses it.`,
+	},
+	{
+		q: 'Does a pay rise increase student loan repayments?',
+		a: `Yes, once pay is above the plan's threshold. A Plan 2 loan takes ${pct(loanRate)} of pay above ${money(loanFrom, 0)} in ${year.label}, so ${pct(loanRate)} of any rise above that goes to the loan on top of tax and National Insurance. Choose the plan in the form to include it.`,
+	},
+	{
+		q: 'Why is the share I keep different in Scotland?',
+		a: 'Scotland sets its own income tax bands and rates for pay, with more bands than the rest of the UK. National Insurance and student loan rules are the same. Choose Scotland in the form to use the Scottish bands.',
+	},
+];
+---
+
+<SimpleCalculator
+	tool="pay-rise"
+	title={`Pay rise calculator ${year.label}: what you keep`}
+	description={`See what a pay rise adds to take-home pay in ${year.label} after income tax, National Insurance and student loan, and which thresholds the rise crosses.`}
+	h1="Pay rise calculator"
+	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. Shows what a rise adds to take-home pay a year and a month, the share of the rise you keep, and any threshold it crosses.`}
+	breadcrumb="Pay rise calculator"
+	formLabel="Your salary and the rise"
+	faqs={faqs}
+	limits="It assumes one job on the standard tax code and does not model pension contributions, benefits in kind, the High Income Child Benefit Charge, tax-free childcare or Universal Credit, each of which can change what a rise is worth. It never suggests whether to accept an offer."
+	related={[
+		{ title: 'Bonus tax calculator', href: '/calculators/bonus-tax/', desc: 'What is taken from a one-off bonus in the month it is paid.' },
+		{ title: 'Pension contribution calculator', href: '/calculators/pension-contributions/', desc: 'The same contribution under relief at source, net pay and salary sacrifice.' },
+		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'The full breakdown for one salary, with a tax code and pension.' },
+	]}
+>
+	<Fragment slot="how">
+		<ol>
+			<li><strong>Take-home pay now.</strong> Income tax, National Insurance and any student loan repayment on the current salary.</li>
+			<li><strong>Take-home pay after the rise.</strong> The same on the new salary, or on the current salary plus the percentage.</li>
+			<li><strong>The difference.</strong> Extra take-home pay a year, divided by twelve for a month, and as a share of the rise.</li>
+			<li><strong>Thresholds crossed.</strong> Any threshold between the two salaries: a tax band, the National Insurance upper earnings limit of {money(uel, 0)}, a student loan threshold, the start of the child benefit charge, and the allowance taper from {money(taperStart, 0)}.</li>
+		</ol>
+		<p>The rounding conventions are listed in the <a href="/methodology/">methodology</a>, and the formulas run from the open rules file for {year.label}.</p>
+	</Fragment>
+</SimpleCalculator>

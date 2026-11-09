@@ -1,0 +1,42 @@
+[
+  {
+    "id": "pay-rise-basic-rate",
+    "title": "gov.uk rates: a 5% rise on £30,000 stays in the basic rate band; 20% tax and 8% National Insurance leave £1,080 of the £1,500",
+    "fn": "payRise",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/income-tax-rates", "https://www.gov.uk/national-insurance/how-much-you-pay"],
+    "input": { "salary": 30000, "risePercent": 5, "nation": "england-ni" },
+    "expected": { "rise": 1500, "extraTax": 300, "extraNi": 120, "netGain": 1080, "monthlyGain": 90, "keptShare": 0.72, "crossed": "" },
+    "working": "1,500 x 20% = 300. 1,500 x 8% = 120. 1,500 - 420 = 1,080, 90 a month, 72% of the rise."
+  },
+  {
+    "id": "pay-rise-crosses-higher-rate",
+    "title": "gov.uk rates: a 10% rise on £48,000 with a Plan 2 loan crosses £50,270, where tax rises to 40% and National Insurance falls to 2%",
+    "fn": "payRise",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/income-tax-rates", "https://www.gov.uk/national-insurance/how-much-you-pay", "https://www.gov.uk/repaying-your-student-loan/what-you-pay"],
+    "input": { "salary": 48000, "risePercent": 10, "nation": "england-ni", "plan": "plan2" },
+    "expected": { "rise": 4800, "newSalary": 52800, "extraTax": 1466, "extraNi": 232.2, "extraLoan": 432, "netGain": 2669.8, "crossed": "band-higher-rate" },
+    "working": "Tax before: 35,430 x 20% = 7,086. After: 37,700 x 20% + 2,530 x 40% = 8,552. Extra 1,466. NI before: 35,430 x 8% = 2,834.40. After: 37,700 x 8% + 2,530 x 2% = 3,066.60. Extra 232.20. Loan before: 9% of 18,615 = 1,675 rounded down. After: 9% of 23,415 = 2,107. Extra 432. 4,800 - 1,466 - 232.20 - 432 = 2,669.80."
+  },
+  {
+    "id": "pay-rise-crosses-allowance-taper",
+    "title": "gov.uk: above £100,000 the personal allowance falls by £1 for every £2, so a rise from £99,000 to £105,000 loses £2,500 of allowance",
+    "fn": "payRise",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/income-tax-rates/income-over-100000", "https://www.gov.uk/income-tax-rates", "https://www.gov.uk/national-insurance/how-much-you-pay"],
+    "input": { "salary": 99000, "newSalary": 105000, "nation": "england-ni" },
+    "expected": { "rise": 6000, "extraTax": 3400, "extraNi": 120, "netGain": 2480, "crossed": "taper" },
+    "working": "Tax before: 7,540 + (86,430 - 37,700) x 40% = 27,032. After: allowance 12,570 - 2,500 = 10,070, taxable 94,930, 7,540 + 57,230 x 40% = 30,432. Extra 3,400. NI 6,000 x 2% = 120. 6,000 - 3,520 = 2,480."
+  },
+  {
+    "id": "pay-rise-new-salary-lower",
+    "title": "A new salary below the current one shows no rise",
+    "fn": "payRise",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/income-tax-rates"],
+    "input": { "salary": 30000, "newSalary": 29000, "nation": "wales" },
+    "expected": { "rise": 0, "netGain": 0, "keptShare": 0 },
+    "working": "The tool works out rises only."
+  }
+]
