@@ -7,6 +7,7 @@ import CookieBanner from '../components/CookieBanner.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import JsonLd from '../components/JsonLd.astro';
+import { GA_MEASUREMENT_ID } from '../config/analytics';
 import { BUILD_DATE } from '../config/site';
 import { breadcrumbList, crumbsFor, faqPage, organisation, webPage, websiteNode, type FaqPair } from '../lib/schema';
 
@@ -52,7 +53,7 @@ const nodes = noindex
 			<slot />
 		</main>
 		<Footer />
-		<CookieBanner />
+		{GA_MEASUREMENT_ID && <CookieBanner />}
 		<script>
 			import { GA_MEASUREMENT_ID } from '../config/analytics';
 			import { initConsent, loadGoogleAnalytics } from '../scripts/analytics';

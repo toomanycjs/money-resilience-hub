@@ -1,24 +1,29 @@
 ---
+import { GA_MEASUREMENT_ID } from '../config/analytics';
 import { SITE_NAME } from '../config/site';
 import Plain from '../layouts/Plain.astro';
 
 const contents = [
 	{ id: 'inputs', label: 'Your inputs stay in your browser' },
 	{ id: 'links', label: 'Share links' },
-	{ id: 'cookies', label: 'Cookies' },
+	...(GA_MEASUREMENT_ID ? [{ id: 'cookies', label: 'Cookies' }] : []),
 	{ id: 'contact', label: 'Contact' },
 ];
 ---
 
-<Plain title={`Privacy: ${SITE_NAME}`} description="Your calculator inputs stay in your browser, a share link carries them in the link itself, and analytics cookies are set only if you accept." h1="Privacy" contents={contents}>
+<Plain title={`Privacy: ${SITE_NAME}`} description="Your calculator inputs stay in your browser, and a share link carries them in the link itself." h1="Privacy" contents={contents}>
 	<h2 id="inputs">Your inputs stay in your browser</h2>
 	<p>Everything you type into a calculator is worked out on your device. Nothing you enter is sent to us or to anyone else. If you choose, your inputs are kept in your browser's local storage so other pages can pre-fill them; the Forget my inputs button on each calculator removes them. We never see them.</p>
 
 	<h2 id="links">Share links</h2>
 	<p>A share link carries your inputs in the part of the address after the # sign. Browsers do not send that part to any server, and the site removes it from the address before a page view is recorded. Anyone you give the link to can see the inputs in it, so share it as you would any note about your pay.</p>
 
-	<h2 id="cookies">Cookies</h2>
-	<p>When you first visit, the site asks whether you accept cookies. If you accept, Google Analytics counts which pages are viewed. If you reject, nothing is counted and no analytics cookie is set. Either way, nothing you type into a calculator is sent anywhere. You can change your choice at any time with the Cookie choices link at the foot of every page.</p>
+	{GA_MEASUREMENT_ID && (
+		<>
+			<h2 id="cookies">Cookies</h2>
+			<p>When you first visit, the site asks whether you accept cookies. If you accept, Google Analytics counts which pages are viewed. If you reject, nothing is counted and no analytics cookie is set. Either way, nothing you type into a calculator is sent anywhere. You can change your choice at any time with the Cookie choices link at the foot of every page.</p>
+		</>
+	)}
 
 	<h2 id="contact">Contact</h2>
 	<p>Questions about privacy go to the address on the <a href="/about/">about page</a>.</p>
