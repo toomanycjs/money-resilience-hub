@@ -174,10 +174,21 @@ if (root) {
 	// below the screen, a bar at the bottom shows it and links to it.
 	const stickyBar = el('[data-sticky-figure]');
 	const figure = el('[data-figure]');
-	if (stickyBar && figure && 'IntersectionObserver' in window) {
-		new IntersectionObserver(([entry]) => {
-			stickyBar.hidden = entry.isIntersecting || entry.boundingClientRect.top < 0;
-		}).observe(figure);
+	if (stickyBar && figure) {
+		let queued = false;
+		const place = () => {
+			queued = false;
+			// Shown only while the top of the figure is still below the screen.
+			stickyBar.hidden = figure.getBoundingClientRect().top < window.innerHeight;
+		};
+		const queue = () => {
+			if (queued) return;
+			queued = true;
+			requestAnimationFrame(place);
+		};
+		window.addEventListener('scroll', queue, { passive: true });
+		window.addEventListener('resize', queue, { passive: true });
+		place();
 	}
 
 	// Tax year toggle: only years the engine can compute for the chosen nation.

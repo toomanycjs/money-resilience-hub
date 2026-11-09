@@ -439,3 +439,8 @@ button.link {
 .jump-row { display: flex; gap: 0.5rem; align-items: stretch; flex-wrap: wrap; }
 .jump-row .money-input { flex: 1 1 10rem; }
 .jump-row button { font: inherit; font-weight: 600; color: var(--page); background: var(--ink); border: 1px solid var(--ink); border-radius: 2px; padding: 0.5rem 0.9rem; cursor: pointer; }
+
+/* On a narrow screen a wide table scrolls inside itself, so the page never moves sideways. */
+@media (max-width: 899px) {
+	main table:not(.ledger) { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}

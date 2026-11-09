@@ -102,17 +102,21 @@ export function yearOnYear(input: TakeHomeInput): YearOnYear | null {
 	if (Math.abs(difference) < 0.5) {
 		sentence = `On the same pay, take-home is unchanged from ${prev.label}. ${relevant.length ? 'The rules that apply to this result moved, but not at this income.' : 'None of the rules that apply to this result changed.'}`;
 	} else {
-		sentence = `On the same pay, take-home is ${money(difference)} a year ${difference > 0 ? 'higher' : 'lower'} than in ${prev.label}. ${describe(relevant)}`;
+		sentence = `On the same pay, take-home is ${money(difference)} a year ${difference > 0 ? 'higher' : 'lower'} than in ${prev.label}. ${describe(relevant, getYear(now.taxYear))}`;
 	}
 	return { thisYear: now.taxYear, lastYear: prev.taxYear, takeHomeNow: now.takeHome, takeHomeThen: then.takeHome, difference, sentence, changes: relevant };
 }
 
-function describe(changes: ValueChange[]): string {
+function describe(changes: ValueChange[], year: YearConfig): string {
 	const parts: string[] = [];
 	const fmt = (v: number | string | null) => (typeof v === 'number' ? (v < 1 ? `${+(v * 100).toFixed(2)}%` : '£' + v.toLocaleString('en-GB')) : String(v ?? 'not set'));
 	for (const c of changes.slice(0, 3)) {
 		const name = c.path
-			.replace(/^incomeTax\.bands\.[a-z-]+\[(\d+)\]\.(upTo|rate)$/, (_, i, k) => `band ${Number(i) + 1} ${k === 'upTo' ? 'limit' : 'rate'}`)
+			.replace(/^incomeTax\.bands\.([a-z-]+)\[(\d+)\]\.(upTo|rate)$/, (_, n, i, k) => {
+				// "the top of the starter rate band" rather than a band number.
+				const band = (year.incomeTax.bands[n as keyof typeof year.incomeTax.bands]?.[Number(i)]?.name ?? `band ${Number(i) + 1}`).toLowerCase();
+				return k === 'upTo' ? `the top of the ${band} band` : `the ${band}`;
+			})
 			.replace(/^incomeTax\.personalAllowance$/, 'the personal allowance')
 			.replace(/^nationalInsurance\.employee\.(\w+)$/, (_, k) => `the National Insurance ${k.replace(/([A-Z])/g, ' $1').toLowerCase()}`)
 			.replace(/^studentLoans\.(\w+)\.threshold$/, (_, p) => `the ${p.replace('plan', 'Plan ')} threshold`)
