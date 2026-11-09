@@ -15,3 +15,11 @@ export { landlordTax, LANDLORD_TOUCHES, type LandlordTaxInput } from './landlord
 export { statePensionTax, STATE_PENSION_TOUCHES, type StatePensionTaxInput } from './statePensionTax.ts';
 export { lifetimeIsaPenalty, LISA_REASONS, LISA_REASON_LABEL, type LifetimeIsaPenaltyInput, type LisaReason } from './lifetimeIsaPenalty.ts';
 export { sideHustleTax, SIDE_HUSTLE_TOUCHES, type SideHustleTaxInput } from './sideHustleTax.ts';
+export { PAY_TOUCHES, weeksStarting, type PlanChoice } from './payShared.ts';
+export { payRise, type PayRiseInput } from './payRise.ts';
+export { bonusTax, BONUS_TOUCHES, type BonusTaxInput } from './bonusTax.ts';
+export { pensionContributions, type PensionContributionsInput } from './pensionContributions.ts';
+export { hourlyToSalary, type HourlyToSalaryInput } from './hourlyToSalary.ts';
+export { childBenefitCharge, CHILD_BENEFIT_TOUCHES, type ChildBenefitChargeInput } from './childBenefitCharge.ts';
+export { mileageAllowance, MILEAGE_TOUCHES, MILEAGE_VEHICLES, MILEAGE_VEHICLE_LABEL, type MileageAllowanceInput, type MileageVehicle } from './mileageAllowance.ts';
+export { maternityPay, paternityPay, MATERNITY_TOUCHES, PATERNITY_TOUCHES, type MaternityPayInput, type PaternityPayInput } from './parentalPay.ts';

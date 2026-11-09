@@ -14,5 +14,11 @@ Every figure the engine produces follows one of these rules. The site never roun
 | Pension Tax Allowance | 20% of the gap between the full new State Pension and the personal allowance, rounded up to a pound; withdrawn at £1 for every £3 above the full new State Pension | HMRC's explainer gives "up to £94" for a gap of £466.40 |
 | Monthly, weekly and daily | The annual figure divided by 12, 52 and 260, to the penny | Convention; a daily figure assumes a five-day week |
 | Marginal rate | One minus the change in take-home over the next £1,000, to two decimal places | Convention |
+| Bonus month National Insurance | Pay for the month between the monthly thresholds times the rate, to the penny, less the same for a normal month | Monthly thresholds from the employer rates page; employees are assessed per pay period |
+| Bonus month student loan | The rate times the month's pay above a twelfth of the annual threshold (the twelfth cut to the penny), rounded down to a whole pound | The employer rates page lists each monthly threshold as a twelfth of the annual figure |
+| High Income Child Benefit Charge | The year's child benefit, the percentage and the charge are each rounded down to a whole number | ITEPA 2003 s681C(3). The gov.uk calculator applies the percentage before rounding the child benefit, so its estimate can be a pound higher |
+| Child benefit weeks | Weeks whose Monday falls in the tax year, 52 or 53 | ITEPA 2003 s681H(3) |
+| Statutory maternity and paternity pay | A weekly amount with a fraction of a penny is rounded up to the next penny | SMP (General) Regulations 1986 reg 28; SPP and SAP (Weekly Rates) Regulations 2002 reg 4 |
+| Approved mileage | Miles times the rate per mile, to the penny | gov.uk: business travel mileage, rules for tax |
 
 Figures are shown with two decimals in the ledger and none in headlines. Thousands always carry a separator.

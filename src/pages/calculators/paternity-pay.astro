@@ -1,0 +1,76 @@
+---
+import { getYear, paternityPay, resolve } from '@money-resilience-hub/rules';
+import { money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value as number;
+const spp = year.statutoryPay.spp!;
+const weekly = v(spp.weekly);
+const fraction = v(spp.earningsFraction);
+const maxWeeks = v(spp.maxWeeks);
+const test = v(spp.earningsTestWeekly!);
+const capAt = weekly / fraction;
+const ex = paternityPay({ weeklyEarnings: 500, taxYear: year.taxYear, asAt, compare: false });
+const exLow = 150;
+const low = paternityPay({ weeklyEarnings: exLow, taxYear: year.taxYear, asAt, compare: false });
+const shpp = year.statutoryPay.shpp;
+const shppWeekly = shpp ? v(shpp.weekly) : null;
+const shppWeeks = shpp ? v(shpp.maxWeeks) : null;
+const shppFraction = shpp ? v(shpp.earningsFraction) : null;
+
+const faqs = [
+	{
+		q: `How much is Statutory Paternity Pay in ${year.label}?`,
+		a: `${money(weekly)} a week, or ${pct(fraction)} of average weekly earnings if that is lower. Anyone with average weekly earnings of ${money(capAt)} or more gets the weekly rate, so ${maxWeeks} weeks is ${money(ex.facts.total as number)}. On ${money(exLow, 0)} a week it is ${money(low.facts.weekly as number)} a week.`,
+	},
+	{
+		q: 'How many weeks of paternity pay can I get?',
+		a: `Up to ${maxWeeks} weeks. They can be taken together or as separate weeks, and the amount is the same for twins or other multiple births. A week is the same number of days as a normal working week. The leave cannot start before the birth.`,
+	},
+	{
+		q: 'How much do I need to earn to get paternity pay?',
+		a: `An average of at least ${money(test, 0)} a week before tax in ${year.label}. The other conditions are a period of continuous work for the same employer up to the qualifying week, which falls before the baby is due, still being employed there at the birth, and giving the correct notice.`,
+	},
+	{
+		q: 'Is paternity pay taxed?',
+		a: 'Yes. It is paid through the payroll like wages, and income tax and National Insurance are deducted from it. The figures here are before those deductions. An employer with its own paternity scheme can pay more than the statutory amount, never less.',
+	},
+	{
+		q: 'What is Statutory Shared Parental Pay?',
+		a:
+			shppWeekly !== null && shppWeeks !== null && shppFraction !== null
+				? `Pay for parents who share leave after a birth or adoption. In ${year.label} it is ${money(shppWeekly)} a week or ${pct(shppFraction)} of average weekly earnings, whichever is lower, the same as paternity pay. Up to ${shppWeeks} weeks can be shared between the parents, less the weeks of maternity or adoption pay already taken. This tool works out paternity pay only.`
+				: `Pay for parents who share leave after a birth or adoption. The rates for ${year.label} are not recorded in the rules file.`,
+	},
+];
+---
+
+<SimpleCalculator
+	tool="paternity-pay"
+	title={`Paternity pay calculator ${year.label}: statutory rate`}
+	description={`Work out Statutory Paternity Pay for ${year.label} from average weekly earnings: the weekly amount, the total for up to ${maxWeeks} weeks and the earnings test.`}
+	h1="Statutory Paternity Pay calculator"
+	subtitle={`Rates for tax year ${year.label}, for employees in the UK. Shows Statutory Paternity Pay for a week and in total for up to ${maxWeeks} weeks, from average weekly earnings.`}
+	breadcrumb="Paternity pay calculator"
+	form={{ weeks: String(maxWeeks) }}
+	formLabel="Your average weekly earnings"
+	faqs={faqs}
+	limits="It takes average weekly earnings as entered and does not model the qualifying week dates, the different rules in Northern Ireland, Statutory Shared Parental Pay, an employer's own scheme or the tax deducted. It never suggests when to take leave."
+	related={[
+		{ title: 'Maternity pay calculator', href: '/calculators/maternity-pay/', desc: 'Statutory Maternity Pay week by week and in total.' },
+		{ title: 'Child benefit tax charge calculator', href: '/calculators/child-benefit-charge/', desc: 'Child benefit for the year and the charge on higher incomes.' },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'Every figure this tool uses, with its source and the date it was checked.' },
+	]}
+>
+	<Fragment slot="how">
+		<ol>
+			<li><strong>Earnings test.</strong> Average weekly earnings before tax are compared with the {money(test, 0)} a week needed to qualify.</li>
+			<li><strong>Weekly amount.</strong> The lower of {money(weekly)} and {pct(fraction)} of average weekly earnings.</li>
+			<li><strong>Total.</strong> The weekly amount times the weeks taken, up to {maxWeeks}, before income tax and National Insurance.</li>
+		</ol>
+		<p>A weekly amount with a fraction of a penny is rounded up to the next penny, as the Statutory Paternity Pay regulations require. The other rounding conventions are in the <a href="/methodology/">methodology</a>.</p>
+	</Fragment>
+</SimpleCalculator>

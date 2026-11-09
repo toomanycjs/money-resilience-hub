@@ -355,6 +355,22 @@
         "status": "in-force",
         "note": "The annual figure is published on the rates and thresholds for employers page; the National Insurance rates and allowances page gives the weekly and monthly amounts only",
         "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "primaryThresholdMonthly": {
+        "value": 1048,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "The primary threshold for a monthly pay period",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "upperEarningsLimitMonthly": {
+        "value": 4189,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "The upper earnings limit for a monthly pay period",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
       }
     },
     "employer": {
@@ -541,18 +557,34 @@
       "archived": "archive/2026-11-07/www-gov-uk-child-benefit-tax-charge.html"
     },
     "weeklyEldest": {
-      "value": null,
-      "source": "",
-      "verified": "",
-      "status": "unset",
-      "note": "The gov.uk rates page shows the current year only."
+      "value": 26.05,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance-tax-credits-child-benefit-and-guardians-allo.html"
     },
     "weeklyAdditional": {
-      "value": null,
-      "source": "",
-      "verified": "",
-      "status": "unset",
-      "note": "The gov.uk rates page shows the current year only."
+      "value": 17.25,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance/tax-credits-child-benefit-and-guardians-allowance",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-tax-credits-child-benefit-and-guardians-allowance-tax-credits-child-benefit-and-guardians-allo.html"
+    },
+    "weekStartsOn": {
+      "value": "Monday",
+      "source": "https://www.legislation.gov.uk/ukpga/2003/1/section/681H",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "note": "A week of child benefit begins on a Monday and belongs to the tax year its Monday falls in, so a tax year has 52 or 53 weeks",
+      "archived": "archive/2026-11-09/www-legislation-gov-uk-ukpga-2003-1-section-681h.html"
+    },
+    "chargeRounding": {
+      "value": "down",
+      "source": "https://www.legislation.gov.uk/ukpga/2003/1/section/681C",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "note": "The total child benefit, the percentage and the charge are each rounded down to a whole number",
+      "archived": "archive/2026-11-09/www-legislation-gov-uk-ukpga-2003-1-section-681c.html"
     }
   },
   "statutoryPay": {
@@ -577,6 +609,108 @@
         "verified": "2026-11-07",
         "status": "in-force",
         "archived": "archive/2026-11-07/www-gov-uk-statutory-sick-pay.html"
+      }
+    },
+    "smp": {
+      "weekly": {
+        "value": 187.18,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "earningsFraction": {
+        "value": 0.9,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "fullRateWeeks": {
+        "value": 6,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "maxWeeks": {
+        "value": 39,
+        "source": "https://www.gov.uk/maternity-pay-leave/pay",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "Paid for up to 39 weeks: 6 at the earnings rate, then 33 at the lower of the weekly rate and the earnings rate",
+        "archived": "archive/2026-11-09/www-gov-uk-maternity-pay-leave-pay.html"
+      },
+      "earningsTestWeekly": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "gov.uk's eligibility pages show the current earnings test only; the figure for this tax year has not been read from a dated primary source"
+      }
+    },
+    "spp": {
+      "weekly": {
+        "value": 187.18,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "earningsFraction": {
+        "value": 0.9,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "The lower of the weekly rate and 90% of average weekly earnings",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "maxWeeks": {
+        "value": 2,
+        "source": "https://www.gov.uk/paternity-pay-leave/leave",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "Up to 2 weeks, together or as separate weeks",
+        "archived": "archive/2026-11-09/www-gov-uk-paternity-pay-leave-leave.html"
+      },
+      "earningsTestWeekly": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "gov.uk's eligibility pages show the current earnings test only; the figure for this tax year has not been read from a dated primary source"
+      }
+    },
+    "shpp": {
+      "weekly": {
+        "value": 187.18,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "earningsFraction": {
+        "value": 0.9,
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "The lower of the weekly rate and 90% of average weekly earnings",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+      },
+      "maxWeeks": {
+        "value": 37,
+        "source": "https://www.gov.uk/shared-parental-leave-and-pay/what-youll-get",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "Up to 37 weeks of pay shared between the parents, less the weeks of maternity or adoption pay taken",
+        "archived": "archive/2026-11-09/www-gov-uk-shared-parental-leave-and-pay-what-youll-get.html"
+      },
+      "earningsTestWeekly": {
+        "value": null,
+        "source": "",
+        "verified": "",
+        "status": "unset",
+        "note": "gov.uk's eligibility pages show the current earnings test only; the figure for this tax year has not been read from a dated primary source"
       }
     }
   },
@@ -691,6 +825,43 @@
       "status": "in-force",
       "note": "Full rate of the new State Pension, 2025 to 2026, from the confirmed benefit and pension rates 2026 to 2027 publication, whose address still carries the word 'proposed'",
       "archived": "archive/2026-11-09/www-gov-uk-government-publications-benefit-and-pension-rates-2026-to-2027-proposed-benefit-and-pension-rates-2026-to-2027.html"
+    }
+  },
+  "mileage": {
+    "carFirstRate": {
+      "value": 0.45,
+      "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+    },
+    "carFirstMiles": {
+      "value": 10000,
+      "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+    },
+    "carAfterRate": {
+      "value": 0.25,
+      "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+    },
+    "motorcycle": {
+      "value": 0.24,
+      "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+    },
+    "cycle": {
+      "value": 0.2,
+      "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
     }
   }
 }

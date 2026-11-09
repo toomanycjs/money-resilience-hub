@@ -154,7 +154,7 @@ export type { RulerThreshold };
 
 /** The headline of a single-purpose tool: the amount, its unit, the secondary figures and one sentence. */
 export function renderSimpleFigure(r: SimpleResult): string {
-	const figures = r.figures.map((f) => `<div><dt>${esc(f.label)}</dt><dd>${f.rate ? pct(f.amount) : money(f.amount, 0)}</dd></div>`).join('');
+	const figures = r.figures.map((f) => `<div><dt>${esc(f.label)}</dt><dd>${f.rate ? pct(f.amount) : money(f.amount, f.pence ? 2 : 0)}</dd></div>`).join('');
 	return `
 <p class="figure-label">${esc(r.headline.label)}</p>
 <p class="figure"><span class="figure-amount">${money(r.headline.amount, 0)}</span><span class="figure-period">${esc(r.headline.unit)}</span></p>

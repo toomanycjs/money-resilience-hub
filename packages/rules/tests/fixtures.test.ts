@@ -7,6 +7,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { getYear, incomeTax, landlordTax, lifetimeIsaPenalty, marriageAllowanceSaving, pensionTaxAllowance, savingsTax, sideHustleTax, statePensionTax, takeHome, type Nation, type Plan, type SimpleResult } from '../src/index';
+import { bonusTax, childBenefitCharge, hourlyToSalary, maternityPay, mileageAllowance, paternityPay, payRise, pensionContributions } from '../src/index';
 
 const DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures');
 
@@ -29,6 +30,14 @@ const SIMPLE: Record<string, (input: Record<string, unknown>, taxYear: string, a
 	statePensionTax: (i, taxYear, asAt) => statePensionTax({ ...(i as unknown as Parameters<typeof statePensionTax>[0]), taxYear, asAt }),
 	sideHustleTax: (i, taxYear, asAt) => sideHustleTax({ ...(i as unknown as Parameters<typeof sideHustleTax>[0]), taxYear, asAt }),
 	lifetimeIsaPenalty: (i) => lifetimeIsaPenalty(i as unknown as Parameters<typeof lifetimeIsaPenalty>[0]),
+	payRise: (i, taxYear, asAt) => payRise({ ...(i as unknown as Parameters<typeof payRise>[0]), taxYear, asAt }),
+	bonusTax: (i, taxYear, asAt) => bonusTax({ ...(i as unknown as Parameters<typeof bonusTax>[0]), taxYear, asAt }),
+	pensionContributions: (i, taxYear, asAt) => pensionContributions({ ...(i as unknown as Parameters<typeof pensionContributions>[0]), taxYear, asAt }),
+	hourlyToSalary: (i, taxYear, asAt) => hourlyToSalary({ ...(i as unknown as Parameters<typeof hourlyToSalary>[0]), taxYear, asAt }),
+	childBenefitCharge: (i, taxYear, asAt) => childBenefitCharge({ ...(i as unknown as Parameters<typeof childBenefitCharge>[0]), taxYear, asAt }),
+	mileageAllowance: (i, taxYear, asAt) => mileageAllowance({ ...(i as unknown as Parameters<typeof mileageAllowance>[0]), taxYear, asAt }),
+	maternityPay: (i, taxYear, asAt) => maternityPay({ ...(i as unknown as Parameters<typeof maternityPay>[0]), taxYear, asAt }),
+	paternityPay: (i, taxYear, asAt) => paternityPay({ ...(i as unknown as Parameters<typeof paternityPay>[0]), taxYear, asAt }),
 };
 
 const files = readdirSync(DIR).filter((f) => f.endsWith('.json'));

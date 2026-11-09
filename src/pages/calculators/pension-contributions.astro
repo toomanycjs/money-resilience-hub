@@ -1,0 +1,76 @@
+---
+import { getYear, pensionContributions, resolve, NATION_LABEL } from '@money-resilience-hub/rules';
+import { money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value as number;
+const bands = year.incomeTax.bands['england-ni'];
+const basic = bands[0].rate as number;
+const higher = bands[1].rate as number;
+const pa = v(year.incomeTax.personalAllowance);
+const higherFrom = pa + (bands[0].upTo as number);
+const taperStart = v(year.incomeTax.taperStart);
+const ni = year.nationalInsurance.employee;
+const niMain = v(ni.mainRate);
+const niUpper = v(ni.upperRate);
+const uel = v(ni.upperEarningsLimit);
+const loanRate = v(year.studentLoans.plan2.rate);
+const exSalary = 40000;
+const exPercent = 5;
+const ex = pensionContributions({ salary: exSalary, percent: exPercent, nation: 'england-ni', taxYear: year.taxYear, asAt, compare: false });
+const f = (k: string) => ex.facts[k] as number;
+
+const faqs = [
+	{
+		q: 'How much tax relief do I get on pension contributions?',
+		a: `Relief is given at the rate of income tax the contribution would otherwise have carried. In ${year.label} in England, Wales and Northern Ireland that is ${pct(basic)} on pay up to ${money(higherFrom, 0)} and ${pct(higher)} above it. A ${exPercent}% contribution on ${money(exSalary, 0)} puts ${money(f('contribution'), 0)} in the pension and takes ${money(f('costNetPay'), 0)} off take-home pay under net pay or relief at source, and ${money(f('costSacrifice'), 0)} under salary sacrifice.`,
+	},
+	{
+		q: 'What is the difference between relief at source and net pay?',
+		a: `With net pay the employer takes the contribution from pay before income tax, so relief is given in full through the payslip. With relief at source the contribution comes from pay after tax, and the provider claims ${pct(basic)} from HMRC and adds it to the pot; a taxpayer above the basic rate claims the rest from HMRC. For someone who pays tax the cost is the same. For someone earning below the ${money(pa, 0)} personal allowance, relief at source still adds ${pct(basic)}, where net pay gives nothing through the payslip.`,
+	},
+	{
+		q: 'How does salary sacrifice save National Insurance?',
+		a: `Under salary sacrifice the salary itself is reduced and the employer pays the contribution, so National Insurance is worked out on the lower salary. That saves ${pct(niMain)} of the contribution on pay up to ${money(uel, 0)} and ${pct(niUpper)} above it, on top of the income tax relief. Anything else worked out from salary, such as statutory pay, uses the lower figure too.`,
+	},
+	{
+		q: 'Do pension contributions reduce student loan repayments?',
+		a: `Only under salary sacrifice. Repayments are ${pct(loanRate)} of pay above the plan threshold (${pct(v(year.studentLoans.postgraduate.rate))} for a postgraduate loan), and salary sacrifice lowers the pay they are worked out on. Net pay and relief at source contributions leave repayments unchanged. Choose a plan in the form to see the difference.`,
+	},
+	{
+		q: `Do pension contributions restore the personal allowance above ${money(taperStart, 0)}?`,
+		a: `Yes. The allowance is reduced by reference to adjusted net income, which is income less pension contributions. A contribution that brings adjusted net income back to ${money(taperStart, 0)} restores the full ${money(pa, 0)} allowance, under any of the three arrangements. The tax saved line shows the effect.`,
+	},
+];
+---
+
+<SimpleCalculator
+	tool="pension-contributions"
+	title={`Pension contribution calculator ${year.label}: tax relief`}
+	description={`Compare relief at source, net pay and salary sacrifice for ${year.label}: what a contribution costs in take-home pay, and the tax and National Insurance saved.`}
+	h1="Pension contribution calculator"
+	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. Shows the same contribution under relief at source, net pay and salary sacrifice: the cost to take-home pay, the income tax saved and the National Insurance saved.`}
+	breadcrumb="Pension contribution calculator"
+	formLabel="Your salary and contribution"
+	faqs={faqs}
+	limits="It does not model employer contributions, the annual allowance or its taper, the money purchase annual allowance, tax relief limits for non-taxpayers under net pay, or changes to benefits based on salary. Which arrangement applies is set by the scheme and the employer. It never suggests how much to contribute."
+	related={[
+		{ title: 'Pay rise calculator', href: '/calculators/pay-rise/', desc: 'What a rise adds to take-home pay and the thresholds it crosses.' },
+		{ title: 'Child benefit tax charge calculator', href: '/calculators/child-benefit-charge/', desc: 'The charge on adjusted net income, which pension contributions reduce.' },
+		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'One salary with a tax code and one pension arrangement in full.' },
+	]}
+>
+	<Fragment slot="how">
+		<ol>
+			<li><strong>No contribution.</strong> Take-home pay on the salary alone, as the starting point.</li>
+			<li><strong>Relief at source.</strong> The contribution less {pct(basic)} comes from pay after tax, and the provider adds the {pct(basic)}. Any relief above the basic rate is shown by widening the basic rate band by the contribution.</li>
+			<li><strong>Net pay.</strong> The contribution comes off pay before income tax. National Insurance and student loan repayments still use the full salary.</li>
+			<li><strong>Salary sacrifice.</strong> The salary is reduced by the contribution before income tax, National Insurance and student loan repayments are worked out.</li>
+			<li><strong>Side by side.</strong> For each: income tax saved, National Insurance saved, and the fall in take-home pay for the same amount in the pension.</li>
+		</ol>
+		<p>The rounding conventions are listed in the <a href="/methodology/">methodology</a>, and the formulas run from the open rules file for {year.label}.</p>
+	</Fragment>
+</SimpleCalculator>

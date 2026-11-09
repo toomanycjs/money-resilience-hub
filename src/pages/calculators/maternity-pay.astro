@@ -1,0 +1,72 @@
+---
+import { getYear, maternityPay, resolve } from '@money-resilience-hub/rules';
+import { money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value as number;
+const smp = year.statutoryPay.smp!;
+const weekly = v(smp.weekly);
+const fraction = v(smp.earningsFraction);
+const fullWeeks = v(smp.fullRateWeeks);
+const maxWeeks = v(smp.maxWeeks!);
+const laterWeeks = maxWeeks - fullWeeks;
+const test = v(smp.earningsTestWeekly!);
+const capAt = weekly / fraction;
+const exEarnings = 300;
+const ex = maternityPay({ weeklyEarnings: exEarnings, taxYear: year.taxYear, asAt, compare: false });
+const shpp = year.statutoryPay.shpp;
+const shppWeeks = shpp ? v(shpp.maxWeeks) : null;
+
+const faqs = [
+	{
+		q: `How much is Statutory Maternity Pay in ${year.label}?`,
+		a: `${pct(fraction)} of average weekly earnings for the first ${fullWeeks} weeks, with no upper limit, then ${money(weekly)} a week or ${pct(fraction)} of average weekly earnings, whichever is lower, for the next ${laterWeeks} weeks. On ${money(exEarnings, 0)} a week that is ${money(ex.facts.firstWeekly as number)} a week for ${fullWeeks} weeks and ${money(ex.facts.laterWeekly as number)} a week for ${laterWeeks}, ${money(ex.facts.total as number)} in total.`,
+	},
+	{
+		q: 'How long is Statutory Maternity Pay paid for?',
+		a: `Up to ${maxWeeks} weeks. It usually starts when maternity leave starts, and is paid in the same way as wages, monthly or weekly. Maternity leave itself can run longer than the paid weeks.`,
+	},
+	{
+		q: 'How much do I need to earn to get Statutory Maternity Pay?',
+		a: `An average of at least ${money(test, 0)} a week before tax in ${year.label}. The other conditions are a period of continuous work for the same employer running into the qualifying week, which falls before the week the baby is due, and giving the correct notice with proof of the pregnancy. Someone who does not qualify may be able to get Maternity Allowance instead.`,
+	},
+	{
+		q: 'Is Statutory Maternity Pay taxed?',
+		a: 'Yes. It is paid through the payroll like wages, and income tax and National Insurance are deducted from it. The figures here are before those deductions. Whether any tax is due depends on total pay for the tax year.',
+	},
+	{
+		q: 'What is the most Statutory Maternity Pay I can get?',
+		a: `There is no limit for the first ${fullWeeks} weeks: the rate is ${pct(fraction)} of average weekly earnings whatever they are. After that the weekly rate of ${money(weekly)} applies to anyone whose average weekly earnings are ${money(capAt)} or more. An employer's own maternity scheme can pay more than the statutory amount.${shppWeeks ? ` Weeks of maternity pay not taken can be used as Statutory Shared Parental Pay, up to ${shppWeeks} weeks between both parents.` : ''}`,
+	},
+];
+---
+
+<SimpleCalculator
+	tool="maternity-pay"
+	title={`Maternity pay calculator ${year.label}: SMP week by week`}
+	description={`Work out Statutory Maternity Pay for ${year.label} from average weekly earnings: the rate for the first ${fullWeeks} weeks, the next ${laterWeeks} and the total.`}
+	h1="Statutory Maternity Pay calculator"
+	subtitle={`Rates for tax year ${year.label}, for employees in the UK. Shows Statutory Maternity Pay for each of the ${maxWeeks} weeks and in total, from average weekly earnings.`}
+	breadcrumb="Maternity pay calculator"
+	formLabel="Your average weekly earnings"
+	faqs={faqs}
+	limits="It takes average weekly earnings as entered and applies one tax year's rates to all the weeks, so it does not model a pay period that runs across 5 April, a pay rise during the leave, the qualifying week dates, Maternity Allowance, an employer's own scheme or the tax deducted. It never suggests when to start leave."
+	related={[
+		{ title: 'Paternity pay calculator', href: '/calculators/paternity-pay/', desc: 'Statutory Paternity Pay for one or two weeks.' },
+		{ title: 'Child benefit tax charge calculator', href: '/calculators/child-benefit-charge/', desc: 'Child benefit for the year and the charge on higher incomes.' },
+		{ title: 'Hourly rate to salary calculator', href: '/calculators/hourly-to-salary/', desc: 'An hourly rate as a salary and take-home pay.' },
+	]}
+>
+	<Fragment slot="how">
+		<ol>
+			<li><strong>Earnings test.</strong> Average weekly earnings before tax are compared with the {money(test, 0)} a week needed to qualify.</li>
+			<li><strong>Weeks 1 to {fullWeeks}.</strong> {pct(fraction)} of average weekly earnings, with no upper limit.</li>
+			<li><strong>Weeks {fullWeeks + 1} to {maxWeeks}.</strong> The lower of {money(weekly)} and {pct(fraction)} of average weekly earnings.</li>
+			<li><strong>Total.</strong> The two added together, before income tax and National Insurance.</li>
+		</ol>
+		<p>A weekly amount with a fraction of a penny is rounded up to the next penny, as the Statutory Maternity Pay regulations require. The other rounding conventions are in the <a href="/methodology/">methodology</a>.</p>
+	</Fragment>
+</SimpleCalculator>

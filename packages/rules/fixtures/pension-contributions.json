@@ -1,0 +1,42 @@
+[
+  {
+    "id": "pension-basic-rate-three-ways",
+    "title": "gov.uk: relief at source adds 20% and net pay takes the contribution before tax, so 5% of £40,000 costs £1,600 either way; salary sacrifice also saves 8% National Insurance",
+    "fn": "pensionContributions",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief", "https://www.gov.uk/income-tax-rates", "https://www.gov.uk/national-insurance/how-much-you-pay"],
+    "input": { "salary": 40000, "percent": 5, "nation": "england-ni" },
+    "expected": { "contribution": 2000, "costRas": 1600, "costNetPay": 1600, "costSacrifice": 1440, "taxSavedRas": 400, "taxSavedNetPay": 400, "taxSavedSacrifice": 400, "niSavedRas": 0, "niSavedNetPay": 0, "niSavedSacrifice": 160 },
+    "working": "2,000 x 20% = 400 of tax relief under each. Salary sacrifice also saves 2,000 x 8% = 160 of National Insurance: 2,000 - 400 - 160 = 1,440."
+  },
+  {
+    "id": "pension-higher-rate-with-loan",
+    "title": "gov.uk: a higher rate taxpayer gets 40% relief; 8% of £60,000 costs £2,880 with relief at source or net pay, and salary sacrifice also lowers National Insurance and Plan 2 repayments",
+    "fn": "pensionContributions",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief", "https://www.gov.uk/income-tax-rates", "https://www.gov.uk/repaying-your-student-loan/what-you-pay"],
+    "input": { "salary": 60000, "percent": 8, "nation": "england-ni", "plan": "plan2" },
+    "expected": { "contribution": 4800, "costRas": 2880, "costNetPay": 2880, "costSacrifice": 2352, "taxSavedRas": 1920, "taxSavedNetPay": 1920, "taxSavedSacrifice": 1920, "niSavedSacrifice": 96, "loanSavedSacrifice": 432 },
+    "working": "4,800 x 40% = 1,920 of tax relief (20% claimed by the provider and 20% through the wider basic rate band under relief at source). Sacrifice: 4,800 x 2% = 96 of National Insurance; loan 9% of 30,615 = 2,755 against 9% of 25,815 = 2,323, saving 432. 4,800 - 1,920 - 96 - 432 = 2,352."
+  },
+  {
+    "id": "pension-restores-allowance",
+    "title": "gov.uk: pension contributions reduce adjusted net income, so 10% of £110,000 brings it to £99,000 and restores the full personal allowance",
+    "fn": "pensionContributions",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/income-tax-rates/income-over-100000", "https://www.gov.uk/guidance/adjusted-net-income", "https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief"],
+    "input": { "salary": 110000, "percent": 10, "nation": "england-ni" },
+    "expected": { "contribution": 11000, "costRas": 4600, "costNetPay": 4600, "costSacrifice": 4380, "taxSavedNetPay": 6400, "taxSavedRas": 6400, "niSavedSacrifice": 220 },
+    "working": "Tax on 110,000: allowance 7,570, taxable 102,430, 7,540 + 64,730 x 40% = 33,432. On 99,000: allowance 12,570, taxable 86,430, 27,032. Saved 6,400. Relief at source: 2,200 claimed by the provider and tax falls to 9,740 + 48,730 x 40% = 29,232, 4,200 less. Sacrifice also saves 11,000 x 2% = 220."
+  },
+  {
+    "id": "pension-low-pay-small-contribution",
+    "title": "gov.uk rates: 3% of £20,000 is £600, costing £480 after 20% relief and £432 under salary sacrifice",
+    "fn": "pensionContributions",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief", "https://www.gov.uk/national-insurance/how-much-you-pay"],
+    "input": { "salary": 20000, "percent": 3, "nation": "wales" },
+    "expected": { "contribution": 600, "costRas": 480, "costNetPay": 480, "costSacrifice": 432 },
+    "working": "600 x 20% = 120. 600 x 8% = 48. 600 - 120 = 480; 600 - 120 - 48 = 432."
+  }
+]

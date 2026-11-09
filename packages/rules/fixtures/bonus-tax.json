@@ -1,0 +1,42 @@
+[
+  {
+    "id": "bonus-crosses-monthly-upper-limit",
+    "title": "gov.uk monthly thresholds: a £10,000 bonus on £40,000 takes the month above £4,189, so most of it carries 2% National Insurance, not 8%",
+    "fn": "bonusTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027", "https://www.gov.uk/national-insurance/how-much-you-pay", "https://www.gov.uk/income-tax-rates", "https://www.gov.uk/repaying-your-student-loan/what-you-pay"],
+    "input": { "salary": 40000, "bonus": 10000, "nation": "england-ni", "plan": "plan2" },
+    "expected": { "extraTax": 2000, "normalMonthNi": 182.83, "bonusMonthNi": 434.17, "extraNi": 251.34, "annualMethodNi": 800, "extraLoan": 900, "kept": 6848.66 },
+    "working": "Tax: taxable 27,430 becomes 37,430, all at 20%: 2,000. Normal month 3,333.33: (3,333.33 - 1,048) x 8% = 182.83. Bonus month 13,333.33: (4,189 - 1,048) x 8% = 251.28 plus (13,333.33 - 4,189) x 2% = 182.89, 434.17. Extra 251.34; annually 10,000 x 8% = 800. Plan 2 monthly threshold 2,448.75: 9% of 10,884.58 = 979 against 9% of 884.58 = 79, extra 900. 10,000 - 2,000 - 251.34 - 900 = 6,848.66."
+  },
+  {
+    "id": "bonus-within-monthly-limits",
+    "title": "gov.uk monthly thresholds: a £1,000 bonus on £30,000 keeps the month under £4,189, so National Insurance is 8% of it",
+    "fn": "bonusTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027", "https://www.gov.uk/income-tax-rates"],
+    "input": { "salary": 30000, "bonus": 1000, "nation": "england-ni" },
+    "expected": { "extraTax": 200, "extraNi": 80, "annualMethodNi": 80, "extraLoan": 0, "kept": 720, "keptShare": 0.72 },
+    "working": "1,000 x 20% = 200. Bonus month 3,500 is below 4,189: 1,000 x 8% = 80. 1,000 - 280 = 720."
+  },
+  {
+    "id": "bonus-above-upper-limit-every-month",
+    "title": "gov.uk monthly thresholds: on £60,000 every month is already above £4,189, so a £5,000 bonus carries 40% tax and 2% National Insurance",
+    "fn": "bonusTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027", "https://www.gov.uk/income-tax-rates"],
+    "input": { "salary": 60000, "bonus": 5000, "nation": "england-ni" },
+    "expected": { "extraTax": 2000, "extraNi": 100, "annualMethodNi": 100, "kept": 2900 },
+    "working": "5,000 x 40% = 2,000. 5,000 x 2% = 100. 5,000 - 2,100 = 2,900."
+  },
+  {
+    "id": "bonus-2025-26-monthly-thresholds",
+    "title": "gov.uk 2025 to 2026 thresholds: the same monthly limits of £1,048 and £4,189 applied, so the £10,000 bonus on £40,000 carried £251.34",
+    "fn": "bonusTax",
+    "taxYear": "2025-26",
+    "sources": ["https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026"],
+    "input": { "salary": 40000, "bonus": 10000, "nation": "england-ni" },
+    "expected": { "extraTax": 2000, "extraNi": 251.34, "kept": 7748.66 },
+    "working": "As the 2026 to 2027 case without a student loan: 10,000 - 2,000 - 251.34 = 7,748.66."
+  }
+]

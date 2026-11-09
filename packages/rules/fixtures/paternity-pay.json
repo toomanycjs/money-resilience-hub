@@ -1,0 +1,52 @@
+[
+  {
+    "id": "spp-weekly-rate-two-weeks",
+    "title": "gov.uk: the statutory weekly rate of Paternity Pay is £194.32, or 90% of average weekly earnings if lower; on £500 a week, 2 weeks is £388.64",
+    "fn": "paternityPay",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/paternity-pay-leave/pay", "https://www.gov.uk/paternity-pay-leave/leave"],
+    "input": { "weeklyEarnings": 500, "weeks": 2 },
+    "expected": { "weekly": 194.32, "total": 388.64, "weeks": 2, "eligible": "yes" },
+    "working": "90% of 500 is 450, above 194.32. 2 x 194.32 = 388.64."
+  },
+  {
+    "id": "spp-earnings-rate-one-week",
+    "title": "gov.uk: on £150 a week, 90% of earnings (£135) is lower than the weekly rate, so one week of Paternity Pay is £135",
+    "fn": "paternityPay",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/paternity-pay-leave/pay"],
+    "input": { "weeklyEarnings": 150, "weeks": 1 },
+    "expected": { "weekly": 135, "total": 135, "weeks": 1 },
+    "working": "150 x 90% = 135."
+  },
+  {
+    "id": "spp-below-earnings-test",
+    "title": "gov.uk: to get Paternity Pay you must earn an average of at least £129 a week before tax",
+    "fn": "paternityPay",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/paternity-pay-leave/eligibility"],
+    "input": { "weeklyEarnings": 128.99 },
+    "expected": { "total": 0, "eligible": "no" },
+    "working": "128.99 is below 129."
+  },
+  {
+    "id": "spp-no-more-than-two-weeks",
+    "title": "gov.uk: you can take up to 2 weeks of paternity leave, so a request for 4 weeks is paid for 2",
+    "fn": "paternityPay",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/paternity-pay-leave/leave", "https://www.gov.uk/paternity-pay-leave/pay"],
+    "input": { "weeklyEarnings": 500, "weeks": 4 },
+    "expected": { "weeks": 2, "total": 388.64 },
+    "working": "2 x 194.32 = 388.64."
+  },
+  {
+    "id": "spp-2025-26-rate",
+    "title": "gov.uk 2025 to 2026: the weekly rate of Statutory Paternity Pay was £187.18, so 2 weeks on £500 a week was £374.36",
+    "fn": "paternityPay",
+    "taxYear": "2025-26",
+    "sources": ["https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026"],
+    "input": { "weeklyEarnings": 500 },
+    "expected": { "weekly": 187.18, "total": 374.36 },
+    "working": "2 x 187.18 = 374.36."
+  }
+]
