@@ -15,3 +15,6 @@ export { landlordTax, LANDLORD_TOUCHES, type LandlordTaxInput } from './landlord
 export { statePensionTax, STATE_PENSION_TOUCHES, type StatePensionTaxInput } from './statePensionTax.ts';
 export { lifetimeIsaPenalty, LISA_REASONS, LISA_REASON_LABEL, type LifetimeIsaPenaltyInput, type LisaReason } from './lifetimeIsaPenalty.ts';
 export { sideHustleTax, SIDE_HUSTLE_TOUCHES, type SideHustleTaxInput } from './sideHustleTax.ts';
+export { financeCostReliefRate } from './landlordTax.ts';
+export { selfAssessmentPayments, dayMonthAfter, type SelfAssessmentPayments } from './sideHustleTax.ts';
+export { makingTaxDigitalCheck, withInformationSources, type MtdCheck, type MtdPosition } from './makingTaxDigital.ts';

@@ -1,11 +1,12 @@
 ---
-import { getYear, nextYear, resolve, NATION_LABEL } from '@money-resilience-hub/rules';
+import { dayMonthAfter, getYear, nextYear, previousYear, resolve, NATION_LABEL } from '@money-resilience-hub/rules';
 import { money, pct, longDate } from '@money-resilience-hub/calculators';
 import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
 import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
 
 const year = getYear(CURRENT_YEAR.taxYear);
 const next = nextYear(year.taxYear);
+const prev = previousYear(year.taxYear);
 const asAt = BUILD_DATE;
 const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value;
 const allowance = v(year.incomeTax.tradingAllowance);
@@ -18,6 +19,31 @@ const c4Main = v(c4.mainRate);
 const c4Upper = v(c4.upperRate);
 const spt = v(year.nationalInsurance.selfEmployed.smallProfitsThreshold);
 const basicRate = year.incomeTax.bands['england-ni'][0].rate as number;
+
+// Self Assessment: the dates for this tax year and the payments on account rules.
+const sa = year.selfAssessment;
+const poa = sa?.paymentsOnAccount;
+const dueDate = sa ? dayMonthAfter(v(sa.paymentDue) as string, year, 1) : null;
+const secondDate = poa ? dayMonthAfter(v(poa.secondDue) as string, year, 1) : null;
+const registerBy = sa?.registerBy ? dayMonthAfter(v(sa.registerBy) as string, year, 0) : null;
+const poaThreshold = poa ? (v(poa.billThreshold) as number) : null;
+const poaShare = poa ? (v(poa.deductedAtSourceFraction) as number) : null;
+const poaEach = poa ? (v(poa.eachPaymentFraction) as number) : null;
+const poaCaveat = next?.selfAssessment?.paymentsOnAccount.secondDue.status !== 'in-force' ? (next?.selfAssessment?.paymentsOnAccount.secondDue.note ?? '') : '';
+
+// Digital platforms. The euro figure is a count of euros, so the pound sign is taken off the formatted number.
+const dp = year.digitalPlatforms;
+const plain = (n: number) => money(n, 0).slice(1);
+
+// Making Tax Digital for Income Tax: each test names the tax year whose income it uses and the date it starts.
+const slash = (taxYear: string) => taxYear.replace('-', '/');
+const mtd = year.makingTaxDigital;
+const mtdTests: string[] = [];
+if (mtd?.inUse && mtd.inUse.threshold.value !== null && mtd.inUse.incomeYear.value !== null) mtdTests.push(`over ${money(mtd.inUse.threshold.value, 0)} for ${slash(mtd.inUse.incomeYear.value)}, it has applied since ${longDate(year.starts)}`);
+const prevTest = prev?.makingTaxDigital?.incomeTest;
+if (prevTest && prevTest.threshold.value !== null && prevTest.startDate.value !== null) mtdTests.push(`over ${money(prevTest.threshold.value, 0)} for ${prev!.label}, it applies from ${longDate(prevTest.startDate.value)}`);
+const thisTest = mtd?.incomeTest;
+if (thisTest && thisTest.threshold.value !== null && thisTest.startDate.value !== null) mtdTests.push(`over ${money(thisTest.threshold.value, 0)} for ${year.label}, it applies from ${longDate(thisTest.startDate.value)}`);
 
 const faqs = [
 	{
@@ -38,21 +64,49 @@ const faqs = [
 	},
 	{
 		q: 'When do I need to register for Self Assessment?',
-		a: `When trading income is over the ${money(allowance, 0)} allowance in a tax year, by 5 October after the end of that year. ${nextAllowance !== null ? `From ${longDate(next!.starts)} the threshold is ${money(nextAllowance, 0)}.` : ''}`,
+		a: `When trading income is over the ${money(allowance, 0)} allowance in a tax year, by ${registerBy ? `${longDate(registerBy)} for ${year.label}, the ${v(sa!.registerBy!)} after the tax year ends` : 'the October after the tax year ends'}. ${nextAllowance !== null ? `From ${longDate(next!.starts)} the threshold is ${money(nextAllowance, 0)}.` : ''}`,
 	},
+	...(dueDate && secondDate && poaThreshold !== null && poaShare !== null && poaEach !== null
+		? [
+				{
+					q: 'When is the tax on a side hustle due?',
+					a: `Tax and Class 4 for ${year.label} are paid through Self Assessment by midnight on ${longDate(dueDate)}. Nothing is taken during the year, so the whole amount falls due at once. The tool shows the figure for that date.`,
+				},
+				{
+					q: 'What are payments on account?',
+					a: `Two advance payments towards the next year's bill, each ${pct(poaEach)} of the bill just worked out. For ${year.label} they are due by ${longDate(dueDate)} and ${longDate(secondDate)}. They do not apply when the bill is less than ${money(poaThreshold, 0)}, or when more than ${pct(poaShare)} of the year's tax was collected outside Self Assessment, for example through PAYE. In a first year nothing has been paid in advance, so the January payment is the bill plus the first payment on account: ${pct(1 + poaEach)} of the bill. The tool shows both dates and treats the tax on your other income as collected at source. ${poaCaveat ? `${poaCaveat}.` : ''}`,
+				},
+			]
+		: []),
+	...(dp && dp.salesOfGoodsLimit.value !== null && dp.salesValueLimitEuros.value !== null && dp.salesValueLimitApproxPounds.value !== null
+		? [
+				{
+					q: 'Do online platforms tell HMRC what I sell?',
+					a: `Yes. Digital platforms, such as online marketplaces and apps for services or lettings, collect details of their sellers and report each seller's income for a calendar year to HMRC${dp.reportBy?.value ? ` by ${dp.reportBy.value} of the following year` : ''}. They give the seller a copy. A seller of goods is not reported when they make fewer than ${dp.salesOfGoodsLimit.value} sales in the year and receive less than ${plain(dp.salesValueLimitEuros.value)} euros (about ${money(dp.salesValueLimitApproxPounds.value, 0)}) for them. Being reported does not by itself mean tax is due, and not being reported does not remove it: the ${money(allowance, 0)} trading allowance and the tax rules are the same either way. Selling your own unwanted belongings is unlikely to be taxed. Buying or making goods to sell at a profit is likely to be trading.`,
+				},
+			]
+		: []),
+	...(mtdTests.length
+		? [
+				{
+					q: 'Does Making Tax Digital for Income Tax apply to a side hustle?',
+					a: `It depends on qualifying income: self-employment income and rent added together, before expenses, as reported on the tax return for a tax year. Where that is ${mtdTests.join('; ')}. The last line of the working shows where the trading income you enter sits against the threshold for the tax year chosen. Some people are exempt.`,
+				},
+			]
+		: []),
 ];
 ---
 
 <SimpleCalculator
 	tool="side-hustle-tax"
 	title={`Side hustle tax calculator ${year.label}: trading allowance`}
-	description={`Work out the tax and Class 4 National Insurance on a side hustle for ${year.label}, with the trading allowance this year and the ${nextAllowance !== null ? money(nextAllowance, 0) : 'higher'} allowance from April 2027, each figure shown with its gov.uk source.`}
+	description={`Income tax and Class 4 on a side hustle for ${year.label}: the trading allowance, what is due by ${dueDate ? longDate(dueDate) : 'the deadline'} and payments on account, with sources.`}
 	h1="Side hustle tax calculator"
-	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. Trading income less expenses or the trading allowance, taxed on top of your other income, this year and from ${next ? longDate(next.starts) : 'the next tax year'}.`}
+	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. Trading income less expenses or the trading allowance, taxed on top of your other income, with what Self Assessment asks for and when, this year and from ${next ? longDate(next.starts) : 'the next tax year'}.`}
 	breadcrumb="Side hustle tax calculator"
 	formLabel="Your side hustle and income"
 	faqs={faqs}
-	limits="It does not model a trading loss, the cash basis rules, payments on account, the annual maximum for someone who also pays employee National Insurance, Class 2 contributions, or VAT. It never suggests what to do with the result."
+	limits="It does not model a trading loss, the cash basis rules, payments on account already made or a balancing payment in a later year, the annual maximum for someone who also pays employee National Insurance, Class 2 contributions, tax collected through a tax code, or VAT. It never suggests what to do with the result."
 	related={[
 		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'The pay that the profit sits on top of.' },
 		{ title: 'Savings interest tax calculator', href: '/calculators/savings-tax/', desc: 'Interest on top of pay, with the personal savings allowance.' },
@@ -65,6 +119,10 @@ const faqs = [
 			<li><strong>Personal allowance.</strong> Your other income uses the {money(pa, 0)} allowance first. Whatever is left goes against the profit at 0%. Above {money(v(year.incomeTax.taperStart), 0)} of total income the allowance tapers.</li>
 			<li><strong>Income tax.</strong> The taxable profit is stacked on top of your other income and taxed band by band at the rates for where you live. Taxable amounts are rounded down to the pound.</li>
 			<li><strong>Class 4 National Insurance.</strong> {pct(c4Main)} on profit between {money(lpl, 0)} and {money(upl, 0)}, then {pct(c4Upper)} above, on the profit alone.</li>
+			{dueDate && secondDate && poaThreshold !== null && poaShare !== null && poaEach !== null && (
+				<li><strong>What is due and when.</strong> The bill is due by {longDate(dueDate)}. Payments on account towards the next year are added when the bill is {money(poaThreshold, 0)} or more and no more than {pct(poaShare)} of the year's tax was collected outside Self Assessment. Each is {pct(poaEach)} of the bill, due by {longDate(dueDate)} and {longDate(secondDate)}. The tool shows a first year in Self Assessment, with nothing paid in advance, and treats the tax on your other income as collected at source.</li>
+			)}
+			<li><strong>Making Tax Digital.</strong> The last line compares the trading income you enter, before expenses, with the qualifying income threshold tested on the tax year chosen, and gives the date it would apply from. It does not change the tax.</li>
 		</ol>
 		<p>The rounding conventions are listed in the <a href="/methodology/">methodology</a>, and the formulas run from the open rules file for {year.label}.</p>
 	</Fragment>

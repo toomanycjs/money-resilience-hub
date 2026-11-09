@@ -243,6 +243,38 @@
           "status": "in-force",
           "archived": "archive/2026-11-07/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
         }
+      },
+      "financeCostReliefRate": {
+        "value": 0.2,
+        "source": "https://www.gov.uk/guidance/changes-to-tax-relief-for-residential-landlords-how-its-worked-out-including-case-studies",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "The tax reduction for residential finance costs: the basic rate value of the lowest of finance costs, property profits and adjusted total income above the personal allowance. It cannot create a refund",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-changes-to-tax-relief-for-residential-landlords-how-its-worked-out-including-case-studies.html"
+      },
+      "financeCostReliefBasis": {
+        "value": "basic rate",
+        "source": "https://www.gov.uk/guidance/changes-to-tax-relief-for-residential-landlords-how-its-worked-out-including-case-studies",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "The reduction is the basic rate value of the lowest of the three amounts",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-changes-to-tax-relief-for-residential-landlords-how-its-worked-out-including-case-studies.html"
+      },
+      "rentARoomLimit": {
+        "value": 7500,
+        "source": "https://www.gov.uk/rent-room-in-your-home/the-rent-a-room-scheme",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "Tax free a year from letting furnished accommodation in your own home",
+        "archived": "archive/2026-11-09/www-gov-uk-rent-room-in-your-home-the-rent-a-room-scheme.html"
+      },
+      "rentARoomSharedLimit": {
+        "value": 3750,
+        "source": "https://www.gov.uk/rent-room-in-your-home/the-rent-a-room-scheme",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "The limit is halved when the income is shared with someone else",
+        "archived": "archive/2026-11-09/www-gov-uk-rent-room-in-your-home-the-rent-a-room-scheme.html"
       }
     },
     "dividends": {
@@ -704,6 +736,130 @@
       "status": "in-force",
       "note": "Full rate of the new State Pension, 2026 to 2027",
       "archived": "archive/2026-11-08/www-gov-uk-government-publications-benefit-and-pension-rates-2026-to-2027-proposed-benefit-and-pension-rates-2026-to-2027.html"
+    }
+  },
+  "selfAssessment": {
+    "paymentDue": {
+      "value": "31 January",
+      "source": "https://www.gov.uk/understand-self-assessment-bill/payments-on-account",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "note": "Day and month after the tax year ends. The bill for the year and the first payment on account towards the next year are due by midnight on this date",
+      "archived": "archive/2026-11-09/www-gov-uk-understand-self-assessment-bill-payments-on-account.html"
+    },
+    "registerBy": {
+      "value": "5 October",
+      "source": "https://www.gov.uk/self-assessment-tax-returns/deadlines",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "note": "Day and month after the tax year ends, for someone who has not sent a tax return before",
+      "archived": "archive/2026-11-09/www-gov-uk-self-assessment-tax-returns-deadlines.html"
+    },
+    "paymentsOnAccount": {
+      "billThreshold": {
+        "value": 1000,
+        "source": "https://www.gov.uk/understand-self-assessment-bill/payments-on-account",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "No payments on account when the tax owed for the last year was less than this",
+        "archived": "archive/2026-11-09/www-gov-uk-understand-self-assessment-bill-payments-on-account.html"
+      },
+      "deductedAtSourceFraction": {
+        "value": 0.8,
+        "source": "https://www.gov.uk/understand-self-assessment-bill/payments-on-account",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "No payments on account when more than this share of the tax owed was paid outside Self Assessment, for example through a tax code",
+        "archived": "archive/2026-11-09/www-gov-uk-understand-self-assessment-bill-payments-on-account.html"
+      },
+      "eachPaymentFraction": {
+        "value": 0.5,
+        "source": "https://www.gov.uk/understand-self-assessment-bill/payments-on-account",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "Each payment on account is half of the tax owed for the last year",
+        "archived": "archive/2026-11-09/www-gov-uk-understand-self-assessment-bill-payments-on-account.html"
+      },
+      "secondDue": {
+        "value": "31 July",
+        "source": "https://www.gov.uk/understand-self-assessment-bill/payments-on-account",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "Day and month of the second payment on account, in the year after the tax year ends",
+        "archived": "archive/2026-11-09/www-gov-uk-understand-self-assessment-bill-payments-on-account.html"
+      }
+    }
+  },
+  "makingTaxDigital": {
+    "incomeTest": {
+      "threshold": {
+        "value": 20000,
+        "source": "https://www.gov.uk/guidance/find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "note": "Tested on qualifying income for 2026/27. Set by regulation 27 of the Income Tax (Digital Obligations) Regulations 2026 (S.I. 2026/336)",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax.html"
+      },
+      "startDate": {
+        "value": "2028-04-06",
+        "source": "https://www.gov.uk/guidance/find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "note": "Making Tax Digital for Income Tax applies from this date when qualifying income for 2026/27 is over the threshold",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax.html"
+      }
+    },
+    "inUse": {
+      "threshold": {
+        "value": 50000,
+        "source": "https://www.gov.uk/guidance/find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "In 2026/27 Making Tax Digital for Income Tax applies where qualifying income for 2024/25 was over this",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax.html"
+      },
+      "incomeYear": {
+        "value": "2024-25",
+        "source": "https://www.gov.uk/guidance/find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "The tax year whose qualifying income decides who uses Making Tax Digital in 2026/27",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax.html"
+      }
+    }
+  },
+  "digitalPlatforms": {
+    "salesOfGoodsLimit": {
+      "value": 30,
+      "source": "https://www.gov.uk/guidance/selling-goods-or-services-on-a-digital-platform",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "note": "A count of sales, not money. A seller of goods is not reported when they make fewer than this many sales in a calendar year and receive less than the euro limit for them",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-selling-goods-or-services-on-a-digital-platform.html"
+    },
+    "salesValueLimitEuros": {
+      "value": 2000,
+      "source": "https://www.gov.uk/guidance/selling-goods-or-services-on-a-digital-platform",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "note": "In euros, not pounds",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-selling-goods-or-services-on-a-digital-platform.html"
+    },
+    "salesValueLimitApproxPounds": {
+      "value": 1700,
+      "source": "https://www.gov.uk/guidance/selling-goods-or-services-on-a-digital-platform",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "note": "The approximate sterling figure gov.uk gives for 2,000 euros",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-selling-goods-or-services-on-a-digital-platform.html"
+    },
+    "reportBy": {
+      "value": "31 January",
+      "source": "https://www.gov.uk/guidance/selling-goods-or-services-on-a-digital-platform",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "note": "Platforms report a calendar year to HMRC by this day and month in the following January",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-selling-goods-or-services-on-a-digital-platform.html"
     }
   }
 }

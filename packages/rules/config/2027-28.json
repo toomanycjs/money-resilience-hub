@@ -215,6 +215,38 @@
         "verified": "",
         "status": "unset",
         "note": "Scotland gains the power to set its own property income rates from 2027/28; none set yet."
+      },
+      "financeCostReliefRate": {
+        "value": null,
+        "source": "https://www.gov.uk/government/publications/changes-to-tax-rates-for-property-savings-and-dividend-income/change-to-tax-rates-for-property-savings-and-dividend-income-technical-note",
+        "verified": "2026-11-09",
+        "status": "unset",
+        "note": "No gov.uk page states the rate of finance cost relief for 2027/28 as a figure after Budget 2026. The technical note says relief is given at the property basic rate from 2027/28, so the landlord tool applies the property basic rate recorded for this year",
+        "archived": "archive/2026-11-09/www-gov-uk-government-publications-changes-to-tax-rates-for-property-savings-and-dividend-income-change-to-tax-rates-for-property-savings-and-dividend.html"
+      },
+      "financeCostReliefBasis": {
+        "value": "property basic rate",
+        "source": "https://www.gov.uk/government/publications/changes-to-tax-rates-for-property-savings-and-dividend-income/change-to-tax-rates-for-property-savings-and-dividend-income-technical-note",
+        "verified": "2026-11-09",
+        "status": "announced",
+        "note": "The technical note of 26 November 2025 says relief for residential finance costs is calculated at the property basic rate from 2027/28. It quotes the 22% rate announced at Budget 2025; Budget 2026 raised the property basic rate to 24%",
+        "archived": "archive/2026-11-09/www-gov-uk-government-publications-changes-to-tax-rates-for-property-savings-and-dividend-income-change-to-tax-rates-for-property-savings-and-dividend.html"
+      },
+      "rentARoomLimit": {
+        "value": 7500,
+        "source": "https://www.gov.uk/rent-room-in-your-home/the-rent-a-room-scheme",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "note": "No change announced; the technical note on property rates of 26 November 2025 says the Rent a Room Scheme is unchanged",
+        "archived": "archive/2026-11-09/www-gov-uk-rent-room-in-your-home-the-rent-a-room-scheme.html"
+      },
+      "rentARoomSharedLimit": {
+        "value": 3750,
+        "source": "https://www.gov.uk/rent-room-in-your-home/the-rent-a-room-scheme",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "note": "The limit is halved when the income is shared with someone else",
+        "archived": "archive/2026-11-09/www-gov-uk-rent-room-in-your-home-the-rent-a-room-scheme.html"
       }
     },
     "dividends": {
@@ -652,6 +684,130 @@
       "status": "announced",
       "note": "The explainer gives the full annual value as £13,036.40, which is £250.70 a week",
       "archived": "archive/2026-11-08/www-gov-uk-government-publications-pension-tax-allowance-explainer-pension-tax-allowance-explainer.html"
+    }
+  },
+  "selfAssessment": {
+    "paymentDue": {
+      "value": "31 January",
+      "source": "https://www.gov.uk/understand-self-assessment-bill/payments-on-account",
+      "verified": "2026-11-09",
+      "status": "legislated",
+      "note": "Day and month after the tax year ends. The bill for the year and the first payment on account towards the next year are due by midnight on this date",
+      "archived": "archive/2026-11-09/www-gov-uk-understand-self-assessment-bill-payments-on-account.html"
+    },
+    "registerBy": {
+      "value": "5 October",
+      "source": "https://www.gov.uk/self-assessment-tax-returns/deadlines",
+      "verified": "2026-11-09",
+      "status": "legislated",
+      "note": "Day and month after the tax year ends, for someone who has not sent a tax return before",
+      "archived": "archive/2026-11-09/www-gov-uk-self-assessment-tax-returns-deadlines.html"
+    },
+    "paymentsOnAccount": {
+      "billThreshold": {
+        "value": 1000,
+        "source": "https://www.gov.uk/understand-self-assessment-bill/payments-on-account",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "note": "No payments on account when the tax owed for the last year was less than this",
+        "archived": "archive/2026-11-09/www-gov-uk-understand-self-assessment-bill-payments-on-account.html"
+      },
+      "deductedAtSourceFraction": {
+        "value": 0.8,
+        "source": "https://www.gov.uk/understand-self-assessment-bill/payments-on-account",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "note": "No payments on account when more than this share of the tax owed was paid outside Self Assessment, for example through a tax code",
+        "archived": "archive/2026-11-09/www-gov-uk-understand-self-assessment-bill-payments-on-account.html"
+      },
+      "eachPaymentFraction": {
+        "value": 0.5,
+        "source": "https://www.gov.uk/understand-self-assessment-bill/payments-on-account",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "note": "Each payment on account is half of the tax owed for the last year",
+        "archived": "archive/2026-11-09/www-gov-uk-understand-self-assessment-bill-payments-on-account.html"
+      },
+      "secondDue": {
+        "value": "31 July",
+        "source": "https://www.gov.uk/understand-self-assessment-bill/payments-on-account",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "note": "Budget 2026 announced more regular in-year payments from April 2029 for people who make payments on account. The detail is not set, so payment dates after April 2029 may change",
+        "archived": "archive/2026-11-09/www-gov-uk-understand-self-assessment-bill-payments-on-account.html"
+      }
+    }
+  },
+  "makingTaxDigital": {
+    "incomeTest": {
+      "threshold": {
+        "value": 20000,
+        "source": "https://www.legislation.gov.uk/uksi/2026/336/made",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "note": "Regulation 27: the qualifying amount is £20,000 for 2026-27 and any subsequent tax year. The gov.uk guidance lists thresholds up to 2026/27 income only",
+        "archived": "archive/2026-11-09/www-legislation-gov-uk-uksi-2026-336-made.html"
+      },
+      "startDate": {
+        "value": "2029-04-06",
+        "source": "https://www.legislation.gov.uk/uksi/2026/336/made",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "note": "Regulation 23: the test for a tax year uses qualifying income for the tax year two years earlier, so 2027/28 income is tested for the tax year that starts on this date",
+        "archived": "archive/2026-11-09/www-legislation-gov-uk-uksi-2026-336-made.html"
+      }
+    },
+    "inUse": {
+      "threshold": {
+        "value": 30000,
+        "source": "https://www.gov.uk/guidance/find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "note": "In 2027/28 Making Tax Digital for Income Tax applies where qualifying income for 2025/26 was over this. Set by regulation 27 of the Income Tax (Digital Obligations) Regulations 2026 (S.I. 2026/336)",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax.html"
+      },
+      "incomeYear": {
+        "value": "2025-26",
+        "source": "https://www.gov.uk/guidance/find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax",
+        "verified": "2026-11-09",
+        "status": "legislated",
+        "note": "The tax year whose qualifying income decides who starts using Making Tax Digital on 6 April 2027",
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax.html"
+      }
+    }
+  },
+  "digitalPlatforms": {
+    "salesOfGoodsLimit": {
+      "value": 30,
+      "source": "https://www.gov.uk/guidance/selling-goods-or-services-on-a-digital-platform",
+      "verified": "2026-11-09",
+      "status": "legislated",
+      "note": "A count of sales, not money. A seller of goods is not reported when they make fewer than this many sales in a calendar year and receive less than the euro limit for them",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-selling-goods-or-services-on-a-digital-platform.html"
+    },
+    "salesValueLimitEuros": {
+      "value": 2000,
+      "source": "https://www.gov.uk/guidance/selling-goods-or-services-on-a-digital-platform",
+      "verified": "2026-11-09",
+      "status": "legislated",
+      "note": "In euros, not pounds",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-selling-goods-or-services-on-a-digital-platform.html"
+    },
+    "salesValueLimitApproxPounds": {
+      "value": 1700,
+      "source": "https://www.gov.uk/guidance/selling-goods-or-services-on-a-digital-platform",
+      "verified": "2026-11-09",
+      "status": "legislated",
+      "note": "The approximate sterling figure gov.uk gives for 2,000 euros",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-selling-goods-or-services-on-a-digital-platform.html"
+    },
+    "reportBy": {
+      "value": "31 January",
+      "source": "https://www.gov.uk/guidance/selling-goods-or-services-on-a-digital-platform",
+      "verified": "2026-11-09",
+      "status": "legislated",
+      "note": "Platforms report a calendar year to HMRC by this day and month in the following January",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-selling-goods-or-services-on-a-digital-platform.html"
     }
   }
 }

@@ -1,11 +1,12 @@
 ---
-import { getYear, nextYear, resolve, NATION_LABEL } from '@money-resilience-hub/rules';
+import { financeCostReliefRate, getYear, nextYear, previousYear, resolve, NATION_LABEL } from '@money-resilience-hub/rules';
 import { money, pct, longDate } from '@money-resilience-hub/calculators';
 import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
 import SimpleCalculator from '../../layouts/SimpleCalculator.astro';
 
 const year = getYear(CURRENT_YEAR.taxYear);
 const next = nextYear(year.taxYear);
+const prev = previousYear(year.taxYear);
 const asAt = BUILD_DATE;
 const v = (leaf: Parameters<typeof resolve>[0], at = asAt) => resolve(leaf, 'p', at).value;
 const allowance = v(year.incomeTax.propertyAllowance!);
@@ -15,10 +16,33 @@ const nextRates = next ? { basic: v(next.incomeTax.property.rates.basic, next.st
 const basicLimit = year.incomeTax.bands['england-ni'][0].upTo as number;
 const scotlandNote = next?.incomeTax.property.scotlandRates?.note ?? '';
 
+// Finance cost relief: this year's rate, and next year's when the rule for it is recorded.
+const relief = financeCostReliefRate(year, asAt);
+const nextRelief = next ? financeCostReliefRate(next, next.starts) : null;
+const reliefNext = nextRelief && nextRelief.rate !== relief.rate ? ` From ${longDate(next!.starts)} it is given at ${nextRelief.phrase}${nextRelief.derived ? ', the rate the technical note on the property rates points to; no gov.uk page states the relief rate for that year as a figure' : ''}.` : '';
+
+// Rent a room.
+const rentARoom = year.incomeTax.property.rentARoomLimit ? v(year.incomeTax.property.rentARoomLimit) : null;
+const rentARoomShared = year.incomeTax.property.rentARoomSharedLimit ? v(year.incomeTax.property.rentARoomSharedLimit) : null;
+
+// Making Tax Digital for Income Tax: each test names the tax year whose income it uses and the date it starts.
+const slash = (taxYear: string) => taxYear.replace('-', '/');
+const mtd = year.makingTaxDigital;
+const mtdTests: string[] = [];
+if (mtd?.inUse && mtd.inUse.threshold.value !== null && mtd.inUse.incomeYear.value !== null) mtdTests.push(`over ${money(mtd.inUse.threshold.value, 0)} for ${slash(mtd.inUse.incomeYear.value)}, it has applied since ${longDate(year.starts)}`);
+const prevTest = prev?.makingTaxDigital?.incomeTest;
+if (prevTest && prevTest.threshold.value !== null && prevTest.startDate.value !== null) mtdTests.push(`over ${money(prevTest.threshold.value, 0)} for ${prev!.label}, it applies from ${longDate(prevTest.startDate.value)}`);
+const thisTest = mtd?.incomeTest;
+if (thisTest && thisTest.threshold.value !== null && thisTest.startDate.value !== null) mtdTests.push(`over ${money(thisTest.threshold.value, 0)} for ${year.label}, it applies from ${longDate(thisTest.startDate.value)}`);
+
 const faqs = [
 	{
 		q: 'How much rent can I receive before paying tax?',
 		a: `The first ${money(allowance, 0)} of property income in a tax year is covered by the property allowance. Above that, rent less allowable expenses is added to your other income and taxed in the band it lands in. Rent over ${money(allowance, 0)} has to be reported to HMRC even when no tax is due.`,
+	},
+	{
+		q: 'Is mortgage interest an allowable expense?',
+		a: `Not on a residential let owned by an individual. Mortgage interest and other finance costs are not deducted from rent. Instead the tax is reduced by ${relief.phrase} of the lowest of three amounts: the finance costs, the rental profit, and your income above the personal allowance. The reduction cannot create a refund, and finance costs that earn no reduction are carried forward. The tool shows the reduction on its own line.${reliefNext}`,
 	},
 	{
 		q: 'What changes for landlords in April 2027?',
@@ -28,11 +52,27 @@ const faqs = [
 	},
 	{
 		q: 'Can I claim expenses and the property allowance?',
-		a: `No. You deduct either the ${money(allowance, 0)} allowance or your actual expenses, whichever you choose. This tool deducts the larger of the two, and the ledger says which it used.`,
+		a: `No. You deduct either the ${money(allowance, 0)} allowance or your actual expenses. The allowance also cannot be used by someone claiming the tax reduction for finance costs. With no finance costs entered the tool deducts the larger of the two; with finance costs it works out both routes and shows the one with less tax. The ledger says which it used.`,
 	},
+	...(mtdTests.length
+		? [
+				{
+					q: 'Do landlords have to use Making Tax Digital for Income Tax?',
+					a: `It depends on qualifying income: rent and self-employment income added together, before expenses, as reported on the tax return for a tax year. Where that is ${mtdTests.join('; ')}. The last line of the working shows where the rent you enter sits against the threshold for the tax year chosen. Some people are exempt.`,
+				},
+			]
+		: []),
+	...(rentARoom !== null && rentARoomShared !== null
+		? [
+				{
+					q: 'What is the rent a room scheme?',
+					a: `A separate relief for letting furnished accommodation in your own home. Up to ${money(rentARoom, 0)} a year is tax free, or ${money(rentARoomShared, 0)} when the income is shared with someone else. The exemption is automatic below the limit. Above it a tax return is needed, with a choice between the scheme and recording income and expenses in the usual way. The property allowance cannot be used on the same income. This tool does not work out the scheme.`,
+				},
+			]
+		: []),
 	{
-		q: 'Is mortgage interest an allowable expense?',
-		a: 'Not for an individual landlord. Finance costs are relieved separately as a reduction of 20% of the interest, which this tool does not model, so a landlord with a mortgage pays less than the figure shown.',
+		q: 'How is jointly owned property taxed?',
+		a: `Each owner is taxed on their own share of the rental profit. Married couples and civil partners who live together are usually taxed in equal shares, unless they own the property in unequal shares, are entitled to the income in those shares and declare that to HMRC. Other joint owners are usually taxed on the share they own, unless they agree a different split. Each owner has their own ${money(allowance, 0)} property allowance against their share of the rent. This tool does not split a property: enter your own share of the rent, expenses and finance costs.`,
 	},
 	{
 		q: 'What about Scotland?',
@@ -46,13 +86,13 @@ const faqs = [
 <SimpleCalculator
 	tool="landlord-tax"
 	title={`Landlord tax calculator ${year.label}: tax on rental profit`}
-	description={`Work out the tax on rental profit for ${year.label} and under the property rates that start in April 2027, with the property allowance, expenses and each rate shown with its gov.uk source.`}
+	description={`Tax on rental profit for ${year.label}: expenses or the property allowance, mortgage interest relief and the property rates from April 2027, with gov.uk sources.`}
 	h1="Landlord tax calculator"
-	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. Rent less expenses or the property allowance, taxed on top of your other income, this year and from ${next ? longDate(next.starts) : 'the next tax year'}.`}
+	subtitle={`Tax year ${year.label}, for ${Object.values(NATION_LABEL).join(', ')}. Rent less expenses or the property allowance, taxed on top of your other income, less the relief for mortgage interest, this year and from ${next ? longDate(next.starts) : 'the next tax year'}.`}
 	breadcrumb="Landlord tax calculator"
-	formLabel="Your rent, expenses and income"
+	formLabel="Your rent, expenses, finance costs and income"
 	faqs={faqs}
-	limits="It does not model mortgage interest relief, losses carried forward, furnished holiday lettings, the rent a room scheme, jointly owned property, or a tax code adjustment. Scotland is shown as not set from April 2027 until the Scottish rates are published. It never suggests what to do with the result."
+	limits="It does not model finance costs or losses carried forward from earlier years, furnished holiday lettings, the rent a room scheme, the split of jointly owned property, commercial property, savings or dividend income, or a tax code adjustment. Scotland is shown as not set from April 2027 until the Scottish rates are published. It never suggests what to do with the result."
 	related={[
 		{ title: 'Savings interest tax calculator', href: '/calculators/savings-tax/', desc: 'The savings rates rise on the same day as the property rates.' },
 		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'The pay that the rental profit sits on top of.' },
@@ -61,10 +101,12 @@ const faqs = [
 >
 	<Fragment slot="how">
 		<ol>
-			<li><strong>Profit.</strong> Rent received less either your allowable expenses or the {money(allowance, 0)} property allowance, never both. The tool deducts whichever is larger.</li>
+			<li><strong>Profit.</strong> Rent received less either your allowable expenses or the {money(allowance, 0)} property allowance, never both. Mortgage interest is not deducted at this step.</li>
 			<li><strong>Personal allowance.</strong> Your other income uses the {money(pa, 0)} allowance first. Whatever is left goes against the profit at 0%. Above {money(v(year.incomeTax.taperStart), 0)} of total income the allowance tapers.</li>
 			<li><strong>Rates.</strong> The taxable profit is stacked on top of your other income. In {year.label} it is taxed at the main rates: {pct(rates.basic)} within the basic rate limit of {money(basicLimit, 0)}, then {pct(rates.higher)} and {pct(rates.additional)}. {nextRates ? `From ${longDate(next!.starts)} the property rates of ${pct(nextRates.basic)}, ${pct(nextRates.higher)} and ${pct(nextRates.additional)} apply in England, Wales and Northern Ireland.` : ''} Taxable amounts are rounded down to the pound.</li>
+			<li><strong>Finance cost relief.</strong> Mortgage interest and other finance costs on a residential let reduce the tax instead of the profit. The reduction is {relief.phrase} of the lowest of the finance costs, the rental profit, and your income above the personal allowance. It cannot take the tax bill below nothing, and it cannot be used together with the property allowance, so with finance costs entered the tool compares the two routes and shows the one with less tax.{reliefNext}</li>
 			<li><strong>Scotland.</strong> Scottish taxpayers pay Scottish income tax on rental profit at the Scottish bands. {scotlandNote}</li>
+			<li><strong>Making Tax Digital.</strong> The last line compares the rent you enter, before expenses, with the qualifying income threshold tested on the tax year chosen, and gives the date it would apply from. It does not change the tax.</li>
 		</ol>
 		<p>The rounding conventions are listed in the <a href="/methodology/">methodology</a>, and the formulas run from the open rules file for {year.label}.</p>
 	</Fragment>

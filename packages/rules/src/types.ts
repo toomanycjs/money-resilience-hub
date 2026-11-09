@@ -95,7 +95,16 @@ export interface YearConfig {
 			personalSavingsAllowance: { basic: Leaf; higher: Leaf; additional: Leaf };
 			rates: { basic: Leaf; higher: Leaf; additional: Leaf };
 		};
-		property: { rates: { basic: Leaf; higher: Leaf; additional: Leaf }; scotlandRates?: Leaf<unknown> };
+		property: {
+			rates: { basic: Leaf; higher: Leaf; additional: Leaf };
+			scotlandRates?: Leaf<unknown>;
+			/** The rate of the tax reduction for residential finance costs, where a source states it as a figure. */
+			financeCostReliefRate?: Leaf;
+			/** Which rate the reduction is given at: "basic rate" or "property basic rate". */
+			financeCostReliefBasis?: Leaf<string>;
+			rentARoomLimit?: Leaf;
+			rentARoomSharedLimit?: Leaf;
+		};
 		dividends: { allowance: Leaf; rates: { basic: Leaf; higher: Leaf; additional: Leaf } };
 		tradingAllowance: Leaf;
 		propertyAllowance?: Leaf;
@@ -113,6 +122,23 @@ export interface YearConfig {
 	isa?: { annualLimit: Leaf; cashLimit?: Leaf; lifetimeIsa?: { propertyCap: Leaf; withdrawalCharge: Leaf; firstHomeOverCapCharge: Leaf; bonusRate?: Leaf; annualLimit?: Leaf } };
 	pensionTaxAllowance: null | { effectiveFrom: string; fullNewStatePension: Leaf; rate: Leaf; taperDivisor: Leaf; lastYear: Leaf<string> };
 	statePension?: { fullNewWeekly: Leaf };
+	/** Self Assessment payment dates and the payments on account rules. Dates are a day and month, such as "31 January". */
+	selfAssessment?: {
+		paymentDue: Leaf<string>;
+		registerBy?: Leaf<string>;
+		paymentsOnAccount: { billThreshold: Leaf; deductedAtSourceFraction: Leaf; eachPaymentFraction: Leaf; secondDue: Leaf<string> };
+	};
+	/**
+	 * Making Tax Digital for Income Tax. `incomeTest` is the threshold this tax year's qualifying income is tested
+	 * against and the date the obligation starts when it is over; `inUse` is the threshold that decided who uses it
+	 * during this tax year and the earlier tax year whose income was tested.
+	 */
+	makingTaxDigital?: {
+		incomeTest: { threshold: Leaf; startDate: Leaf<string> };
+		inUse?: { threshold: Leaf; incomeYear: Leaf<string> };
+	};
+	/** Reporting of sellers' income to HMRC by digital platforms. */
+	digitalPlatforms?: { salesOfGoodsLimit: Leaf; salesValueLimitEuros: Leaf; salesValueLimitApproxPounds: Leaf; reportBy?: Leaf<string> };
 }
 
 /** A figure shown under the headline of a simple tool. */
