@@ -41,6 +41,29 @@
       "status": "in-force",
       "archived": "archive/2026-11-07/www-gov-uk-marriage-allowance.html"
     },
+    "blindPersonsAllowance": {
+      "value": 3250,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+    },
+    "marriedCouplesAllowance": {
+      "maximum": {
+        "value": 11700,
+        "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+      },
+      "minimum": {
+        "value": 4530,
+        "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+      }
+    },
     "bands": {
       "england-ni": [
         {
@@ -297,23 +320,24 @@
     "employee": {
       "mainRate": {
         "value": 0.08,
-        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
-        "verified": "2026-11-07",
+        "source": "https://www.gov.uk/national-insurance-rates-letters",
+        "verified": "2026-11-09",
         "status": "in-force",
-        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
+        "archived": "archive/2026-11-09/www-gov-uk-national-insurance-rates-letters.html"
       },
       "upperRate": {
         "value": 0.02,
-        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
-        "verified": "2026-11-07",
+        "source": "https://www.gov.uk/national-insurance-rates-letters",
+        "verified": "2026-11-09",
         "status": "in-force",
-        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
+        "archived": "archive/2026-11-09/www-gov-uk-national-insurance-rates-letters.html"
       },
       "lowerEarningsLimit": {
         "value": 6708,
         "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
         "verified": "2026-11-07",
         "status": "in-force",
+        "note": "The annual figure is published on the rates and thresholds for employers page; the National Insurance rates and category letters page gives the weekly and monthly amounts only",
         "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
       },
       "primaryThreshold": {
@@ -321,6 +345,7 @@
         "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
         "verified": "2026-11-07",
         "status": "in-force",
+        "note": "The annual figure is published on the rates and thresholds for employers page; the National Insurance rates and category letters page gives the weekly and monthly amounts only",
         "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
       },
       "upperEarningsLimit": {
@@ -328,6 +353,7 @@
         "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
         "verified": "2026-11-07",
         "status": "in-force",
+        "note": "The annual figure is published on the rates and thresholds for employers page; the National Insurance rates and category letters page gives the weekly and monthly amounts only",
         "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
       }
     },
@@ -400,16 +426,25 @@
           "archived": "archive/2026-11-07/www-gov-uk-self-employed-national-insurance-rates.html"
         }
       }
+    },
+    "voluntary": {
+      "class3Weekly": {
+        "value": 18.4,
+        "source": "https://www.gov.uk/voluntary-national-insurance-contributions/rates",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "archived": "archive/2026-11-09/www-gov-uk-voluntary-national-insurance-contributions-rates.html"
+      }
     }
   },
   "studentLoans": {
     "plan1": {
       "threshold": {
         "value": 26900,
-        "source": "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
-        "verified": "2026-11-07",
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+        "verified": "2026-11-09",
         "status": "in-force",
-        "archived": "archive/2026-11-07/www-gov-uk-repaying-your-student-loan-what-you-pay.html"
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
       },
       "rate": {
         "value": 0.09,
@@ -422,10 +457,10 @@
     "plan2": {
       "threshold": {
         "value": 29385,
-        "source": "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
-        "verified": "2026-11-07",
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+        "verified": "2026-11-09",
         "status": "in-force",
-        "archived": "archive/2026-11-07/www-gov-uk-repaying-your-student-loan-what-you-pay.html"
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
       },
       "rate": {
         "value": 0.09,
@@ -438,10 +473,10 @@
     "plan4": {
       "threshold": {
         "value": 33795,
-        "source": "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
-        "verified": "2026-11-07",
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+        "verified": "2026-11-09",
         "status": "in-force",
-        "archived": "archive/2026-11-07/www-gov-uk-repaying-your-student-loan-what-you-pay.html"
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
       },
       "rate": {
         "value": 0.09,
@@ -454,10 +489,10 @@
     "plan5": {
       "threshold": {
         "value": 25000,
-        "source": "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
-        "verified": "2026-11-07",
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+        "verified": "2026-11-09",
         "status": "in-force",
-        "archived": "archive/2026-11-07/www-gov-uk-repaying-your-student-loan-what-you-pay.html"
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
       },
       "rate": {
         "value": 0.09,
@@ -470,10 +505,10 @@
     "postgraduate": {
       "threshold": {
         "value": 21000,
-        "source": "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
-        "verified": "2026-11-07",
+        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+        "verified": "2026-11-09",
         "status": "in-force",
-        "archived": "archive/2026-11-07/www-gov-uk-repaying-your-student-loan-what-you-pay.html"
+        "archived": "archive/2026-11-09/www-gov-uk-guidance-rates-and-thresholds-for-employers-2026-to-2027.html"
       },
       "rate": {
         "value": 0.06,
@@ -695,15 +730,108 @@
       }
     }
   },
+  "capitalGainsTax": {
+    "annualExemptAmount": {
+      "value": 3000,
+      "source": "https://www.gov.uk/guidance/capital-gains-tax-rates-and-allowances",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-capital-gains-tax-rates-and-allowances.html"
+    },
+    "rates": {
+      "basic": {
+        "value": 0.18,
+        "source": "https://www.gov.uk/capital-gains-tax/rates",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "On gains that fall within the basic rate band; any gain above the band is charged at the higher rate",
+        "archived": "archive/2026-11-09/www-gov-uk-capital-gains-tax-rates.html"
+      },
+      "higher": {
+        "value": 0.24,
+        "source": "https://www.gov.uk/capital-gains-tax/rates",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "archived": "archive/2026-11-09/www-gov-uk-capital-gains-tax-rates.html"
+      }
+    }
+  },
+  "pensionAllowances": {
+    "annualAllowance": {
+      "value": 60000,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-pension-schemes-pension-schemes-rates.html"
+    },
+    "moneyPurchaseAnnualAllowance": {
+      "value": 10000,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-pension-schemes-pension-schemes-rates.html"
+    },
+    "taperThresholdIncome": {
+      "value": 200000,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-pension-schemes-pension-schemes-rates.html"
+    },
+    "taperAdjustedIncome": {
+      "value": 260000,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-pension-schemes-pension-schemes-rates.html"
+    },
+    "lumpSumAllowance": {
+      "value": 268275,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-pension-schemes-pension-schemes-rates.html"
+    }
+  },
+  "inheritanceTax": {
+    "nilRateBand": {
+      "value": 325000,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-inheritance-tax-thresholds-and-interest-rates/inheritance-tax-thresholds-and-interest-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-inheritance-tax-thresholds-and-interest-rates-inheritance-tax-thresholds-and-interest-rates.html"
+    },
+    "residenceNilRateBand": {
+      "value": 175000,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-inheritance-tax-thresholds-and-interest-rates/inheritance-tax-thresholds-and-interest-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-inheritance-tax-thresholds-and-interest-rates-inheritance-tax-thresholds-and-interest-rates.html"
+    },
+    "taperThreshold": {
+      "value": 2000000,
+      "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+    },
+    "rate": {
+      "value": 0.4,
+      "source": "https://www.gov.uk/government/publications/budget-2026-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-budget-2026-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+    }
+  },
   "pensionTaxAllowance": null,
   "statePension": {
     "fullNewWeekly": {
       "value": 241.3,
       "source": "https://www.gov.uk/government/publications/benefit-and-pension-rates-2026-to-2027/proposed-benefit-and-pension-rates-2026-to-2027",
-      "verified": "2026-11-08",
+      "verified": "2026-11-09",
       "status": "in-force",
-      "note": "Full rate of the new State Pension, 2026 to 2027",
-      "archived": "archive/2026-11-08/www-gov-uk-government-publications-benefit-and-pension-rates-2026-to-2027-proposed-benefit-and-pension-rates-2026-to-2027.html"
+      "note": "Full rate of the new State Pension, 2026 to 2027. These are the confirmed rates: the publication dropped 'proposed' from its title on 16 February 2026, though its address still carries the word",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-benefit-and-pension-rates-2026-to-2027-proposed-benefit-and-pension-rates-2026-to-2027.html"
     }
   }
 }

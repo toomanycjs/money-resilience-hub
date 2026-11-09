@@ -41,6 +41,29 @@
       "status": "in-force",
       "archived": "archive/2026-11-07/www-gov-uk-marriage-allowance.html"
     },
+    "blindPersonsAllowance": {
+      "value": 3130,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+    },
+    "marriedCouplesAllowance": {
+      "maximum": {
+        "value": 11270,
+        "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+      },
+      "minimum": {
+        "value": 4360,
+        "source": "https://www.gov.uk/government/publications/rates-and-allowances-income-tax/income-tax-rates-and-allowances-current-and-past",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-income-tax-income-tax-rates-and-allowances-current-and-past.html"
+      }
+    },
     "bands": {
       "england-ni": [
         {
@@ -297,23 +320,24 @@
     "employee": {
       "mainRate": {
         "value": 0.08,
-        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
-        "verified": "2026-11-07",
+        "source": "https://www.gov.uk/government/publications/rates-and-allowances-national-insurance-contributions/rates-and-allowances-national-insurance-contributions",
+        "verified": "2026-11-09",
         "status": "in-force",
-        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+        "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-national-insurance-contributions-rates-and-allowances-national-insurance-contributions.html"
       },
       "upperRate": {
         "value": 0.02,
-        "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
-        "verified": "2026-11-07",
+        "source": "https://www.gov.uk/government/publications/rates-and-allowances-national-insurance-contributions/rates-and-allowances-national-insurance-contributions",
+        "verified": "2026-11-09",
         "status": "in-force",
-        "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
+        "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-national-insurance-contributions-rates-and-allowances-national-insurance-contributions.html"
       },
       "lowerEarningsLimit": {
         "value": 6500,
         "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
         "verified": "2026-11-07",
         "status": "in-force",
+        "note": "The annual figure is published on the rates and thresholds for employers page; the National Insurance rates and allowances page gives the weekly and monthly amounts only",
         "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
       },
       "primaryThreshold": {
@@ -321,6 +345,7 @@
         "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
         "verified": "2026-11-07",
         "status": "in-force",
+        "note": "The annual figure is published on the rates and thresholds for employers page; the National Insurance rates and allowances page gives the weekly and monthly amounts only",
         "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
       },
       "upperEarningsLimit": {
@@ -328,6 +353,7 @@
         "source": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2025-to-2026",
         "verified": "2026-11-07",
         "status": "in-force",
+        "note": "The annual figure is published on the rates and thresholds for employers page; the National Insurance rates and allowances page gives the weekly and monthly amounts only",
         "archived": "archive/2026-11-07/www-gov-uk-guidance-rates-and-thresholds-for-employers-2025-to-2026.html"
       }
     },
@@ -398,6 +424,15 @@
           "status": "unset",
           "note": "Not read from a gov.uk page yet."
         }
+      }
+    },
+    "voluntary": {
+      "class3Weekly": {
+        "value": 17.75,
+        "source": "https://www.gov.uk/government/publications/rates-and-allowances-national-insurance-contributions/rates-and-allowances-national-insurance-contributions",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-national-insurance-contributions-rates-and-allowances-national-insurance-contributions.html"
       }
     }
   },
@@ -554,15 +589,108 @@
       "note": "The 2025/26 ISA limit has not been read from a 2025/26 gov.uk page."
     }
   },
+  "capitalGainsTax": {
+    "annualExemptAmount": {
+      "value": 3000,
+      "source": "https://www.gov.uk/guidance/capital-gains-tax-rates-and-allowances",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-guidance-capital-gains-tax-rates-and-allowances.html"
+    },
+    "rates": {
+      "basic": {
+        "value": 0.18,
+        "source": "https://www.gov.uk/government/publications/budget-2025-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "note": "Residential property and other assets were charged at the same rates in 2025/26",
+        "archived": "archive/2026-11-09/www-gov-uk-government-publications-budget-2025-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      },
+      "higher": {
+        "value": 0.24,
+        "source": "https://www.gov.uk/government/publications/budget-2025-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+        "verified": "2026-11-09",
+        "status": "in-force",
+        "archived": "archive/2026-11-09/www-gov-uk-government-publications-budget-2025-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+      }
+    }
+  },
+  "pensionAllowances": {
+    "annualAllowance": {
+      "value": 60000,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-pension-schemes-pension-schemes-rates.html"
+    },
+    "moneyPurchaseAnnualAllowance": {
+      "value": 10000,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-pension-schemes-pension-schemes-rates.html"
+    },
+    "taperThresholdIncome": {
+      "value": 200000,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-pension-schemes-pension-schemes-rates.html"
+    },
+    "taperAdjustedIncome": {
+      "value": 260000,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-pension-schemes-pension-schemes-rates.html"
+    },
+    "lumpSumAllowance": {
+      "value": 268275,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-pension-schemes/pension-schemes-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-pension-schemes-pension-schemes-rates.html"
+    }
+  },
+  "inheritanceTax": {
+    "nilRateBand": {
+      "value": 325000,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-inheritance-tax-thresholds-and-interest-rates/inheritance-tax-thresholds-and-interest-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-inheritance-tax-thresholds-and-interest-rates-inheritance-tax-thresholds-and-interest-rates.html"
+    },
+    "residenceNilRateBand": {
+      "value": 175000,
+      "source": "https://www.gov.uk/government/publications/rates-and-allowances-inheritance-tax-thresholds-and-interest-rates/inheritance-tax-thresholds-and-interest-rates",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-rates-and-allowances-inheritance-tax-thresholds-and-interest-rates-inheritance-tax-thresholds-and-interest-rates.html"
+    },
+    "taperThreshold": {
+      "value": 2000000,
+      "source": "https://www.gov.uk/government/publications/budget-2025-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-budget-2025-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+    },
+    "rate": {
+      "value": 0.4,
+      "source": "https://www.gov.uk/government/publications/budget-2025-overview-of-tax-legislation-and-rates-ootlar/annex-a-rates-and-allowances",
+      "verified": "2026-11-09",
+      "status": "in-force",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-budget-2025-overview-of-tax-legislation-and-rates-ootlar-annex-a-rates-and-allowances.html"
+    }
+  },
   "pensionTaxAllowance": null,
   "statePension": {
     "fullNewWeekly": {
       "value": 230.25,
       "source": "https://www.gov.uk/government/publications/benefit-and-pension-rates-2026-to-2027/proposed-benefit-and-pension-rates-2026-to-2027",
-      "verified": "2026-11-08",
+      "verified": "2026-11-09",
       "status": "in-force",
-      "note": "Full rate of the new State Pension, 2025 to 2026",
-      "archived": "archive/2026-11-08/www-gov-uk-government-publications-benefit-and-pension-rates-2026-to-2027-proposed-benefit-and-pension-rates-2026-to-2027.html"
+      "note": "Full rate of the new State Pension, 2025 to 2026, from the confirmed benefit and pension rates 2026 to 2027 publication, whose address still carries the word 'proposed'",
+      "archived": "archive/2026-11-09/www-gov-uk-government-publications-benefit-and-pension-rates-2026-to-2027-proposed-benefit-and-pension-rates-2026-to-2027.html"
     }
   }
 }
