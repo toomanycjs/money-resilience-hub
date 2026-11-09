@@ -21,7 +21,7 @@ export interface RateTable {
 	rows: RateRow[];
 }
 
-const LABELS: Record<string, string> = {
+export const LABELS: Record<string, string> = {
 	'incomeTax.personalAllowance': 'Personal allowance',
 	'incomeTax.taperStart': 'Income limit for the personal allowance',
 	'incomeTax.taperRate': 'Allowance lost per £1 of income above the limit',
@@ -119,7 +119,7 @@ function isLeaf(x: unknown): x is Leaf<unknown> {
 	return !!x && typeof x === 'object' && 'value' in (x as object) && 'status' in (x as object);
 }
 
-function format(path: string, value: unknown): string {
+export function formatRateValue(path: string, value: unknown): string {
 	if (value === null || value === undefined) return 'Not set';
 	if (typeof value === 'string') return value;
 	if (typeof value !== 'number') return String(value);
@@ -136,14 +136,14 @@ function collect(node: unknown, path: string, out: RateRow[]) {
 		out.push({
 			path,
 			label: LABELS[path] ?? path,
-			value: format(path, leaf.value),
+			value: formatRateValue(path, leaf.value),
 			source: leaf.source,
 			verified: leaf.verified,
 			status: leaf.status,
 			note: leaf.note,
 			effectiveFrom: leaf.effectiveFrom,
 		});
-		if (leaf.previous) out.push({ path: `${path}.previous`, label: `${LABELS[path] ?? path}, before ${leaf.effectiveFrom}`, value: format(path, leaf.previous.value), source: leaf.previous.source, verified: leaf.previous.verified, status: leaf.previous.status });
+		if (leaf.previous) out.push({ path: `${path}.previous`, label: `${LABELS[path] ?? path}, before ${leaf.effectiveFrom}`, value: formatRateValue(path, leaf.previous.value), source: leaf.previous.source, verified: leaf.previous.verified, status: leaf.previous.status });
 		return;
 	}
 	if (Array.isArray(node)) return;
