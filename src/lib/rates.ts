@@ -3,6 +3,7 @@
 
 import { NATION_LABEL, type Band, type Leaf, type Nation, type Status, type YearConfig } from '@money-resilience-hub/rules';
 import { money, pct } from '@money-resilience-hub/calculators';
+import { PAYTOOLS_LABELS } from './labels-paytools.ts';
 
 export interface RateRow {
 	path: string;
@@ -116,6 +117,7 @@ export const LABELS: Record<string, string> = {
 	'pensionTaxAllowance.rate': 'Pension Tax Allowance rate on the gap above the personal allowance',
 	'pensionTaxAllowance.taperDivisor': 'Pension Tax Allowance: income per £1 withdrawn',
 	'pensionTaxAllowance.lastYear': 'Pension Tax Allowance: last tax year',
+	...PAYTOOLS_LABELS,
 };
 
 const SECTIONS: { id: string; heading: string; prefix: string }[] = [

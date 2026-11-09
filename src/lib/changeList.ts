@@ -26,6 +26,8 @@ export interface ChangeList {
 	notYetSet: { path: string; label: string; was: string }[];
 }
 
+const SECTION_PREFIX: Record<string, string> = { capitalGainsTax: 'Capital gains tax', pensionAllowances: 'Pension allowances', inheritanceTax: 'Inheritance tax' };
+
 const NATION_ADJECTIVE: Record<Nation, string> = { 'england-ni': 'England and Northern Ireland', scotland: 'Scottish', wales: 'Welsh' };
 
 /** A plain label for a config path: "Scottish starter rate band, top" rather than a data key. */
@@ -36,7 +38,9 @@ export function labelFor(path: string, year: YearConfig): string {
 		const name = year.incomeTax.bands[nation]?.[Number(band[2])]?.name ?? `band ${Number(band[2]) + 1}`;
 		return `${NATION_ADJECTIVE[nation]} ${name.toLowerCase()}${band[3] === 'upTo' ? ' band, top' : ''}`;
 	}
-	if (LABELS[path]) return LABELS[path];
+	// A label that only makes sense under its table heading carries the heading with it.
+	const section = SECTION_PREFIX[path.split('.')[0]];
+	if (LABELS[path]) return section ? `${section}: ${LABELS[path][0].toLowerCase()}${LABELS[path].slice(1)}` : LABELS[path];
 	const fromEngine = pathLabel(path);
 	if (fromEngine !== path) return fromEngine.replace(/^the /, '').replace(/^(.)/, (m) => m.toUpperCase());
 	// Last resort: turn the key into words rather than show it raw.
