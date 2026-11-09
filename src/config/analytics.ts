@@ -4,4 +4,4 @@
 // the footer's Cookie choices link and the privacy page's cookies section
 // are not rendered, since there is then nothing to ask about.
 
-export const GA_MEASUREMENT_ID: string = '';
+export const GA_MEASUREMENT_ID: string = 'G-ZTP3M0WJTL';
