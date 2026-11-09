@@ -27,3 +27,5 @@ Thumbs.db
 
 # lighthouse reports
 .lighthouse/
+
+.env*
