@@ -2,7 +2,7 @@
 // One salary page: the calculator locked to the salary and the nation, then
 // the detail that is particular to that salary. Used by /salary/30000/ and
 // by /salary/30000/scotland/.
-import { NATION_LABEL, type Nation } from '@money-resilience-hub/rules';
+import type { Nation } from '@money-resilience-hub/rules';
 import { money } from '@money-resilience-hub/calculators';
 import { BUILD_DATE, CURRENT_YEAR } from '../config/site';
 import Calculator from '../layouts/Calculator.astro';
@@ -51,7 +51,7 @@ const related = [
 	title={scottish ? `${label} after tax in Scotland ${year.label}: take-home pay` : `${label} after tax ${year.label}: take-home, sourced to gov.uk`}
 	description={`${label} a year${where} is ${money(b.periods.monthly, 0)} a month after tax and National Insurance in ${year.label}. Every deduction is shown with its rate and gov.uk source.`}
 	h1={`${label} after tax${where}`}
-	subtitle={`${money(b.periods.monthly, 0)} a month in ${year.label} ${scottish ? 'under the Scottish income tax bands' : `for ${NATION_LABEL['england-ni']} and Wales`}, before any pension or student loan. Change the tax code, pension or loan plan and the page updates.`}
+	subtitle={`${money(b.periods.monthly, 0)} a month in ${year.label} ${scottish ? 'under the Scottish income tax bands' : 'for England, Wales and Northern Ireland'}, before any pension or student loan. Change the tax code, pension or loan plan and the page updates.`}
 	breadcrumb={`${label} after tax${where}`}
 	form={{ nation }}
 	lockedGross={amount}
