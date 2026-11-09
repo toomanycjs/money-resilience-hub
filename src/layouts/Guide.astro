@@ -1,0 +1,97 @@
+---
+// The guide template: the question as the heading, the byline, the opening
+// answer, the first section, the body, the sources, the calculator the guide
+// belongs to and three hand-picked links. Ad slots sit after the first
+// section and before the related links, never between the heading and the
+// opening answer.
+import { getYear, STATUS_LABEL, type Status } from '@money-resilience-hub/rules';
+import { longDate } from '@money-resilience-hub/calculators';
+import AdSlot from '../components/AdSlot.astro';
+import Related from '../components/Related.astro';
+import { AUTHOR } from '../config/site';
+import { guideBySlug } from '../lib/guides';
+import { articleNode } from '../lib/schema';
+import Base from './Base.astro';
+
+interface Props {
+	/** The guide's slug in src/lib/guides.ts. */
+	slug: string;
+	/** Three hand-picked links. */
+	related: { title: string; href: string; desc?: string }[];
+	/** Tax years the page's main figures come from, named in the status line. */
+	taxYears: string[];
+	/** Other tax years the page reads (a next-year column, say), for the sitemap's lastmod. */
+	alsoReads?: string[];
+	/** The least settled status among the figures on the page. */
+	status: Status;
+}
+
+const { slug, related, taxYears, alsoReads = [], status } = Astro.props;
+const guide = guideBySlug(slug);
+if (related.length !== 3) throw new Error(`Guide ${slug}: ${related.length} related links given; a guide has three`);
+
+const url = new URL(Astro.url.pathname, Astro.site).href;
+const image = new URL(`/og/guides/${guide.slug}.png`, Astro.site).href;
+const article = articleNode({ title: guide.title, description: guide.description, published: guide.published, modified: guide.reviewedOn, url, image });
+const years = taxYears.map((y) => getYear(y));
+---
+
+<Base title={guide.title} description={guide.description} breadcrumb={guide.h1} ogType="article" extraNodes={[article]} taxYears={[...taxYears, ...alsoReads]}>
+	<article class="prose guide">
+		<div class="page-head">
+			<p class="kicker"><a href="/guides/">Guides</a></p>
+			<h1>{guide.h1}</h1>
+			<p class="byline">By <a href={AUTHOR.path}>{AUTHOR.name}</a>. Reviewed <time datetime={guide.reviewedOn}>{longDate(guide.reviewedOn)}</time>.</p>
+		</div>
+
+		<div class="answer">
+			<slot name="answer" />
+		</div>
+
+		<slot name="first" />
+
+		<AdSlot id="guide-after-first" />
+
+		<slot />
+
+		<section aria-labelledby="sources-heading">
+			<h2 id="sources-heading">Sources</h2>
+			<p>The gov.uk pages this guide relied on, read on {longDate(guide.reviewedOn)}.</p>
+			<ul class="small">
+				<slot name="sources" />
+			</ul>
+			<p class="small quiet">
+				The figures are computed when the site is built from the rules file for {years.map((y) => y.label).join(' and ')}. Status: {STATUS_LABEL[status].toLowerCase()}. Each value, its source and the date it was checked: {years.map((y, i) => (
+					<Fragment>{i > 0 && ', '}<a href={`/rates/${y.taxYear}/`}>rates for {y.label}</a></Fragment>
+				))}.
+			</p>
+		</section>
+
+		<aside class="guide-calculator" aria-labelledby="guide-calculator-heading">
+			<h2 id="guide-calculator-heading">Run your own figures</h2>
+			<p><a href={guide.calculator.href}>{guide.calculator.title}</a></p>
+			<p class="desc">{guide.calculator.desc}</p>
+		</aside>
+	</article>
+
+	<AdSlot id="guide-before-related" />
+
+	<Related links={related} />
+</Base>
+
+<style>
+	.byline { color: var(--quiet); font-size: 0.9rem; margin: 0.6rem 0 0; }
+	.byline a { color: var(--quiet); }
+	.answer { font-size: 1.12em; }
+	.answer :global(.status-note) { font-size: 0.95rem; }
+	.guide :global(.table-wrap) { overflow-x: auto; margin: 0 0 1rem; }
+	.guide :global(table) { font-size: 0.95rem; }
+	.guide :global(thead th.num) { white-space: normal; vertical-align: bottom; }
+	.guide :global(caption) { text-align: left; color: var(--quiet); font-size: 0.9rem; padding-bottom: 0.35rem; }
+	.guide :global(dt) { font-weight: 600; margin-top: 0.75rem; }
+	.guide :global(dd) { margin: 0.15rem 0 0; }
+	.guide-calculator { background: var(--ledger); padding: 1rem 1.25rem; margin-top: 2.5rem; }
+	.guide-calculator h2 { margin-top: 0; font-size: 1.1rem; }
+	.guide-calculator p { margin: 0; }
+	.guide-calculator .desc { color: var(--quiet); font-size: 0.95rem; margin-top: 0.15rem; }
+</style>

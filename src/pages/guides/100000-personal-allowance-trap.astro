@@ -1,0 +1,120 @@
+---
+import { bandsFor, getYear, resolve, takeHome, thresholdsFor, MARGINAL_STEP, PENSION_LABEL, type PensionType } from '@money-resilience-hub/rules';
+import { money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const pa = resolve(year.incomeTax.personalAllowance, 'incomeTax.personalAllowance', asAt).value;
+const taperStart = resolve(year.incomeTax.taperStart, 'incomeTax.taperStart', asAt).value;
+const taperRate = resolve(year.incomeTax.taperRate, 'incomeTax.taperRate', asAt).value;
+const taperEnd = taperStart + pa / taperRate;
+const additionalStart = thresholdsFor(year, 'england-ni', [], asAt).find((t) => t.id === 'band-additional-rate')?.value ?? null;
+const taperWords = `${money(1, 0)} for every ${money(1 / taperRate, 0)}`;
+const [, higher, additional] = bandsFor(year, 'england-ni');
+const higherRate = higher.rate ?? 0;
+const step = MARGINAL_STEP;
+
+const at = (gross: number, nation: 'england-ni' | 'scotland' = 'england-ni') => takeHome({ gross, nation, taxYear: year.taxYear, asAt });
+
+// Points below, across and above the band.
+const points = [taperStart - 10000, taperStart, taperStart + 5000, taperStart + 10000, taperStart + 20000, taperEnd, taperEnd + 10000].map((gross) => {
+	const b = at(gross);
+	return { gross, allowance: b.allowance.allowance, tax: b.incomeTax.total, takeHome: b.takeHome, marginal: b.marginalRate ?? 0 };
+});
+const below = points[0];
+const above = points[points.length - 1];
+
+// The next step of pay from a point inside the band, line by line.
+const inside = taperStart + 10000;
+const here = at(inside);
+const next = at(inside + step);
+const taxOnStep = next.incomeTax.total - here.incomeTax.total;
+const niOnStep = next.nationalInsurance.total - here.nationalInsurance.total;
+const allowanceLost = here.allowance.allowance - next.allowance.allowance;
+// Scotland, unrounded: the share of the next step that does not reach take-home.
+const scotlandInside = 1 - (at(inside + step, 'scotland').takeHome - at(inside, 'scotland').takeHome) / step;
+
+// A pension contribution that brings adjusted net income back to the start of the taper.
+const contribution = inside - taperStart;
+const methods = (['salary-sacrifice', 'net-pay', 'relief-at-source'] as PensionType[]).map((type) => {
+	const b = takeHome({ gross: inside, nation: 'england-ni', taxYear: year.taxYear, asAt, pension: { type, amount: contribution } }, { withMarginal: false });
+	return { label: PENSION_LABEL[type], ani: b.adjustedNetIncome, allowance: b.allowance.allowance, tax: b.incomeTax.total, takeHome: b.takeHome, fromPay: b.pension?.fromPay ?? 0, added: b.pension?.providerAdds ?? 0 };
+});
+const sacrifice = methods[0];
+const ras = methods[2];
+
+const sources = [
+	{ href: 'https://www.gov.uk/income-tax-rates', title: 'Income Tax rates and Personal Allowances' },
+	{ href: 'https://www.gov.uk/guidance/adjusted-net-income', title: 'Personal Allowances: adjusted net income' },
+	{ href: 'https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief', title: 'Tax on your private pension contributions: tax relief' },
+	{ href: 'https://www.gov.uk/scottish-income-tax', title: 'Income Tax in Scotland: current rates' },
+];
+---
+
+<Guide
+	slug="100000-personal-allowance-trap"
+	taxYears={[year.taxYear]}
+	status={here.rulesUsed.status}
+	related={[
+		guideLink('scottish-income-tax', 'The Scottish bands, where the same taper meets a higher rate.'),
+		guideLink('tax-codes-explained', 'How the allowance reaches a payslip through the tax code.'),
+		guideLink('why-your-payslip-differs', 'The three pension methods side by side on one salary.'),
+	]}
+>
+	<Fragment slot="answer">
+		<p>The {money(pa, 0)} personal allowance falls by {taperWords} of adjusted net income above {money(taperStart, 0)} and is zero from {money(taperEnd, 0)}. Inside that band in {year.label}, the next {money(step, 0)} of salary costs {money(taxOnStep, 0)} in income tax and {money(niOnStep, 0)} in National Insurance, a marginal rate of {pct(here.marginalRate ?? 0)} against {pct(below.marginal)} below the band and {pct(above.marginal)} above it.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>How the taper works</h2>
+		<p>The allowance is the slice of income taxed at {pct(0)}. Once adjusted net income passes {money(taperStart, 0)}, each extra {money(1 / taperRate, 0)} removes {money(1, 0)} of it. The table follows a salary across the band, for England and Northern Ireland with no pension or student loan. The last column is the share of the next {money(step, 0)} of pay that goes in income tax and National Insurance.</p>
+		<div class="table-wrap">
+			<table>
+				<caption>The personal allowance and take-home pay across the taper in {year.label}</caption>
+				<thead><tr><th scope="col">Salary</th><th scope="col" class="num">Allowance left</th><th scope="col" class="num">Income tax</th><th scope="col" class="num">Take-home</th><th scope="col" class="num">Marginal rate</th></tr></thead>
+				<tbody>
+					{points.map((p) => (
+						<tr><th scope="row">{money(p.gross, 0)}</th><td class="num">{money(p.allowance, 0)}</td><td class="num">{money(p.tax, 0)}</td><td class="num">{money(p.takeHome, 0)}</td><td class="num">{pct(p.marginal)}</td></tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+	</Fragment>
+
+	<h2>Where the marginal rate comes from</h2>
+	<p>Take a salary of {money(inside, 0)} and add {money(step, 0)}.</p>
+	<ul>
+		<li>The extra pay is taxed at the higher rate: {money(step, 0)} × {pct(higherRate)} = {money(step * higherRate, 0)}.</li>
+		<li>The allowance shrinks by {money(allowanceLost, 0)}, so that much income moves from {pct(0)} to the higher rate: {money(allowanceLost, 0)} × {pct(higherRate)} = {money(allowanceLost * higherRate, 0)}.</li>
+		<li>Income tax rises by {money(taxOnStep, 0)}, which is {pct(taxOnStep / step)} of the extra pay.</li>
+		<li>National Insurance adds {money(niOnStep, 0)}, bringing the total to {pct(here.marginalRate ?? 0)}.</li>
+	</ul>
+	<p>In Scotland the same taper applies to the Scottish bands, and the engine gives a marginal rate of {pct(scotlandInside)} on the next {money(step, 0)} at {money(inside, 0)}.</p>
+
+	<h2>Where it ends</h2>
+	<p>At {money(taperEnd, 0)} the allowance has reached zero and there is nothing left to withdraw. {additionalStart === taperEnd ? `That is also where the additional rate of ${pct(additional.rate ?? 0)} starts in England, Wales and Northern Ireland, so` : `The additional rate is ${pct(additional.rate ?? 0)} in England, Wales and Northern Ireland, and`} the marginal rate drops to {pct(above.marginal)} from that point on. gov.uk puts it this way: there is no personal allowance on taxable income over {money(taperEnd, 0)}.</p>
+
+	<h2>What a pension contribution does to adjusted net income</h2>
+	<p>The taper is measured on adjusted net income, not on salary. gov.uk defines it as total taxable income before allowances, less certain reliefs: trading losses, Gift Aid donations (the grossed-up amount), pension contributions paid gross, and pension contributions where the provider has already added basic rate relief (again the grossed-up amount).</p>
+	<p>The arithmetic for a salary of {money(inside, 0)} and a gross pension contribution of {money(contribution, 0)}: {money(inside, 0)} − {money(contribution, 0)} = {money(sacrifice.ani, 0)} of adjusted net income, which is not above {money(taperStart, 0)}, so the allowance is {money(sacrifice.allowance, 0)} where it was {money(here.allowance.allowance, 0)}.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>{money(inside, 0)} a year with a {money(contribution, 0)} gross pension contribution in {year.label}</caption>
+			<thead><tr><th scope="col">Method</th><th scope="col" class="num">Adjusted net income</th><th scope="col" class="num">Allowance</th><th scope="col" class="num">Income tax</th><th scope="col" class="num">Take-home</th></tr></thead>
+			<tbody>
+				<tr><th scope="row">No contribution</th><td class="num">{money(here.adjustedNetIncome, 0)}</td><td class="num">{money(here.allowance.allowance, 0)}</td><td class="num">{money(here.incomeTax.total, 0)}</td><td class="num">{money(here.takeHome, 0)}</td></tr>
+				{methods.map((m) => (
+					<tr><th scope="row">{m.label}</th><td class="num">{money(m.ani, 0)}</td><td class="num">{money(m.allowance, 0)}</td><td class="num">{money(m.tax, 0)}</td><td class="num">{money(m.takeHome, 0)}</td></tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>Under salary sacrifice {money(contribution, 0)} goes into the pension and take-home falls by {money(here.takeHome - sacrifice.takeHome, 0)}. Under relief at source {money(ras.fromPay, 0)} leaves pay and the provider adds {money(ras.added, 0)}; the income tax column is higher than in the rows above because that basic rate relief goes into the pension instead of coming off the tax. gov.uk says relief above the basic rate is claimed from HMRC under relief at source, and the table assumes it has been. These rows are arithmetic, not a suggestion.</p>
+
+	<Fragment slot="sources">
+		{sources.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
+	</Fragment>
+</Guide>

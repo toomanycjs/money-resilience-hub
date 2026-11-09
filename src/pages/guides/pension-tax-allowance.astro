@@ -1,0 +1,95 @@
+---
+import { leastSettled, listYears, pensionTaxAllowance, resolve, statePensionTax, STATUS_LABEL } from '@money-resilience-hub/rules';
+import { longDate, money, pct, yearLabel } from '@money-resilience-hub/calculators';
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+
+// The first tax year in the rules file that has the allowance.
+const year = listYears().find((y) => y.pensionTaxAllowance);
+if (!year || !year.pensionTaxAllowance) throw new Error('No tax year in the rules file has a Pension Tax Allowance');
+const cfg = year.pensionTaxAllowance;
+const asAt = year.starts;
+const pa = resolve(year.incomeTax.personalAllowance, 'incomeTax.personalAllowance', asAt).value;
+const rate = resolve(cfg.rate, 'pensionTaxAllowance.rate', asAt).value;
+const divisor = resolve(cfg.taperDivisor, 'pensionTaxAllowance.taperDivisor', asAt).value;
+const lastYear = resolve(cfg.lastYear, 'pensionTaxAllowance.lastYear', asAt).value;
+const full = pensionTaxAllowance(0, year, asAt);
+const nsp = full.fullNewStatePension;
+const gap = nsp - pa;
+const status = leastSettled([cfg.fullNewStatePension.status, cfg.rate.status, cfg.taperDivisor.status, cfg.lastYear.status]);
+const taperWords = `${money(1, 0)} for every ${money(divisor, 0)}`;
+
+// Worked examples from the State Pension tax engine: below the allowance, between the
+// allowance and the full new State Pension, at it, inside the taper and beyond it.
+const incomes = [pa, pa + 400, nsp, nsp + 150, Math.ceil(full.withdrawnAt), Math.ceil(full.withdrawnAt) + 100];
+const rows = incomes.map((income) => {
+	const r = statePensionTax({ statePension: income, otherIncome: 0, nation: 'england-ni', taxYear: year.taxYear, asAt, compare: false });
+	const before = Number(r.facts.incomeTaxBefore);
+	const after = Number(r.facts.incomeTaxAfter);
+	return { income, before, allowance: Number(r.facts.pensionTaxAllowance), removed: before - after, after };
+});
+const inTaper = rows[3];
+
+// The day the measure was announced, from the gov.uk explainer's publication date.
+const ANNOUNCED = '2026-10-28';
+
+const sources = [
+	{ href: cfg.fullNewStatePension.source, title: 'Pension Tax Allowance explainer (HM Treasury)' },
+	{ href: cfg.rate.source, title: 'Reduction in Income Tax for eligible pensioners (HMRC policy paper)' },
+];
+---
+
+<Guide
+	slug="pension-tax-allowance"
+	taxYears={[year.taxYear]}
+	status={status}
+	related={[
+		guideLink('tax-codes-explained', 'How an allowance or a reduction reaches a pension through a tax code.'),
+		{ title: 'Budget 2026: what changed', href: '/budget/2026-autumn/', desc: 'The other measures announced with the Pension Tax Allowance, and their dates.' },
+		{ title: 'Savings interest tax calculator', href: '/calculators/savings-tax/', desc: 'Interest counts towards total income; this shows how much of it is taxed.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>The Pension Tax Allowance is a reduction in income tax of up to {money(full.maximum, 0)} a year for people over State Pension age, starting on {longDate(year.starts)}. Anyone whose total income is no more than the full new State Pension of {money(nsp, 2)} gets all of it; above that it falls by {taperWords} of income and is gone at {money(full.withdrawnAt, 2)}.</p>
+		<p class="status-note"><strong>Status: {STATUS_LABEL[status].toLowerCase()}, not yet legislated.</strong> The government announced it on {longDate(ANNOUNCED)} and says the legislation will be in Finance Bill 2026-27. The figures here are for {year.label} as announced.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>How much it is</h2>
+		<p>The maximum is the basic rate of {pct(rate)} applied to the gap between the full new State Pension and the personal allowance: {money(nsp, 2)} − {money(pa, 0)} = {money(gap, 2)}, and {pct(rate)} of that is {money(gap * rate, 2)}, which HM Treasury's explainer gives as up to {money(full.maximum, 0)}. It is a reduction in the tax bill, not extra tax-free income, and the personal allowance stays at {money(pa, 0)}.</p>
+		<div class="table-wrap">
+			<table>
+				<caption>Income tax for someone over State Pension age in {year.label}, England and Northern Ireland, as announced</caption>
+				<thead><tr><th scope="col">Total income</th><th scope="col" class="num">Tax before</th><th scope="col" class="num">Allowance available</th><th scope="col" class="num">Tax after</th></tr></thead>
+				<tbody>
+					{rows.map((r) => (
+						<tr><th scope="row">{money(r.income, 2)}</th><td class="num">{money(r.before, 2)}</td><td class="num">{money(r.allowance, 2)}</td><td class="num">{money(r.after, 2)}</td></tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+		<p>The reduction can never be more than the tax due, so it does not create a refund or a payment. The engine rounds taxable income down to the pound, which is why the tax before the allowance in the third row is a few pence under {money(gap * rate, 2)}.</p>
+	</Fragment>
+
+	<h2>Who gets it</h2>
+	<ul>
+		<li>People above State Pension age, and people who reach it during the tax year.</li>
+		<li>The test is total income from every source: the State Pension, private pensions, earnings, self-employment, savings, property and dividends. Income inside an ISA is not counted.</li>
+		<li>Receiving the State Pension is not a condition. Someone who has deferred it can still qualify on income from other sources.</li>
+		<li>There is no claim to make. HMRC applies it from the information it holds on age and income, through tax codes for income paid under PAYE and in the calculation for anyone who files a Self Assessment return.</li>
+		<li>It belongs to one person and cannot be passed to a partner.</li>
+		<li>Scottish taxpayers get it too. The explainer says it is calculated with the {pct(rate)} basic rate, not the Scottish starter rate.</li>
+	</ul>
+
+	<h2>The taper and where it ends</h2>
+	<p>For each {money(divisor, 0)} of total income above {money(nsp, 2)}, {money(1, 0)} of the allowance is withdrawn. With {money(inTaper.income, 2)} of income, {money(inTaper.income - nsp, 0)} is over the line, so the allowance is {money(full.maximum, 0)} − {money((inTaper.income - nsp) / divisor, 0)} = {money(inTaper.allowance, 0)}.</p>
+	<p>The whole {money(full.maximum, 0)} is withdrawn once income is {money(full.maximum * divisor, 0)} above the full new State Pension, which is {money(full.withdrawnAt, 2)}. The explainer states the limit in whole pounds, as {money(Math.ceil(full.withdrawnAt), 0)}. Above that point income tax is worked out exactly as it would be without the allowance.</p>
+
+	<h2>How long it lasts</h2>
+	<p>The policy paper covers the tax years {year.label} to {yearLabel(lastYear)}. In the later years the full amount is uprated in line with the full new State Pension, and the government says it will consider what follows in the usual way. The rules file holds figures for {year.label} only, so this page shows no amounts for the later years.</p>
+	<p>The explainer gives the reason for the measure: from {year.label} the full new State Pension rises above the personal allowance, and some pensioners would otherwise receive a bill for a small amount of tax for the first time.</p>
+
+	<Fragment slot="sources">
+		{sources.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
+	</Fragment>
+</Guide>

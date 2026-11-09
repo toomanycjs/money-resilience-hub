@@ -1,0 +1,170 @@
+---
+import { bandsFor, defaultTaxCode, getYear, leastSettled, nextYear, resolve, takeHome, thresholdsFor, MARGINAL_STEP, RulesUnavailableError, STATUS_LABEL, type Band, type Nation } from '@money-resilience-hub/rules';
+import { money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+import { liveAmounts } from '../../lib/pages';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const following = nextYear(year.taxYear);
+const asAt = BUILD_DATE;
+const pa = resolve(year.incomeTax.personalAllowance, 'incomeTax.personalAllowance', asAt).value;
+const taperStart = resolve(year.incomeTax.taperStart, 'incomeTax.taperStart', asAt).value;
+const std = defaultTaxCode(year, asAt);
+const slugOf = (name: string) => `band-${name.toLowerCase().replace(/\s+/g, '-')}`;
+
+// Each band with the gross pay where it starts, from the ruler's thresholds.
+const startsFor = (nation: 'scotland' | 'england-ni') => {
+	const marks = thresholdsFor(year, nation, [], asAt);
+	return bandsFor(year, nation).map((b, i) => ({
+		name: b.name,
+		rate: b.rate ?? 0,
+		status: b.status,
+		from: i === 0 ? pa : (marks.find((t) => t.id === slugOf(b.name))?.value ?? null),
+	}));
+};
+const sco = startsFor('scotland');
+const ruk = startsFor('england-ni');
+const status = leastSettled(sco.map((b) => b.status));
+
+// Take-home in Scotland against England and Northern Ireland at four salaries.
+const live = liveAmounts('salary');
+const pair = (gross: number) => {
+	const s = takeHome({ gross, nation: 'scotland', taxYear: year.taxYear, asAt }, { withMarginal: false });
+	const r = takeHome({ gross, nation: 'england-ni', taxYear: year.taxYear, asAt }, { withMarginal: false });
+	return { gross, scotland: s.takeHome, rest: r.takeHome, diff: Math.round((s.takeHome - r.takeHome) * 100) / 100, sameNi: s.nationalInsurance.total === r.nationalInsurance.total };
+};
+const rows = [25000, 35000, 50000, 75000].map(pair);
+const low = rows[0];
+const high = rows[rows.length - 1];
+const sameNi = rows.every((r) => r.sameNi);
+const gap = (diff: number) => (diff === 0 ? 'the same' : `${money(Math.abs(diff), 0)} ${diff > 0 ? 'more' : 'less'}`);
+const signed = (diff: number) => (diff === 0 ? 'None' : `${diff > 0 ? '+' : ''}${money(diff, 0)}`);
+
+// The first salary, in steps of 100, where Scottish take-home drops below the rest of the UK.
+let crossover: number | null = null;
+for (let g = Math.ceil(pa / 100) * 100; g <= taperStart; g += 100) {
+	if (pair(g).diff < 0) {
+		crossover = g;
+		break;
+	}
+}
+
+// The allowance taper under the Scottish bands.
+const inTaper = taperStart + 10000;
+const net = (gross: number, nation: Nation) => takeHome({ gross, nation, taxYear: year.taxYear, asAt }, { withMarginal: false }).takeHome;
+const marginal = (nation: Nation) => 1 - (net(inTaper + MARGINAL_STEP, nation) - net(inTaper, nation)) / MARGINAL_STEP;
+const taperScotland = marginal('scotland');
+const taperRest = marginal('england-ni');
+const rateOf = (name: string) => pct(sco.find((b) => b.name === name)?.rate ?? 0);
+const intermediateTop = sco.find((b) => b.name === 'Higher rate')?.from ?? null;
+
+// The following year: shown as not set until the rules file has the bands.
+let nextBands: Band[] | null = null;
+let nextNote = '';
+if (following) {
+	try {
+		nextBands = bandsFor(following, 'scotland');
+	} catch (e) {
+		if (!(e instanceof RulesUnavailableError)) throw e;
+		nextNote = following.incomeTax.bands.scotland?.[0]?.note ?? '';
+	}
+}
+
+const sources = [
+	{ href: 'https://www.gov.uk/scottish-income-tax', title: 'Income Tax in Scotland: current rates' },
+	{ href: 'https://www.gov.uk/scottish-income-tax/who-pays', title: 'Income Tax in Scotland: who pays' },
+	{ href: 'https://www.gov.uk/income-tax-rates', title: 'Income Tax rates and Personal Allowances' },
+	{ href: 'https://www.gov.uk/marriage-allowance', title: 'Marriage Allowance: how it works' },
+	{ href: 'https://www.gov.uk/tax-on-your-private-pension/pension-tax-relief', title: 'Tax on your private pension contributions: tax relief' },
+];
+---
+
+<Guide
+	slug="scottish-income-tax"
+	taxYears={[year.taxYear]}
+	alsoReads={following ? [following.taxYear] : []}
+	status={status}
+	related={[
+		guideLink('100000-personal-allowance-trap', 'The allowance taper line by line, with the marginal rate at each point.'),
+		guideLink('tax-codes-explained', 'The S prefix and the Scottish single-rate codes SBR and SD0 to SD3.'),
+		{ title: 'Budget 2026: what changed', href: '/budget/2026-autumn/', desc: 'The UK measures from April 2027, and the date the Scottish rates are due.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>Scotland has {sco.length} income tax bands in {year.label}, from {pct(sco[0].rate)} to {pct(sco[sco.length - 1].rate)}, where the rest of the UK has {ruk.length}, all on the same {money(pa, 0)} personal allowance. On a salary of {money(low.gross, 0)} a Scottish taxpayer takes home {gap(low.diff)} {low.diff === 0 ? "as" : "than"} someone in England; on {money(high.gross, 0)}, {gap(high.diff)}.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>The Scottish bands for {year.label}</h2>
+		<p>The rates apply to taxable income, which is pay above the allowance. The third column converts each band's start into gross pay for someone with the standard allowance.</p>
+		<div class="table-wrap">
+			<table>
+				<caption>Scottish income tax bands, {year.label}</caption>
+				<thead><tr><th scope="col">Band</th><th scope="col" class="num">Rate</th><th scope="col" class="num">Pay above</th><th scope="col">Status</th></tr></thead>
+				<tbody>
+					{sco.map((b) => (
+						<tr><th scope="row">{b.name}</th><td class="num">{pct(b.rate)}</td><td class="num">{b.from === null ? 'Not set' : money(b.from, 0)}</td><td class={`status-${b.status}`}>{STATUS_LABEL[b.status]}</td></tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+		<p>In England, Wales and Northern Ireland the bands are {ruk.map((b) => `the ${b.name.toLowerCase()} of ${pct(b.rate)} on pay above ${b.from === null ? 'a level not set' : money(b.from, 0)}`).join(', ')}.</p>
+	</Fragment>
+
+	<h2>Take-home pay in Scotland and the rest of the UK</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>Annual take-home in {year.label}: standard tax code, no pension or student loan</caption>
+			<thead><tr><th scope="col">Salary</th><th scope="col" class="num">Scotland</th><th scope="col" class="num">England and Northern Ireland</th><th scope="col" class="num">Difference</th></tr></thead>
+			<tbody>
+				{rows.map((r) => (
+					<tr><th scope="row">{live.includes(r.gross) ? <a href={`/salary/${r.gross}/`}>{money(r.gross, 0)}</a> : money(r.gross, 0)}</th><td class="num">{money(r.scotland, 0)}</td><td class="num">{money(r.rest, 0)}</td><td class="num">{signed(r.diff)}</td></tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>{sameNi ? 'The whole difference is income tax: the National Insurance line is identical in both columns.' : 'The difference is in the income tax lines.'} {crossover !== null && `Scottish take-home is the higher of the two up to a salary of about ${money(crossover, 0)} and the lower of the two above it.`} The gap widens where the Scottish higher rate of {pct(sco.find((b) => b.name === 'Higher rate')?.rate ?? 0)} starts, at {money(sco.find((b) => b.name === 'Higher rate')?.from ?? 0, 0)} against {money(ruk.find((b) => b.name === 'Higher rate')?.from ?? 0, 0)} elsewhere.</p>
+
+	<h2>Who pays it and what it covers</h2>
+	<ul>
+		<li>You pay Scottish Income Tax if you live in Scotland. gov.uk has separate rules for people who move during a year, have homes in more than one part of the UK or have no home.</li>
+		<li>It applies to wages, pensions and most other taxable income. Savings interest and dividends are taxed as they are in the rest of the UK.</li>
+		<li>It is paid to the Scottish Government.</li>
+		<li>Through PAYE it shows as a tax code that starts with S. With the standard allowance the code is S{std}.</li>
+		<li>The bands sit on the same standard personal allowance of {money(pa, 0)} that applies in the rest of the UK.</li>
+		<li>Marriage Allowance has a Scottish condition: the partner receiving the transfer pays the starter, basic or intermediate rate{intermediateTop !== null && `, which usually means income up to ${money(intermediateTop, 0)}`}.</li>
+		<li>A pension provider that gives relief at source claims it at {rateOf('Basic rate')} for a Scottish taxpayer whose rate is {rateOf('Starter rate')}, and gov.uk says the difference does not have to be paid.</li>
+	</ul>
+
+	<h2>The allowance taper in Scotland</h2>
+	<p>Above {money(taperStart, 0)} the allowance tapers away as it does across the UK, but the pay that loses its allowance is taxed at Scottish rates. At {money(inTaper, 0)} the engine gives a marginal rate of {pct(taperScotland)} in Scotland, against {pct(taperRest)} in England and Northern Ireland, counting income tax and National Insurance on the next {money(MARGINAL_STEP, 0)} of pay.</p>
+
+	{following && (
+		<Fragment>
+			<h2>Rates for {following.label}</h2>
+			{nextBands ? (
+				<Fragment>
+					<p>The rules file holds these Scottish bands for {following.label}.</p>
+					<div class="table-wrap">
+						<table>
+							<thead><tr><th scope="col">Band</th><th scope="col" class="num">Rate</th><th scope="col" class="num">Taxable income up to</th><th scope="col">Status</th></tr></thead>
+							<tbody>
+								{nextBands.map((b) => (
+									<tr><th scope="row">{b.name}</th><td class="num">{pct(b.rate ?? 0)}</td><td class="num">{b.upTo === null ? 'No limit' : money(b.upTo, 0)}</td><td class={`status-${b.status}`}>{STATUS_LABEL[b.status]}</td></tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				</Fragment>
+			) : (
+				<p class="status-note"><strong>{STATUS_LABEL.unset}.</strong> The Scottish rates and bands for {following.label} are not in the rules file. {nextNote ? <Fragment>The note recorded against them: <em>{nextNote}</em></Fragment> : 'They are set by the Scottish Budget.'} Until they are, this page and the calculator show no Scottish figures for that year.</p>
+			)}
+		</Fragment>
+	)}
+
+	<Fragment slot="sources">
+		{sources.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
+	</Fragment>
+</Guide>

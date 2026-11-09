@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import satori from 'satori';
 import sharp from 'sharp';
 import { BUILD_DATE, SITE_NAME } from '../../config/site';
+import { GUIDES } from '../../lib/guides';
 import { liveAmounts } from '../../lib/pages';
 
 const INK = '#14213D';
@@ -43,6 +44,7 @@ export function getStaticPaths() {
 		{ slug: 'corrections', title: 'Corrections', tail: 'What was wrong, when, and what changed' },
 	];
 	for (const y of listYears()) cards.push({ slug: `rates/${y.taxYear}`, title: `Rates and allowances ${y.label}`, tail: 'Every figure with its source and the date it was checked' });
+	for (const g of [{ slug: '', h1: 'Guides', description: 'One question each, answered with the number first and the gov.uk sources listed' }, ...GUIDES]) cards.push({ slug: g.slug ? `guides/${g.slug}` : 'guides', title: g.h1, tail: g.description });
 	for (const amount of liveAmounts('salary')) {
 		const b = takeHome({ gross: amount, nation: 'england-ni', asAt: BUILD_DATE }, { withMarginal: false });
 		cards.push({

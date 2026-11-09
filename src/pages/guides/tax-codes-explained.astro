@@ -1,0 +1,113 @@
+---
+import { bandsFor, defaultTaxCode, getYear, resolve, takeHome } from '@money-resilience-hub/rules';
+import { money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+import { liveAmounts } from '../../lib/pages';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const pa = resolve(year.incomeTax.personalAllowance, 'incomeTax.personalAllowance', asAt).value;
+const transfer = resolve(year.incomeTax.marriageAllowanceTransfer, 'incomeTax.marriageAllowanceTransfer', asAt).value;
+const std = defaultTaxCode(year, asAt);
+const [basic, higher, additional] = bandsFor(year, 'england-ni');
+const scottish = bandsFor(year, 'scotland');
+const scottishRate = (name: string) => pct(scottish.find((b) => b.name === name)?.rate ?? 0);
+
+// A code is the allowance with its last digit dropped, then a letter.
+const codeFor = (allowance: number, letter: string) => `${Math.round(allowance / 10)}${letter}`;
+
+// The worked example: one salary, a full year, England and Northern Ireland.
+const salary = 35000;
+const benefit = 2000;
+const kNumber = 100;
+const run = (taxCode: string) => takeHome({ gross: salary, nation: 'england-ni', taxCode, taxYear: year.taxYear, asAt }, { withMarginal: false });
+const standard = run(std);
+const rows = [
+	{ code: std, what: 'The standard allowance' },
+	{ code: codeFor(pa - benefit, 'L'), what: `The allowance less a ${money(benefit, 0)} company benefit` },
+	{ code: 'BR', what: `All pay at the basic rate of ${pct(basic.rate ?? 0)}` },
+	{ code: '0T', what: 'No allowance, then the usual bands' },
+	{ code: 'D0', what: `All pay at the higher rate of ${pct(higher.rate ?? 0)}` },
+	{ code: `K${kNumber}`, what: 'An amount added to taxable pay' },
+].map((r) => {
+	const b = run(r.code);
+	return { ...r, tax: b.incomeTax.total, takeHome: b.takeHome, kAddition: b.allowance.kAddition };
+});
+const kRow = rows[rows.length - 1];
+const salaryPage = liveAmounts('salary').includes(salary) ? `/salary/${salary}/` : null;
+
+const sources = [
+	{ href: 'https://www.gov.uk/tax-codes', title: 'Tax codes: overview' },
+	{ href: 'https://www.gov.uk/tax-codes/what-your-tax-code-means', title: 'Tax codes: what your tax code means' },
+	{ href: 'https://www.gov.uk/tax-codes/emergency-tax-codes', title: 'Tax codes: emergency tax codes' },
+	{ href: 'https://www.gov.uk/tax-codes/k-in-your-tax-code', title: 'Tax codes: if you have a K in your tax code' },
+	{ href: 'https://www.gov.uk/employee-tax-codes/numbers', title: "Understanding your employees' tax codes: what the numbers mean" },
+	{ href: 'https://www.gov.uk/marriage-allowance', title: 'Marriage Allowance: how it works' },
+	{ href: 'https://www.gov.uk/scottish-income-tax/who-pays', title: 'Income Tax in Scotland: who pays' },
+];
+---
+
+<Guide
+	slug="tax-codes-explained"
+	taxYears={[year.taxYear]}
+	status={standard.rulesUsed.status}
+	related={[
+		guideLink('why-your-payslip-differs', 'Tax code adjustments are one of six reasons a payslip moves away from an annual figure.'),
+		guideLink('scottish-income-tax', 'What the S prefix switches on: the Scottish bands and where each starts.'),
+		guideLink('pension-tax-allowance', 'A tax reduction for people over State Pension age that HMRC applies through tax codes.'),
+	]}
+>
+	<Fragment slot="answer">
+		<p>The standard tax code for {year.label} is {std}. It gives {money(pa, 0)} of pay free of income tax in the year: the number is the personal allowance with its last digit dropped, and any other number or letter means the allowance has been adjusted or all the pay is taxed at one rate.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>How the number becomes an allowance</h2>
+		<p>An employer or pension provider usually multiplies the number by ten to get the tax-free pay for the year, so {std} means {money(pa, 0)}. HMRC works the number out by starting with the personal allowance and taking off income that has not been taxed and other deductions, such as company benefits, then swapping the last digit for a letter. A {money(benefit, 0)} benefit leaves {money(pa - benefit, 0)}, which is code {codeFor(pa - benefit, 'L')}. Each job or pension has its own code.</p>
+		<div class="table-wrap">
+			<table>
+				<caption>{money(salary, 0)} a year under six codes in {year.label}: England and Northern Ireland, a full year, no pension or student loan</caption>
+				<thead><tr><th scope="col">Code</th><th scope="col">What it does</th><th scope="col" class="num">Income tax</th><th scope="col" class="num">Take-home</th></tr></thead>
+				<tbody>
+					{rows.map((r) => (
+						<tr><th scope="row">{r.code}</th><td>{r.what}</td><td class="num">{money(r.tax, 0)}</td><td class="num">{money(r.takeHome, 0)}</td></tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+		<p>BR and 0T give the same tax here because all of this salary sits inside the basic rate band; they part once pay passes {money(basic.upTo ?? 0, 0)}. National Insurance is {money(standard.nationalInsurance.total, 0)} in every row, because a tax code only changes income tax.{salaryPage && <Fragment> The full ledger for the first row is on the <a href={salaryPage}>{money(salary, 0)} salary page</a>.</Fragment>}</p>
+	</Fragment>
+
+	<h2>What the letters mean</h2>
+	<dl>
+		<dt>L</dt>
+		<dd>The standard personal allowance.</dd>
+		<dt>M and N</dt>
+		<dd>Marriage Allowance. M means a partner has transferred {money(transfer, 0)} of their allowance to you, which on the standard allowance gives {codeFor(pa + transfer, 'M')}. N means you have transferred that amount, giving {codeFor(pa - transfer, 'N')}.</dd>
+		<dt>T</dt>
+		<dd>The code includes other calculations to work out the allowance.</dd>
+		<dt>BR, D0 and D1</dt>
+		<dd>All the pay from this job or pension is taxed at one rate with no allowance: the basic rate ({pct(basic.rate ?? 0)}), the higher rate ({pct(higher.rate ?? 0)}) or the additional rate ({pct(additional.rate ?? 0)}). They are usually used for a second job or pension.</dd>
+		<dt>0T</dt>
+		<dd>The allowance has been used up, or a new employer does not have the details needed to give a code. Pay is taxed through the bands from the first pound.</dd>
+		<dt>NT</dt>
+		<dd>No tax is taken from this income.</dd>
+	</dl>
+
+	<h2>K codes</h2>
+	<p>A K at the start means income or deductions that are not being taxed elsewhere come to more than the personal allowance. gov.uk gives four examples: tax owed from an earlier year, the State Pension or taxable state benefits, a taxable company benefit such as a car, and savings interest above the Personal Savings Allowance. The tax on that other income is collected through the job or pension that carries the code, and an employer cannot take more than half of pre-tax pay under a K code.</p>
+	<p>The calculator on this site treats ten times the K number as an amount added to taxable pay. In the table, {kRow.code} adds {money(kRow.kAddition, 0)}, so tax is charged on {money(salary + kRow.kAddition, 0)}.</p>
+
+	<h2>Emergency codes: W1, M1 and X</h2>
+	<p>A code that ends in W1, M1 or X is an emergency code; some payroll software prints NONCUM. W1 is used for weekly pay, M1 for monthly pay and X when pay dates vary. Tax is usually worked out on total income so far in the tax year. On an emergency code it is worked out on that week or month alone, as if the same amount were paid in every period, which can give the wrong amount of tax.</p>
+	<p>The reasons gov.uk lists are a new job where the employer does not have your earlier income and tax details, and starting to get company benefits or the State Pension. The calculator ignores the ending and assumes a steady salary for a full year, so its annual figure is the same with or without it.</p>
+
+	<h2>The S and C prefixes</h2>
+	<p>An S in front of the code means the pay is taxed using the rates in Scotland, and a C means the rates in Wales. A Scottish taxpayer on the standard allowance has S{std}. The single-rate codes have Scottish versions with different meanings: SBR is the Scottish basic rate ({scottishRate('Basic rate')}), SD0 the intermediate rate ({scottishRate('Intermediate rate')}), SD1 the higher rate ({scottishRate('Higher rate')}), SD2 the advanced rate ({scottishRate('Advanced rate')}) and SD3 the top rate ({scottishRate('Top rate')}). The Welsh versions (CBR, CD0, CD1) follow the same pattern as BR, D0 and D1.</p>
+
+	<Fragment slot="sources">
+		{sources.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
+	</Fragment>
+</Guide>
