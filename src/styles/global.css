@@ -156,7 +156,7 @@ main.frame { padding-top: 2.25rem; padding-bottom: 3rem; }
 .site-footer { border-top: var(--rule); margin-top: 3rem; padding: 2rem 0 2.5rem; color: var(--quiet); font-size: 0.9rem; }
 .site-footer .frame { display: grid; gap: 1rem; }
 .site-footer nav { display: flex; flex-wrap: wrap; gap: 0.25rem 1.1rem; }
-.site-footer a { color: var(--quiet); }
+.site-footer a, .site-footer button.link { color: var(--quiet); font-size: inherit; }
 .site-footer p { margin: 0; max-width: var(--measure); }
 
 /* Page headers */

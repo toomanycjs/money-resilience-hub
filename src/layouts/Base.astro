@@ -3,6 +3,7 @@
 // data (breadcrumb everywhere, WebSite and Organization on the home page,
 // FAQPage only when the questions are on the page).
 import BaseHead from '../components/BaseHead.astro';
+import CookieBanner from '../components/CookieBanner.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import JsonLd from '../components/JsonLd.astro';
@@ -51,10 +52,12 @@ const nodes = noindex
 			<slot />
 		</main>
 		<Footer />
+		<CookieBanner />
 		<script>
 			import { GA_MEASUREMENT_ID } from '../config/analytics';
-			import { loadGoogleAnalytics } from '../scripts/analytics';
-			if (!location.pathname.startsWith('/design/')) loadGoogleAnalytics(GA_MEASUREMENT_ID);
+			import { initConsent, loadGoogleAnalytics } from '../scripts/analytics';
+			initConsent(GA_MEASUREMENT_ID);
+			loadGoogleAnalytics(GA_MEASUREMENT_ID);
 		</script>
 	</body>
 </html>

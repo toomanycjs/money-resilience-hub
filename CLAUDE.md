@@ -21,7 +21,8 @@ Author and publisher of every page: The Money Resilience Hub.
   the URL hash, never the query string, and the hash is stripped before anything is counted.
 - Analytics is Google Analytics 4 (the owner's decision, 9 November 2026), loaded after the page (src/scripts/analytics.ts, ID in
   src/config/analytics.ts). The share hash is removed from the address before it loads and the page address sent is origin and path only.
-  Do Not Track and Global Privacy Control are respected. There is no consent banner yet.
+  It loads only after the visitor presses Accept on the cookie banner (src/components/CookieBanner.astro); before a choice and after
+  Reject all, nothing is sent. The footer's Cookie choices link reopens the banner. The same choice will govern advertising cookies.
   Advertising cookies only after consent through a Google-certified consent platform.
 - Ads only in the reserved, labelled slots (AdSlot component); never within items 1 to 6 of the calculator template.
 - No affiliate or paid links inside any calculator result, ledger or rules used box.
