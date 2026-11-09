@@ -85,7 +85,9 @@ if (root) {
 			put('[data-ruler]', renderRuler(b));
 			put('[data-ledger]', renderLedger(b, { ratesPath, expanded }));
 			put('[data-bar]', renderBar(b));
-			put('[data-rules-used]', renderRulesUsed(b, { ratesPath }));
+			// The rules box sits outside the calculator, after the working; only its body is replaced, so the heading stays.
+			const rulesBody = document.querySelector<HTMLElement>('[data-rules-used-body]');
+			if (rulesBody) rulesBody.innerHTML = renderRulesUsed(b, { ratesPath });
 			const heading = el('[data-ledger-heading]');
 			if (heading) heading.textContent = ledgerHeading(b);
 			const sticky = el('[data-sticky-amount]');

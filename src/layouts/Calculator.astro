@@ -63,7 +63,7 @@ const TOUCHES = /^(incomeTax\.(personalAllowance|taperStart|taperRate|bands)|nat
 
 	<section class="rules-used" data-rules-used aria-labelledby="rules-heading">
 		<h2 id="rules-heading">Rules used</h2>
-		<div set:html={renderRulesUsed(breakdown, { ratesPath })} />
+		<div data-rules-used-body set:html={renderRulesUsed(breakdown, { ratesPath })} />
 	</section>
 
 	<WhatChanges year={year} following={following} touches={TOUCHES} scope="income tax, National Insurance or student loan" canSwitchYear />

@@ -47,5 +47,59 @@
     "input": { "income": 70000, "expenses": 10000, "otherIncome": 0, "nation": "england-ni" },
     "expected": { "profit": 60000, "taxableProfit": 47430, "incomeTax": 11432, "class4": 2456.6, "deducted": 10000 },
     "working": "Taxable 47,430: 37,700 x 20% = 7,540 plus 9,730 x 40% = 3,892, total 11,432. Class 4: 37,700 x 6% = 2,262 plus 9,730 x 2% = 194.60, total 2,456.60."
+  },
+  {
+    "id": "side-hustle-payments-on-account-govuk-example",
+    "title": "gov.uk example: a £3,000 bill with no payments on account already made means £4,500 by 31 January (the bill plus a £1,500 first payment on account), then £1,500 on 31 July",
+    "fn": "sideHustleTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/understand-self-assessment-bill/payments-on-account", "https://www.gov.uk/income-tax-rates"],
+    "input": { "income": 8500, "expenses": 0, "otherIncome": 55000, "nation": "england-ni" },
+    "expected": { "total": 3000, "paymentsOnAccount": "yes", "paymentOnAccount": 1500, "dueJanuary": 4500, "dueJuly": 1500, "paymentDue": "2028-01-31", "taxOutsideSelfAssessment": 9432, "makingTaxDigital": "not-above" },
+    "working": "The 3,000 bill, the 1,500 payments and the 4,500 total are gov.uk's own figures; its example is for 2023 to 2024, due 31 January 2025. Here 8,500 - 1,000 allowance = 7,500 of profit on top of 55,000 of pay, all at 40% = 3,000, with no Class 4 below 12,570. Tax on the pay: 37,700 x 20% + 4,730 x 40% = 9,432, which is 75.87% of the year's 12,432 and so not more than 80%."
+  },
+  {
+    "id": "side-hustle-no-payments-on-account-under-1000",
+    "title": "gov.uk: no payments on account when the tax owed was less than £1,000; a bill of £891.80 is due in full by 31 January with nothing added",
+    "fn": "sideHustleTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/understand-self-assessment-bill/payments-on-account"],
+    "input": { "income": 20000, "expenses": 4000, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "total": 891.8, "paymentsOnAccount": "no", "paymentsOnAccountReason": "below-threshold", "paymentOnAccount": 0, "dueJanuary": 891.8, "dueJuly": 0 }
+  },
+  {
+    "id": "side-hustle-no-payments-on-account-collected-at-source",
+    "title": "gov.uk: no payments on account when more than 80% of the tax owed was paid outside Self Assessment; a £2,000 bill beside £11,432 of tax on pay is 85.11% collected at source",
+    "fn": "sideHustleTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/understand-self-assessment-bill/payments-on-account", "https://www.gov.uk/income-tax-rates"],
+    "input": { "income": 6000, "expenses": 0, "otherIncome": 60000, "nation": "england-ni" },
+    "expected": { "total": 2000, "paymentsOnAccount": "no", "paymentsOnAccountReason": "collected-at-source", "taxOutsideSelfAssessment": 11432, "dueJanuary": 2000, "dueJuly": 0 },
+    "working": "Profit 5,000 x 40% = 2,000. Tax on 60,000 of pay: 37,700 x 20% + 9,730 x 40% = 11,432. 11,432 / 13,432 = 85.11%, more than 80%. The tool treats all the tax on other income as collected at source."
+  },
+  {
+    "id": "side-hustle-payments-on-account-include-class-4",
+    "title": "gov.uk: payments on account include Class 4 National Insurance and each is half the bill; a £4,271.80 bill adds £2,135.90, so £6,407.70 is due by 31 January. £30,000 of trading income is over the £20,000 Making Tax Digital threshold for 2026 to 2027",
+    "fn": "sideHustleTax",
+    "taxYear": "2026-27",
+    "sources": [
+      "https://www.gov.uk/understand-self-assessment-bill/payments-on-account",
+      "https://www.gov.uk/self-employed-national-insurance-rates",
+      "https://www.gov.uk/guidance/find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax"
+    ],
+    "input": { "income": 30000, "expenses": 0, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "incomeTax": 3286, "class4": 985.8, "total": 4271.8, "paymentsOnAccount": "yes", "paymentOnAccount": 2135.9, "dueJanuary": 6407.7, "dueJuly": 2135.9, "makingTaxDigital": "above", "makingTaxDigitalThreshold": 20000, "makingTaxDigitalStart": "2028-04-06" },
+    "working": "Profit 29,000 - 12,570 = 16,430 x 20% = 3,286, and x 6% = 985.80. 4,271.80 / 2 = 2,135.90. 4,271.80 + 2,135.90 = 6,407.70."
+  },
+  {
+    "id": "side-hustle-payments-on-account-2027-28",
+    "title": "gov.uk: the bill for a tax year is due by the 31 January after it ends; for 2027/28 that is 31 January 2029, with the first payment on account, and Making Tax Digital is tested on £20,000 from 6 April 2029",
+    "fn": "sideHustleTax",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": ["https://www.gov.uk/understand-self-assessment-bill/payments-on-account", "https://www.legislation.gov.uk/uksi/2026/336/made"],
+    "input": { "income": 30000, "expenses": 0, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "total": 3751.8, "paymentsOnAccount": "yes", "paymentOnAccount": 1875.9, "dueJanuary": 5627.7, "paymentDue": "2029-01-31", "makingTaxDigital": "above", "makingTaxDigitalStart": "2029-04-06" },
+    "working": "Trading allowance 3,000 from April 2027: profit 27,000 - 12,570 = 14,430 x 20% = 2,886, and x 6% = 865.80, total 3,751.80. Half is 1,875.90."
   }
 ]

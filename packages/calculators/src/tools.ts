@@ -128,13 +128,15 @@ export const TOOLS: Record<string, SimpleTool> = {
 		fields: [
 			{ id: 'rent', label: 'Rent received', type: 'money', unit: 'a year', default: '12000', placeholder: '12000' },
 			{ id: 'expenses', label: 'Allowable expenses', type: 'money', unit: 'a year', default: '3000', placeholder: '3000', help: 'Agent fees, repairs, insurance, ground rent. Not mortgage interest or improvements.' },
-			{ id: 'otherIncome', label: 'Other income', type: 'money', unit: 'a year', default: '30000', placeholder: '30000', help: 'Pay, pensions and profits, before tax.' },
+			{ id: 'financeCosts', label: 'Mortgage interest and other finance costs', type: 'money', unit: 'a year', default: '4000', placeholder: '4000', help: 'Interest on loans for a residential let, and fees for arranging them. Not capital repayments. Enter 0 if there is no mortgage.' },
+			{ id: 'otherIncome', label: 'Other income', type: 'money', unit: 'a year', default: '30000', placeholder: '30000', help: 'Pay, pensions and profits, before tax. Not savings interest or dividends.' },
 			nationField,
 			taxYearField,
 		],
 		touches: LANDLORD_TOUCHES,
 		hasTaxYear: true,
-		compute: (f, asAt) => landlordTax({ rent: parseMoney(f.rent, '12000'), expenses: parseMoney(f.expenses, '3000'), otherIncome: parseMoney(f.otherIncome, '30000'), nation: nationOf(f), taxYear: yearOf(f), asAt }),
+		compute: (f, asAt) =>
+			landlordTax({ rent: parseMoney(f.rent, '12000'), expenses: parseMoney(f.expenses, '3000'), financeCosts: parseMoney(f.financeCosts, '4000'), otherIncome: parseMoney(f.otherIncome, '30000'), nation: nationOf(f), taxYear: yearOf(f), asAt }),
 	},
 	'state-pension-tax': {
 		id: 'state-pension-tax',

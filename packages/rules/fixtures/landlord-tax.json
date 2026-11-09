@@ -63,5 +63,118 @@
     "input": { "rent": 12000, "expenses": 3000, "otherIncome": 30000, "nation": "scotland" },
     "expected": { "profit": 9000, "tax": 1890 },
     "working": "Pay above the allowance 17,430 sits in the Scottish basic rate band (up to 16,956 taxable is basic; 17,430 is already intermediate). Profit 9,000 from 17,430 to 26,430 is all within the intermediate band (16,957 to 31,092) at 21% = 1,890."
+  },
+  {
+    "id": "landlord-finance-cost-relief-basic-rate",
+    "title": "gov.uk: mortgage interest is not deducted from rent; £4,000 of finance costs gives a tax reduction of 20%, £800, off the £1,800 of tax on £9,000 of profit",
+    "fn": "landlordTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/changes-to-tax-relief-for-residential-landlords-how-its-worked-out-including-case-studies", "https://www.gov.uk/income-tax-rates"],
+    "input": { "rent": 12000, "expenses": 3000, "financeCosts": 4000, "otherIncome": 30000, "nation": "england-ni" },
+    "expected": { "profit": 9000, "taxBeforeRelief": 1800, "financeCostRelief": 800, "financeCostsUnused": 0, "tax": 1000, "route": "expenses" },
+    "working": "Profit 12,000 - 3,000 = 9,000 x 20% = 1,800. The lowest of finance costs 4,000, profit 9,000 and income above the allowance 26,430 is 4,000. 4,000 x 20% = 800. 1,800 - 800 = 1,000."
+  },
+  {
+    "id": "landlord-govuk-example-1-sophia",
+    "title": "gov.uk example 1 (Sophia): £52,000 of rent, £9,000 of other expenses and £20,000 of mortgage interest give £43,000 of profit and a reduction of £20,000 x 20% = £4,000",
+    "fn": "landlordTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/changes-to-tax-relief-for-residential-landlords-how-its-worked-out-including-case-studies", "https://www.gov.uk/income-tax-rates"],
+    "input": { "rent": 52000, "expenses": 9000, "financeCosts": 20000, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "profit": 43000, "financeCostRelief": 4000, "financeCostsUnused": 0, "taxableProfit": 30430, "taxBeforeRelief": 6086, "tax": 2086 },
+    "working": "The profit of 43,000 and the reduction of 4,000 are gov.uk's own figures. gov.uk works the tax with the 2016 to 2017 allowance of 11,000 (32,000 x 20% = 6,400, final tax 2,400). With the 2026/27 allowance of 12,570: 43,000 - 12,570 = 30,430 x 20% = 6,086, less 4,000 = 2,086."
+  },
+  {
+    "id": "landlord-govuk-example-2-john",
+    "title": "gov.uk example 2 (John): £35,000 of other income, £18,000 of rent, £2,000 of other expenses and £8,000 of mortgage interest give £16,000 of profit and a reduction of £8,000 x 20% = £1,600",
+    "fn": "landlordTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/changes-to-tax-relief-for-residential-landlords-how-its-worked-out-including-case-studies", "https://www.gov.uk/income-tax-rates"],
+    "input": { "rent": 18000, "expenses": 2000, "financeCosts": 8000, "otherIncome": 35000, "nation": "england-ni" },
+    "expected": { "profit": 16000, "financeCostRelief": 1600, "financeCostsUnused": 0, "taxBeforeRelief": 3346, "tax": 1746 },
+    "working": "The profit of 16,000 and the reduction of 1,600 are gov.uk's own figures; gov.uk works the tax with the 2016 to 2017 bands. With 2026/27 bands: other income above the allowance is 22,430, leaving 15,270 of the basic rate band. 15,270 x 20% = 3,054 and 730 x 40% = 292, total 3,346, less 1,600 = 1,746."
+  },
+  {
+    "id": "landlord-govuk-example-4-brian-carry-forward",
+    "title": "gov.uk example 4 (Brian, first year): £15,000 of mortgage interest against £13,000 of profit; the reduction is £13,000 x 20% = £2,600 and £2,000 of finance costs is unused and carried forward",
+    "fn": "landlordTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/changes-to-tax-relief-for-residential-landlords-how-its-worked-out-including-case-studies"],
+    "input": { "rent": 20000, "expenses": 7000, "financeCosts": 15000, "otherIncome": 36000, "nation": "england-ni" },
+    "expected": { "profit": 13000, "financeCostRelief": 2600, "financeCostsUnused": 2000, "taxBeforeRelief": 2600, "tax": 0, "makingTaxDigital": "not-above" },
+    "working": "The profit of 13,000, the reduction of 2,600 and the 2,000 carried forward are gov.uk's own figures. Property profit is the lowest of the three amounts. With 2026/27 bands all 13,000 of profit falls in the basic rate band (23,430 to 36,430 of taxable income), so the tax on it is 2,600 and the reduction takes it to nil. Rent of exactly 20,000 is not over the 20,000 Making Tax Digital threshold."
+  },
+  {
+    "id": "landlord-relief-limited-by-income-above-allowance",
+    "title": "gov.uk: the reduction uses the lowest of finance costs, profit and adjusted total income above the personal allowance; with £20,000 of rent as the only income the third limit, £7,430, applies",
+    "fn": "landlordTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/changes-to-tax-relief-for-residential-landlords-how-its-worked-out-including-case-studies"],
+    "input": { "rent": 20000, "expenses": 0, "financeCosts": 20000, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "profit": 20000, "taxableProfit": 7430, "taxBeforeRelief": 1486, "financeCostRelief": 1486, "financeCostsUnused": 12570, "tax": 0, "route": "expenses" },
+    "working": "Income above the allowance: 20,000 - 12,570 = 7,430, lower than the finance costs and the profit. 7,430 x 20% = 1,486 of tax and 1,486 of reduction. 20,000 - 7,430 = 12,570 of finance costs unused."
+  },
+  {
+    "id": "landlord-property-allowance-not-with-relief",
+    "title": "gov.uk: the property allowance cannot be used by someone claiming the tax reducer for finance costs; with £3,000 of rent, £200 of expenses and £500 of interest the allowance gives less tax, so no reduction is given",
+    "fn": "landlordTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income"],
+    "input": { "rent": 3000, "expenses": 200, "financeCosts": 500, "otherIncome": 30000, "nation": "england-ni" },
+    "expected": { "route": "allowance", "deducted": 1000, "profit": 2000, "financeCostRelief": 0, "tax": 400 },
+    "working": "Allowance route: 3,000 - 1,000 = 2,000 x 20% = 400. Expenses route: 3,000 - 200 = 2,800 x 20% = 560, less 500 x 20% = 100, is 460. The allowance route gives less tax."
+  },
+  {
+    "id": "landlord-relief-property-basic-rate-2027-28",
+    "title": "Technical note: from 2027/28 relief for residential finance costs is given at the property basic rate, which Budget 2026 set at 24%; £4,000 of interest takes £960 off £2,160 of tax",
+    "fn": "landlordTax",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": [
+      "https://www.gov.uk/government/publications/changes-to-tax-rates-for-property-savings-and-dividend-income/change-to-tax-rates-for-property-savings-and-dividend-income-technical-note",
+      "https://www.gov.uk/government/publications/income-tax-changes-to-tax-rates-for-property-and-savings-income/income-tax-changes-to-tax-rates-for-property-and-savings-income"
+    ],
+    "input": { "rent": 12000, "expenses": 3000, "financeCosts": 4000, "otherIncome": 30000, "nation": "england-ni" },
+    "expected": { "profit": 9000, "taxBeforeRelief": 2160, "financeCostRelief": 960, "tax": 1200 },
+    "working": "9,000 x 24% = 2,160. 4,000 x 24% = 960. 2,160 - 960 = 1,200. No gov.uk page states the 24% relief rate as a figure: the technical note gives the rule and quotes the 22% rate announced at Budget 2025, and Budget 2026 raised the property basic rate to 24%."
+  },
+  {
+    "id": "landlord-scotland-relief-cannot-create-refund",
+    "title": "gov.uk: the tax reduction cannot be used to create a tax refund; in Scotland £1,999 of profit taxed at the 19% starter rate owes £379.81, so a reduction of £399.80 stops at £379.81",
+    "fn": "landlordTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/changes-to-tax-relief-for-residential-landlords-how-its-worked-out-including-case-studies", "https://www.gov.uk/scottish-income-tax"],
+    "input": { "rent": 3000, "expenses": 1001, "financeCosts": 3000, "otherIncome": 12570, "nation": "scotland" },
+    "expected": { "profit": 1999, "taxBeforeRelief": 379.81, "financeCostRelief": 379.81, "tax": 0 },
+    "working": "Other income uses the whole allowance, so no tax is due on it. Profit 1,999 x 19% = 379.81. The lowest of the three amounts is 1,999; 1,999 x 20% = 399.80, which is more than all the tax due, so the reduction is 379.81."
+  },
+  {
+    "id": "landlord-making-tax-digital-above-2026-27",
+    "title": "gov.uk: qualifying income over £20,000 for the 2026 to 2027 tax year means Making Tax Digital for Income Tax from 6 April 2028; £25,000 of rent before expenses is over it",
+    "fn": "landlordTax",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax", "https://www.gov.uk/guidance/work-out-your-qualifying-income-for-making-tax-digital-for-income-tax"],
+    "input": { "rent": 25000, "expenses": 9000, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "makingTaxDigital": "above", "makingTaxDigitalThreshold": 20000, "makingTaxDigitalStart": "2028-04-06" },
+    "working": "Qualifying income is the amount before expenses, so the 9,000 of expenses does not bring 25,000 under the threshold."
+  },
+  {
+    "id": "landlord-making-tax-digital-2025-26-threshold",
+    "title": "gov.uk: qualifying income over £30,000 for the 2025 to 2026 tax year means Making Tax Digital for Income Tax from 6 April 2027; £30,000 exactly is not over it",
+    "fn": "landlordTax",
+    "taxYear": "2025-26",
+    "sources": ["https://www.gov.uk/guidance/find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax"],
+    "input": { "rent": 30000, "expenses": 5000, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "makingTaxDigital": "not-above", "makingTaxDigitalThreshold": 30000, "makingTaxDigitalStart": "2027-04-06" }
+  },
+  {
+    "id": "landlord-making-tax-digital-2027-28-regulations",
+    "title": "S.I. 2026/336 regulations 23 and 27: the qualifying amount is £20,000 for 2026-27 and any later tax year, tested two years before the obligation; £20,001 of rent in 2027/28 is over it, from 6 April 2029",
+    "fn": "landlordTax",
+    "taxYear": "2027-28",
+    "asAt": "2027-04-06",
+    "sources": ["https://www.legislation.gov.uk/uksi/2026/336/made"],
+    "input": { "rent": 20001, "expenses": 5000, "otherIncome": 0, "nation": "england-ni" },
+    "expected": { "makingTaxDigital": "above", "makingTaxDigitalThreshold": 20000, "makingTaxDigitalStart": "2029-04-06" }
   }
 ]

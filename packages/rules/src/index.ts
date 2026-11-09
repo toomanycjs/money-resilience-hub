@@ -23,3 +23,6 @@ export { hourlyToSalary, type HourlyToSalaryInput } from './hourlyToSalary.ts';
 export { childBenefitCharge, CHILD_BENEFIT_TOUCHES, type ChildBenefitChargeInput } from './childBenefitCharge.ts';
 export { mileageAllowance, MILEAGE_TOUCHES, MILEAGE_VEHICLES, MILEAGE_VEHICLE_LABEL, type MileageAllowanceInput, type MileageVehicle } from './mileageAllowance.ts';
 export { maternityPay, paternityPay, MATERNITY_TOUCHES, PATERNITY_TOUCHES, type MaternityPayInput, type PaternityPayInput } from './parentalPay.ts';
+export { financeCostReliefRate } from './landlordTax.ts';
+export { selfAssessmentPayments, dayMonthAfter, type SelfAssessmentPayments } from './sideHustleTax.ts';
+export { makingTaxDigitalCheck, withInformationSources, type MtdCheck, type MtdPosition } from './makingTaxDigital.ts';

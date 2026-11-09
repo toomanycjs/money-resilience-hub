@@ -174,3 +174,30 @@ export function simpleToText(r: SimpleResult, siteUrl: string, path: string): st
 	lines.push(`${siteUrl}${path}`);
 	return lines.join('\n');
 }
+
+/** A readable name for a source: the last part of a gov.uk address, or the host and path elsewhere. */
+function sourceName(url: string): string {
+	try {
+		const u = new URL(url);
+		const host = u.hostname.replace(/^www\./, '');
+		const last = u.pathname.split('/').filter(Boolean).pop();
+		if (host !== 'gov.uk' || !last) return host + u.pathname.replace(/\/$/, '');
+		const words = last.replace(/-/g, ' ');
+		return words.charAt(0).toUpperCase() + words.slice(1);
+	} catch {
+		return url;
+	}
+}
+
+/**
+ * The rules used box for a single-purpose tool: the same list as the
+ * take-home calculator's, with a row naming the sources this result drew
+ * on, so choosing another nation shows that nation's sources.
+ */
+export function renderSimpleRulesUsed(b: { rulesUsed: RulesUsed }, opts: RenderOptions): string {
+	const items = b.rulesUsed.sources
+		.map((s) => `<li><a href="${esc(s.source)}" rel="noopener">${esc(sourceName(s.source))}</a>, checked ${longDate(s.verified)}${s.status !== 'in-force' ? `, ${STATUS_LABEL[s.status].toLowerCase()}` : ''}</li>`)
+		.join('');
+	const row = items ? `\t<div><dt>Sources used</dt><dd><ul class="sources-used">${items}</ul></dd></div>\n` : '';
+	return renderRulesUsed(b, opts).replace('</dl>', `${row}</dl>`);
+}

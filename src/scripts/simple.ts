@@ -3,7 +3,7 @@
 // stay here: saved to localStorage under the tool's own key, carried in a
 // share link's hash, and never sent anywhere.
 
-import { RulesUnavailableError } from '@money-resilience-hub/rules';
+import { NATION_LABEL, RulesUnavailableError, type Nation } from '@money-resilience-hub/rules';
 import {
 	TOOLS,
 	decodeSimpleShare,
@@ -11,8 +11,8 @@ import {
 	forgetSimpleInputs,
 	loadSimpleSaved,
 	renderLedger,
-	renderRulesUsed,
 	renderSimpleFigure,
+	renderSimpleRulesUsed,
 	saveSimpleInputs,
 	simpleToText,
 	type SimpleForm,
@@ -30,6 +30,8 @@ if (root && tool) {
 	const path = location.pathname;
 	const el = (sel: string) => root.querySelector<HTMLElement>(sel);
 	const status = document.querySelector<HTMLElement>('[data-status]');
+	// The rules used box sits outside the calculator. Only its body is replaced, so the heading stays.
+	const rulesBody = document.querySelector<HTMLElement>('[data-rules-used-body]');
 	let current: SimpleResult | null = null;
 
 	function read(): SimpleForm {
@@ -69,7 +71,7 @@ if (root && tool) {
 			const ratesPath = `/rates/${r.taxYear}/`;
 			put('[data-figure]', renderSimpleFigure(r));
 			put('[data-ledger]', renderLedger(r, { ratesPath, amountHeading: tool!.amountHeading }));
-			put('[data-rules-used]', renderRulesUsed(r, { ratesPath }));
+			if (rulesBody) rulesBody.innerHTML = renderSimpleRulesUsed(r, { ratesPath });
 			const changed = el('[data-what-changed]');
 			if (changed) {
 				changed.textContent = r.comparison ? r.comparison.sentence : '';
@@ -79,8 +81,19 @@ if (root && tool) {
 			root!.dataset.result = JSON.stringify({ amount: r.headline.amount });
 		} catch (e) {
 			if (e instanceof RulesUnavailableError && unavailable) {
-				unavailable.textContent = `This result cannot be shown yet: ${e.message.replace(/^[\w.[\]-]+: /, '')}. Choose another nation or tax year, or check back once the rule is set.`;
+				const reason = e.message.replace(/^[\w.[\]-]+: /, '').replace(/\.$/, '');
+				unavailable.textContent = `This result cannot be shown yet: ${reason}. Choose another nation or tax year, or check back once the rule is set.`;
 				unavailable.hidden = false;
+				// The box would otherwise keep naming the nation and sources of the last result that could be shown.
+				current = null;
+				if (rulesBody) {
+					const nation = NATION_LABEL[f.nation as Nation];
+					const year = /^\d{4}-\d{2}$/.test(f.taxYear ?? '') ? f.taxYear.replace('-', '/') : '';
+					const where = [nation, year].filter(Boolean).join(', ');
+					const p = document.createElement('p');
+					p.textContent = `${where ? `${where}: no` : 'No'} rules are shown, because the result cannot be worked out yet. ${reason}.`;
+					rulesBody.replaceChildren(p);
+				}
 			} else throw e;
 		}
 	}

@@ -2,8 +2,9 @@
 // figure a tool uses and the figure the reference shows are the same value.
 
 import { NATION_LABEL, type Band, type Leaf, type Nation, type Status, type YearConfig } from '@money-resilience-hub/rules';
-import { money, pct } from '@money-resilience-hub/calculators';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
 import { PAYTOOLS_LABELS } from './labels-paytools.ts';
+import { PROPERTY_LABELS } from './labels-property.ts';
 
 export interface RateRow {
 	path: string;
@@ -118,6 +119,7 @@ export const LABELS: Record<string, string> = {
 	'pensionTaxAllowance.taperDivisor': 'Pension Tax Allowance: income per £1 withdrawn',
 	'pensionTaxAllowance.lastYear': 'Pension Tax Allowance: last tax year',
 	...PAYTOOLS_LABELS,
+	...PROPERTY_LABELS,
 };
 
 const SECTIONS: { id: string; heading: string; prefix: string }[] = [
@@ -132,6 +134,9 @@ const SECTIONS: { id: string; heading: string; prefix: string }[] = [
 	{ id: 'capital-gains-tax', heading: 'Capital gains tax', prefix: 'capitalGainsTax.' },
 	{ id: 'pension-allowances', heading: 'Pension allowances', prefix: 'pensionAllowances.' },
 	{ id: 'inheritance-tax', heading: 'Inheritance tax', prefix: 'inheritanceTax.' },
+	{ id: 'self-assessment', heading: 'Self Assessment', prefix: 'selfAssessment.' },
+	{ id: 'making-tax-digital', heading: 'Making Tax Digital for Income Tax', prefix: 'makingTaxDigital.' },
+	{ id: 'digital-platforms', heading: 'Selling on digital platforms', prefix: 'digitalPlatforms.' },
 	{ id: 'state-pension', heading: 'State Pension', prefix: 'statePension.' },
 	{ id: 'pension-tax-allowance', heading: 'Pension Tax Allowance', prefix: 'pensionTaxAllowance.' },
 ];
@@ -142,8 +147,10 @@ function isLeaf(x: unknown): x is Leaf<unknown> {
 
 export function formatRateValue(path: string, value: unknown): string {
 	if (value === null || value === undefined) return 'Not set';
-	if (typeof value === 'string') return value;
+	if (typeof value === 'string') return /^\d{4}-\d{2}-\d{2}$/.test(value) ? longDate(value) : value;
 	if (typeof value !== 'number') return String(value);
+	if (/salesOfGoodsLimit$/.test(path)) return String(value);
+	if (/Euros$/.test(path)) return `€${value.toLocaleString('en-GB')}`;
 	if (/mileage\.\w+Rate$|mileage\.(motorcycle|cycle)$/.test(path)) return `${Math.round(value * 100)}p`;
 	if (/Miles$|maxWeeks$|fullRateWeeks$|taperDivisor$|chargeStep$/.test(path)) return path.endsWith('chargeStep') ? money(value, 0) : String(value);
 	if (/[rR]ate$|[fF]raction$|Charge$|rates\.(basic|higher|additional)$/.test(path)) return pct(value);
