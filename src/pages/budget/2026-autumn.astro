@@ -113,7 +113,7 @@ const sources = [...new Set([...measures.map((m) => m.leaf.source), ...changes.c
 				))}
 			</tbody>
 		</table>
-		{changes.notYetSet.length > 0 && <p class="small">Not yet set for {y27.label}, so not compared: {changes.notYetSet.map((n) => n.label.toLowerCase()).join(', ')}.</p>}
+		{changes.notYetSet.length > 0 && <p class="small">Not yet set for {y27.label}, so not compared: {[...(changes.notYetSet.some((n) => /^incomeTax\.bands\.scotland/.test(n.path)) ? ['Scottish income tax bands and rates'] : []), ...changes.notYetSet.filter((n) => !/^incomeTax\.bands\.scotland/.test(n.path)).map((n) => n.label)].join('; ')}.</p>}
 
 		<h2>Sources</h2>
 		<ul class="small">

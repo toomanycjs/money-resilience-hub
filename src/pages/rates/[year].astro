@@ -17,6 +17,9 @@ const prev = previousYear(year.taxYear);
 const tables = rateTables(year);
 const bands = bandTables(year);
 const changes = prev ? changeList(prev, year) : null;
+// The Scottish bands are set together, so when none is set they are named once.
+const unsetScottish = changes ? changes.notYetSet.filter((n) => /^incomeTax\.bands\.scotland/.test(n.path)) : [];
+const notYet = changes ? [...(unsetScottish.length ? ['Scottish income tax bands and rates'] : []), ...changes.notYetSet.filter((n) => !/^incomeTax\.bands\.scotland/.test(n.path)).map((n) => n.label)] : [];
 const allRows = tables.flatMap((t) => t.rows);
 const verifiedDates = allRows.map((r) => r.verified).filter(Boolean).sort();
 const latest = verifiedDates.at(-1) ?? '';
@@ -119,8 +122,8 @@ const dataset = datasetNode({
 			) : (
 				<p>No figure recorded for both years differs between them.</p>
 			)}
-			{changes.notYetSet.length > 0 && <p>Not yet set for {year.label}: {changes.notYetSet.map((n) => n.label.toLowerCase()).join(', ')}.</p>}
-			{changes.notCompared.length > 0 && <p class="small quiet">{changes.notCompared.length} figures on this page have no {prev!.label} value recorded here, so they are not compared: {changes.notCompared.map((n) => n.label.toLowerCase()).join(', ')}.</p>}
+			{notYet.length > 0 && <p>Not yet set for {year.label}: {notYet.join('; ')}.</p>}
+			{changes.notCompared.length > 0 && <p class="small quiet">{changes.notCompared.length} figures on this page have no {prev!.label} value recorded here, so they are not compared: {changes.notCompared.map((n) => n.label).join('; ')}.</p>}
 		</>
 	) : (
 		<p>No earlier year is recorded to compare against.</p>

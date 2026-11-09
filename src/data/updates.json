@@ -1,6 +1,24 @@
 [
 	{
 		"date": "2026-11-09",
+		"title": "Eight new calculators for pay and family",
+		"description": "Pay rise, bonus tax, pension contributions, hourly rate to salary, the High Income Child Benefit Charge, mileage allowance, Statutory Maternity Pay and Statutory Paternity Pay, each with its working and gov.uk sources.",
+		"link": "/calculators/"
+	},
+	{
+		"date": "2026-11-09",
+		"title": "Landlord tax calculator: finance cost relief is now calculated",
+		"description": "The landlord tool works out the tax reduction for mortgage interest and other finance costs, and says where the rent stands against the Making Tax Digital threshold.",
+		"link": "/calculators/landlord-tax/"
+	},
+	{
+		"date": "2026-11-09",
+		"title": "Side hustle tax calculator: payment dates and payments on account",
+		"description": "The side hustle tool now shows when the bill is due, whether payments on account apply and what a first year's payments look like, with Making Tax Digital and digital platform reporting.",
+		"link": "/calculators/side-hustle-tax/"
+	},
+	{
+		"date": "2026-11-09",
 		"title": "Salary pages for every thousand pounds, each with a Scottish version",
 		"description": "The salary pages now run in steps of a thousand pounds and include the salaries that sit on a threshold. Each has a second page under the Scottish income tax bands, and shows the distance to each threshold, what the next few thousand is worth and a pension scenario.",
 		"link": "/salary/"

@@ -64,6 +64,8 @@ export function formatFor(path: string, value: number | string | null): string {
 export function changeList(from: YearConfig, to: YearConfig): ChangeList {
 	const out: ChangeList = { changed: [], notCompared: [], notYetSet: [] };
 	for (const c of compareYears(from, to)) {
+		// Values that only say which year a rule looks at move every year by definition; they are not changes.
+		if (/^makingTaxDigital\.(incomeTest\.startDate|inUse\.incomeYear)$/.test(c.path)) continue;
 		if (typeof c.from === 'object' && c.from !== null) continue;
 		if (typeof c.to === 'object' && c.to !== null) continue;
 		const label = labelFor(c.path, c.to === null ? from : to);

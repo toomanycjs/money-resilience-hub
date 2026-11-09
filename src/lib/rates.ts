@@ -147,7 +147,7 @@ function isLeaf(x: unknown): x is Leaf<unknown> {
 
 export function formatRateValue(path: string, value: unknown): string {
 	if (value === null || value === undefined) return 'Not set';
-	if (typeof value === 'string') return /^\d{4}-\d{2}-\d{2}$/.test(value) ? longDate(value) : value;
+	if (typeof value === 'string') return /^\d{4}-\d{2}-\d{2}$/.test(value) ? longDate(value) : /^\d{4}-\d{2}$/.test(value) ? value.replace('-', '/') : value;
 	if (typeof value !== 'number') return String(value);
 	if (/salesOfGoodsLimit$/.test(path)) return String(value);
 	if (/Euros$/.test(path)) return `€${value.toLocaleString('en-GB')}`;
