@@ -1,0 +1,221 @@
+---
+// What each job takes home: median full-time pay by occupation and industry
+// from the ONS Annual Survey of Hours and Earnings 2026 (provisional), run
+// through the current year's rules. Every pay figure is read from
+// src/data/ashe-occupations.json, which records its sources; every take-home
+// figure is computed from the rules at build time.
+import { bandsFor, getYear, resolve, takeHome } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import data from '../../data/ashe-occupations.json' with { type: 'json' };
+import Guide from '../../layouts/Guide.astro';
+import { liveAmounts } from '../../lib/pages';
+
+interface Group {
+	code: string;
+	level?: 'major' | 'sub-major';
+	name: string;
+	jobs: number | null;
+	median: number | null;
+	mean: number | null;
+	p10: number | null;
+	p25: number | null;
+	p75: number | null;
+	p90: number | null;
+}
+interface Run extends Group {
+	monthly: number;
+	annual: number;
+	rate: number;
+}
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const nation = 'england-ni';
+const run = (gross: number) => takeHome({ gross, nation, asAt }, { withMarginal: false });
+const withTakeHome = (g: Group): Run => {
+	const b = run(g.median as number);
+	return { ...g, monthly: b.periods.monthly, annual: b.takeHome, rate: b.effectiveRate };
+};
+/** A rate to one decimal place. */
+const rate1 = (v: number) => `${(v * 100).toFixed(1)}%`;
+const times = (v: number) => v.toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+const all = withTakeHome({ code: '', name: 'All full-time employee jobs', ...(data.allFullTime as Group) });
+const status = run(all.median as number).rulesUsed.status;
+const occupations = (data.occupations as Group[]).filter((g) => g.median !== null).map(withTakeHome);
+const majors = occupations.filter((g) => g.level === 'major');
+const industries = (data.industries as Group[]).filter((g) => g.median !== null).map(withTakeHome);
+const suppressedIndustries = (data.industries as Group[]).filter((g) => g.median === null);
+
+// The higher rate threshold from the rules, and the groups whose median sits above it.
+const bands = bandsFor(year, nation);
+const pa = resolve(year.incomeTax.personalAllowance, 'incomeTax.personalAllowance', asAt).value;
+const hrt = bands[0].upTo === null ? null : pa + bands[0].upTo;
+const higherRate = bands[1]?.rate ?? null;
+const aboveThreshold = hrt === null ? [] : occupations.filter((g) => (g.median as number) > hrt);
+
+const byMedian = [...majors].sort((a, b) => (b.median as number) - (a.median as number));
+const top = byMedian[0];
+const bottom = byMedian[byMedian.length - 1];
+const ratioBefore = (top.median as number) / (bottom.median as number);
+const ratioAfter = top.monthly / bottom.monthly;
+const spread = (g: Group) => (g.p75 as number) - (g.p25 as number);
+const widest = [...majors].sort((a, b) => spread(b) - spread(a))[0];
+const narrowest = [...majors].sort((a, b) => spread(a) - spread(b))[0];
+const overlap = (narrowest.p75 as number) < (widest.p25 as number);
+
+const industriesByMedian = [...industries].sort((a, b) => (b.median as number) - (a.median as number));
+const topIndustry = industriesByMedian[0];
+const bottomIndustry = industriesByMedian[industriesByMedian.length - 1];
+
+// The chart: take-home a month for the nine major groups, largest first.
+const chartRows = [...majors].sort((a, b) => b.monthly - a.monthly);
+const W = 420;
+const L = 4;
+const R = 64;
+const ROW = 42;
+const T = 6;
+const H = T + chartRows.length * ROW;
+const barMax = Math.ceil(Math.max(...chartRows.map((g) => g.monthly)) / 500) * 500;
+const barX = (v: number) => L + (v / barMax) * (W - L - R);
+
+const live = liveAmounts('salary');
+/** A median that has its own salary page links to it. */
+const pageFor = (v: number | null) => (v !== null && live.includes(Math.round(v)) ? `/salary/${Math.round(v)}/` : null);
+const retrieved = data.retrieved as string;
+---
+
+<Guide
+	slug="what-each-job-takes-home"
+	taxYears={[year.taxYear]}
+	status={status}
+	related={[
+		{ title: 'Salary pages', href: '/salary/', desc: 'One page per salary, every deduction on its own line, with a Scottish version of each.' },
+		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'Your own pay, tax code, pension and student loan, with the arithmetic shown.' },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'The thresholds and rates behind every take-home figure on this page, with their sources.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>The Annual Survey of Hours and Earnings puts median gross pay for a full-time employee job at {money(all.median as number, 0)} in the year to April 2026. Under the {year.label} rules for England and Northern Ireland that is {money(all.monthly, 0)} a month after income tax and National Insurance, an effective rate of {rate1(all.rate)}. Across the nine major occupation groups the median runs from {money(bottom.median as number, 0)} for {bottom.name.toLowerCase()} to {money(top.median as number, 0)} for {top.name.toLowerCase()}: {money(bottom.monthly, 0)} to {money(top.monthly, 0)} a month in hand. The 2026 figures are provisional until the ONS revises them in October 2027.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>Take-home a month by major occupation group</h2>
+		<figure class="chart">
+			<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Take-home pay a month at the median of each major occupation group, from ${money(chartRows[0].monthly, 0)} for ${chartRows[0].name.toLowerCase()} to ${money(chartRows[chartRows.length - 1].monthly, 0)} for ${chartRows[chartRows.length - 1].name.toLowerCase()}.`} class="story-chart">
+				{chartRows.map((g, i) => (
+					<>
+						<text x={L} y={T + i * ROW + 13} class="label">{g.name}</text>
+						<rect x={L} y={T + i * ROW + 19} width={barX(g.monthly) - L} height={14} class="bar" />
+						<text x={barX(g.monthly) + 5} y={T + i * ROW + 30} class="value">{money(g.monthly, 0)}</text>
+					</>
+				))}
+				<line x1={barX(all.monthly)} x2={barX(all.monthly)} y1={T + 16} y2={H} class="marker" />
+				<line x1={L} x2={L} y1={T + 16} y2={H} class="axis" />
+			</svg>
+			<figcaption>
+				Take-home pay a month at each group's median gross annual pay, {year.label} rules for England and Northern Ireland, standard tax code, no pension or student loan. Amber line: the median for all full-time employee jobs, {money(all.monthly, 0)} a month. Pay: ONS ASHE Table 2.7a, April 2026, provisional, retrieved {longDate(retrieved)}.
+			</figcaption>
+		</figure>
+		<p>Tax narrows the range. {top.name} are paid {times(ratioBefore)} times as much as {bottom.name.toLowerCase()} at the median before tax and take home {times(ratioAfter)} times as much. The effective rate is {rate1(bottom.rate)} for the lowest-paid group and {rate1(top.rate)} for the highest, because the personal allowance covers a larger share of a smaller pay packet{hrt !== null && higherRate !== null ? ` and the ${pct(higherRate)} rate only starts above ${money(hrt, 0)}` : ''}.{hrt !== null && aboveThreshold.length > 0 ? ` Of the ${occupations.length} groups in the table below, ${aboveThreshold.length} have a median above that threshold, so at least half the full-time jobs in each pay more than it: ${aboveThreshold.map((g) => g.name.toLowerCase()).join('; ')}.` : ''}</p>
+	</Fragment>
+
+	<h2>Every occupation group</h2>
+	<p>The table covers the nine major groups of the Standard Occupational Classification 2020 and the sub-major groups within them. The two percentile columns show the spread inside a group: a quarter of its full-time jobs pay less than the first and a quarter pay more than the second. Press a heading to sort by that column.</p>
+	<div class="table-wrap">
+		<table data-sortable>
+			<caption>Full-time employee jobs by occupation, UK, year to April 2026 (provisional). Pay from ASHE Table 2.7a; take-home a month and effective rate from the {year.label} rules for England and Northern Ireland.</caption>
+			<thead>
+				<tr>
+					<th scope="col"><button type="button" data-sort="text">Occupation</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">Median pay</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">25th percentile</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">75th percentile</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">Take-home a month</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">Effective rate</button></th>
+				</tr>
+			</thead>
+			<tbody>
+				{occupations.map((g) => (
+					<tr class={g.level === 'sub-major' ? 'sub' : 'major'}>
+						<th scope="row"><span class="code">{g.code}</span> {g.name}</th>
+						<td class="num" data-value={g.median}>{pageFor(g.median) ? <a href={pageFor(g.median)}>{money(g.median as number, 0)}</a> : money(g.median as number, 0)}</td>
+						<td class="num" data-value={g.p25 ?? ''}>{g.p25 === null ? '' : money(g.p25, 0)}</td>
+						<td class="num" data-value={g.p75 ?? ''}>{g.p75 === null ? '' : money(g.p75, 0)}</td>
+						<td class="num" data-value={g.monthly}>{money(g.monthly, 0)}</td>
+						<td class="num" data-value={g.rate}>{rate1(g.rate)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>The widest spread between the quartiles is in {widest.name.toLowerCase()}, {money(widest.p25 as number, 0)} to {money(widest.p75 as number, 0)}; the narrowest is in {narrowest.name.toLowerCase()}, {money(narrowest.p25 as number, 0)} to {money(narrowest.p75 as number, 0)}.{overlap ? ` The upper quartile of ${narrowest.name.toLowerCase()} sits below the lower quartile of ${widest.name.toLowerCase()}: three quarters of one group earn less than three quarters of the other.` : ''} A median is the pay of the job in the middle of a group, so it says nothing about any one job in it; the quartiles are the nearest the published tables come to that.</p>
+
+	<h2>By industry</h2>
+	<p>The same survey sorts jobs by the employer's industry, the sections of the Standard Industrial Classification 2007. The median runs from {money(bottomIndustry.median as number, 0)} in {bottomIndustry.name.toLowerCase()} to {money(topIndustry.median as number, 0)} in {topIndustry.name.toLowerCase()}, which is {money(bottomIndustry.monthly, 0)} to {money(topIndustry.monthly, 0)} a month after tax.</p>
+	<div class="table-wrap">
+		<table data-sortable>
+			<caption>Full-time employee jobs by industry section, UK, year to April 2026 (provisional). Pay from ASHE Table 4.7a; take-home and effective rate from the {year.label} rules. A blank percentile is one the ONS did not publish.</caption>
+			<thead>
+				<tr>
+					<th scope="col"><button type="button" data-sort="text">Industry</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">Median pay</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">25th percentile</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">75th percentile</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">Take-home a month</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">Effective rate</button></th>
+				</tr>
+			</thead>
+			<tbody>
+				{industries.map((g) => (
+					<tr>
+						<th scope="row"><span class="code">{g.code}</span> {g.name}</th>
+						<td class="num" data-value={g.median}>{pageFor(g.median) ? <a href={pageFor(g.median)}>{money(g.median as number, 0)}</a> : money(g.median as number, 0)}</td>
+						<td class="num" data-value={g.p25 ?? ''}>{g.p25 === null ? '' : money(g.p25, 0)}</td>
+						<td class="num" data-value={g.p75 ?? ''}>{g.p75 === null ? '' : money(g.p75, 0)}</td>
+						<td class="num" data-value={g.monthly}>{money(g.monthly, 0)}</td>
+						<td class="num" data-value={g.rate}>{rate1(g.rate)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+
+	<h2>How to read it</h2>
+	<ul>
+		<li>ASHE is a one per cent sample of employee jobs drawn from HMRC's PAYE records. It counts jobs, not people, so someone with two jobs can appear twice, and it does not cover the self-employed. The annual figures are gross pay for the tax year that ended on 5 April 2026, for employees on adult rates who had been in the same job for more than a year. Full-time means more than 30 paid hours a week, or 25 or more in the teaching professions.</li>
+		<li>Take-home is computed from the median as if it were one person's only income: the {year.label} rates and thresholds for England and Northern Ireland, the standard tax code, no pension contribution, no student loan and no benefits in kind. Scottish rates give a different figure, which the <a href="/salary/">salary pages</a> show side by side. A pension contribution, which most employees make, lowers both the take-home and the effective rate.</li>
+		<li>A percentile the ONS withholds because its coefficient of variation is over 20% is left blank. {suppressedIndustries.length > 0 ? `${suppressedIndustries.map((g) => g.name).join(' and ')} ${suppressedIndustries.length === 1 ? 'has' : 'have'} no published median at all and ${suppressedIndustries.length === 1 ? 'is' : 'are'} left out.` : ''} The ONS also publishes a count of jobs in each group but describes it as indicative only, so it is not shown.</li>
+		<li>The 2026 estimates are provisional. The ONS revises each year's figures when it publishes the next, so the medians here will move a little in October 2027. The groups are the one- and two-digit codes of SOC 2020; the four-digit unit groups, several hundred of them, are in the ONS's Table 14 and not here.</li>
+		<li>The ONS publishes this data under the Open Government Licence v3.0.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{(data.sources as { name: string; url: string; published: string }[]).map((s) => <li><a href={s.url} rel="noopener">{s.name}</a>, published {longDate(s.published)}</li>)}
+		<li>The data file this page reads: <a href="/data/ashe-occupations.json">ashe-occupations.json</a>, with each file's address and checksum. Licence: {data.licence}.</li>
+	</Fragment>
+</Guide>
+
+<script>
+	import '../../scripts/sort-table';
+</script>
+
+<style>
+	.chart { margin: 1rem 0 1.5rem; }
+	.story-chart { width: 100%; max-width: 540px; height: auto; display: block; font-family: var(--font-body); }
+	.story-chart .axis { stroke: var(--ink); stroke-width: 1; }
+	.story-chart .bar { fill: var(--ink); }
+	.story-chart .label { fill: var(--ink); font-size: 12px; }
+	.story-chart .value { fill: var(--quiet); font-size: 11px; font-variant-numeric: tabular-nums; }
+	.story-chart .marker { stroke: var(--threshold); stroke-width: 2; stroke-dasharray: 4 3; }
+	figcaption { color: var(--quiet); font-size: 0.9rem; margin-top: 0.5rem; }
+	thead th button { all: unset; cursor: pointer; font: inherit; color: inherit; text-decoration: underline; text-decoration-color: var(--hairline); text-underline-offset: 0.2em; }
+	thead th button:hover, thead th button:focus-visible { text-decoration-color: var(--ink); outline: none; }
+	thead th[aria-sort] button { text-decoration-color: var(--ink); }
+	thead th[aria-sort='descending'] button::after { content: ' \2193'; }
+	thead th[aria-sort='ascending'] button::after { content: ' \2191'; }
+	tr.sub th { padding-left: 1.25rem; font-weight: 400; }
+	tr.major th { font-weight: 600; }
+	.code { display: inline-block; min-width: 1.6rem; color: var(--quiet); font-size: 0.85rem; font-variant-numeric: tabular-nums; }
+</style>
