@@ -162,7 +162,7 @@ const seriesClass: Record<string, string> = { 'Heavily burdened': 'burden', 'Low
 	]}
 >
 	<Fragment slot="answer">
-		<p>In the FCA's Financial Lives {latest.wave} survey, {pct0(lfrAll.share)} of UK adults ({millions(head.lowFinancialResilienceMillions)}) had low financial resilience: they were in financial difficulty, heavily burdened by their bills and credit, or had very limited savings. {pct0(assetsAll.nilOrUnder1k)} had no cash savings or investments at all, or under {money(assetsThreshold, 0)} of the two together, and {pct0(underAWeek.values[lastWave] ?? 0)} said their household could cover its living expenses for less than a week if it lost its main income. Fieldwork ran from {longDate(survey.fieldworkFrom)} to {longDate(survey.fieldworkTo)}, with {survey.respondents.toLocaleString('en-GB')} adults taking part.</p>
+		<p>In the FCA's Financial Lives {latest.wave} survey, {pct0(lfrAll.share)} of UK adults ({millions(head.lowFinancialResilienceMillions)}) had low financial resilience: they were in financial difficulty, heavily burdened by their bills and credit, or had very limited savings. In all, {pct0(assetsAll.nilOrUnder1k)} had no cash savings or investments at all, or under {money(assetsThreshold, 0)} of the two together, and {pct0(underAWeek.values[lastWave] ?? 0)} said their household could cover its living expenses for less than a week if it lost its main income. Fieldwork ran from {longDate(survey.fieldworkFrom)} to {longDate(survey.fieldworkTo)}, with {survey.respondents.toLocaleString('en-GB')} adults taking part.</p>
 	</Fragment>
 
 	<Fragment slot="first">
