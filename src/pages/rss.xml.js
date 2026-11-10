@@ -6,7 +6,7 @@ import rss from '@astrojs/rss';
 import corrections from '../../docs/corrections.json' with { type: 'json' };
 import updates from '../data/updates.json' with { type: 'json' };
 import { SITE_DESCRIPTION, SITE_NAME } from '../config/site';
-import { GUIDES } from '../lib/guides';
+import { LIVE_GUIDES as GUIDES } from '../lib/guides';
 
 // Midday UTC, so the date reads the same in every time zone.
 const at = (date) => new Date(`${date}T12:00:00Z`);

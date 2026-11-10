@@ -36,12 +36,13 @@ const article = articleNode({ title: guide.title, description: guide.description
 const years = taxYears.map((y) => getYear(y));
 ---
 
-<Base title={guide.title} description={guide.description} breadcrumb={guide.h1} ogType="article" extraNodes={[article]} taxYears={[...taxYears, ...alsoReads]}>
+<Base title={guide.title} description={guide.description} breadcrumb={guide.h1} ogType="article" extraNodes={[article]} taxYears={[...taxYears, ...alsoReads]} noindex={!!guide.draft} ogImage={guide.draft ? new URL('/og/guides.png', Astro.site).href : undefined}>
 	<article class="prose guide">
 		<div class="page-head">
 			<p class="kicker"><a href="/guides/">Guides</a></p>
 			<h1>{guide.h1}</h1>
 			<p class="byline">By <a href={AUTHOR.path}>{AUTHOR.name}</a>. Reviewed <time datetime={guide.reviewedOn}>{longDate(guide.reviewedOn)}</time>.</p>
+			{guide.draft && <p class="status-note"><strong>Draft.</strong> Not published{guide.publishOn ? `; planned for ${longDate(guide.publishOn)}` : ''}. Built for review only.</p>}
 		</div>
 
 		<div class="answer">

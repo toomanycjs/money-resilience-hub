@@ -31,6 +31,11 @@ export default function linkCheck() {
 					const page = pageOf(file);
 					if (page === '/404.html' || page.startsWith('/design/')) continue;
 					const html = readFileSync(file, 'utf8');
+					// Draft pages are built for review only and count towards nothing.
+					if (page.startsWith('/drafts/')) {
+						for (const [, href] of html.matchAll(PAGE)) if (!built.has(href)) problems.push(`${page} links to ${href}, which is not a built page`);
+						continue;
+					}
 					// Links in the body, not the header nav, count towards orphan checks.
 					const body = html.replace(/<header[\s\S]*?<\/header>/i, '');
 					for (const [, href] of html.matchAll(NO_SLASH)) problems.push(`${page} links to ${href} without a trailing slash`);
@@ -43,7 +48,7 @@ export default function linkCheck() {
 					}
 				}
 				for (const page of built) {
-					if (page === '/404.html' || page === '/' || page.startsWith('/design/')) continue;
+					if (page === '/404.html' || page === '/' || page.startsWith('/design/') || page.startsWith('/drafts/')) continue;
 					const n = inbound.get(page) ?? 0;
 					if (n < 2) problems.push(`${page} is linked from ${n} other page(s); every page needs at least two`);
 				}

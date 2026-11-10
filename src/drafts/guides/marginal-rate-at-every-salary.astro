@@ -1,0 +1,253 @@
+---
+// The marginal rate at every salary: an engine sweep from the lowest salary
+// to the highest in small steps, charted, with a paragraph on each place
+// the rate jumps. Every figure is computed; nothing is typed.
+import { childBenefitCharge, getYear, leastSettled, resolve, takeHome, type Plan } from '@money-resilience-hub/rules';
+import { money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+import { liveAmounts } from '../../lib/pages';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const live = liveAmounts('salary');
+
+// The sweep: the share of the next STEP pounds that goes in deductions.
+// STEP matches the child benefit charge, which rises one percentage point
+// for each step of income, so every series is exact rather than smeared.
+const FROM = 10000;
+const TO = 200000;
+const cbStep = resolve(year.childBenefit.chargeStep, 'childBenefit.chargeStep', asAt).value;
+const STEP = cbStep;
+
+const net = (gross: number, plans: Plan[] = []) => takeHome({ gross, nation: 'england-ni', studentLoanPlans: plans, taxYear: year.taxYear, asAt }, { withMarginal: false }).takeHome;
+const charge = (income: number, children: number) => childBenefitCharge({ income, children, taxYear: year.taxYear, asAt }).facts.charge as number;
+
+interface Series {
+	id: string;
+	label: string;
+	marginal: (g: number) => number;
+}
+const series: Series[] = [
+	{ id: 'base', label: 'No student loan, no children', marginal: (g) => 1 - (net(g + STEP) - net(g)) / STEP },
+	{ id: 'plan2', label: 'With a Plan 2 loan', marginal: (g) => 1 - (net(g + STEP, ['plan2']) - net(g, ['plan2'])) / STEP },
+	{ id: 'plan5', label: 'With a Plan 5 loan', marginal: (g) => 1 - (net(g + STEP, ['plan5']) - net(g, ['plan5'])) / STEP },
+	{ id: 'child', label: 'One child, child benefit claimed', marginal: (g) => 1 - (net(g + STEP) - net(g) - (charge(g + STEP, 1) - charge(g, 1))) / STEP },
+];
+const salaries: number[] = [];
+for (let g = FROM; g < TO; g += STEP) salaries.push(g);
+const points = series.map((s) => ({ ...s, values: salaries.map((g) => Math.round(s.marginal(g) * 1000) / 1000) }));
+
+// Where the baseline rate changes, with the rate either side.
+const base = points[0].values;
+const changes: { at: number; from: number; to: number }[] = [];
+for (let i = 1; i < base.length; i++) if (base[i] !== base[i - 1]) changes.push({ at: salaries[i], from: base[i - 1], to: base[i] });
+// The threshold inside each step where the change happens.
+const pa = resolve(year.incomeTax.personalAllowance, 'incomeTax.personalAllowance', asAt).value;
+const brl = year.incomeTax.bands['england-ni'][0].upTo as number;
+const hrt = pa + brl;
+const taperStart = resolve(year.incomeTax.taperStart, 'incomeTax.taperStart', asAt).value;
+const taperRate = resolve(year.incomeTax.taperRate, 'incomeTax.taperRate', asAt).value;
+const taperEnd = taperStart + pa / taperRate;
+const uel = resolve(year.nationalInsurance.employee.upperEarningsLimit, 'nationalInsurance.employee.upperEarningsLimit', asAt).value;
+const niMain = resolve(year.nationalInsurance.employee.mainRate, 'nationalInsurance.employee.mainRate', asAt).value;
+const niUpper = resolve(year.nationalInsurance.employee.upperRate, 'nationalInsurance.employee.upperRate', asAt).value;
+const basicRate = year.incomeTax.bands['england-ni'][0].rate as number;
+const higherRate = year.incomeTax.bands['england-ni'][1].rate as number;
+const additionalRate = year.incomeTax.bands['england-ni'][2].rate as number;
+const cbFrom = resolve(year.childBenefit.chargeFrom, 'childBenefit.chargeFrom', asAt).value;
+const cbTo = resolve(year.childBenefit.chargeTo, 'childBenefit.chargeTo', asAt).value;
+const plan2 = resolve(year.studentLoans.plan2.threshold, 'studentLoans.plan2.threshold', asAt).value;
+const plan2Rate = resolve(year.studentLoans.plan2.rate, 'studentLoans.plan2.rate', asAt).value;
+const plan5 = resolve(year.studentLoans.plan5.threshold, 'studentLoans.plan5.threshold', asAt).value;
+const status = leastSettled([year.incomeTax.personalAllowance.status, year.incomeTax.bands['england-ni'][0].status, year.nationalInsurance.employee.mainRate.status, year.childBenefit.chargeFrom.status, year.studentLoans.plan2.threshold.status]);
+
+// The rate in the middle of each plateau, read from the sweep rather than typed.
+const rateAt = (s: Series, g: number) => Math.round(s.marginal(g) * 1000) / 1000;
+const mid = (a: number, b: number) => Math.round((a + b) / 2 / STEP) * STEP;
+const plateau = {
+	belowAllowance: rateAt(series[0], mid(FROM, pa)),
+	basic: rateAt(series[0], mid(pa, hrt)),
+	higher: rateAt(series[0], mid(hrt, taperStart)),
+	taper: rateAt(series[0], mid(taperStart, taperEnd)),
+	additional: rateAt(series[0], mid(taperEnd, TO)),
+	plan2Basic: rateAt(series[1], mid(plan2, hrt)),
+	plan2Higher: rateAt(series[1], mid(hrt, taperStart)),
+	plan5Basic: rateAt(series[2], mid(plan5, hrt)),
+	childBand: rateAt(series[3], mid(cbFrom, cbTo)),
+	childTaper: rateAt(series[3], mid(taperStart, taperEnd)),
+};
+const cbYear = childBenefitCharge({ income: 0, children: 1, taxYear: year.taxYear, asAt }).facts.childBenefit as number;
+const cbPoints = plateau.childBand - plateau.higher;
+
+// What a rise of one thousand pounds keeps at a few salaries.
+const RISE = 1000;
+const keeps = (g: number, s: Series = series[0]) => {
+	const before = s === series[3] ? net(g) - charge(g, 1) : net(g, s.id === 'plan2' ? ['plan2'] : s.id === 'plan5' ? ['plan5'] : []);
+	const after = s === series[3] ? net(g + RISE) - charge(g + RISE, 1) : net(g + RISE, s.id === 'plan2' ? ['plan2'] : s.id === 'plan5' ? ['plan5'] : []);
+	return Math.round((after - before) * 100) / 100;
+};
+const sample = [20000, 40000, 55000, 70000, 90000, 110000, 130000, 160000];
+const table = sample.map((g) => ({ gross: g, rates: series.map((s) => rateAt(s, g)), keep: keeps(g) }));
+
+// The chart: a stepped line per series, salary along the bottom, the
+// marginal rate up the side. Drawn as SVG at build time.
+const W = 800;
+const H = 360;
+const L = 52;
+const R = 16;
+const T = 18;
+const B = 44;
+const yMax = 0.7;
+const x = (g: number) => L + ((g - FROM) / (TO - FROM)) * (W - L - R);
+const y = (m: number) => T + (1 - Math.min(m, yMax) / yMax) * (H - T - B);
+const path = (values: number[]) => {
+	let d = `M${x(salaries[0]).toFixed(1)},${y(values[0]).toFixed(1)}`;
+	for (let i = 1; i < values.length; i++) {
+		if (values[i] !== values[i - 1]) d += `H${x(salaries[i]).toFixed(1)}V${y(values[i]).toFixed(1)}`;
+	}
+	d += `H${x(TO).toFixed(1)}`;
+	return d;
+};
+const xTicks = [FROM, 50000, 100000, 150000, TO];
+const yTicks = [0, 0.2, 0.4, 0.6];
+const marks = [
+	{ at: pa, label: 'Allowance used up' },
+	{ at: hrt, label: 'Higher rate, NI drops' },
+	{ at: cbFrom, label: 'Child benefit charge' },
+	{ at: taperStart, label: 'Allowance taper' },
+	{ at: taperEnd, label: 'Additional rate' },
+];
+const chartSummary = `Marginal rate by salary in ${year.label}: ${series.map((s, i) => `${s.label.toLowerCase()} ${pct(Math.min(...points[i].values))} to ${pct(Math.max(...points[i].values))}`).join('; ')}.`;
+
+const sources = [
+	{ href: 'https://www.gov.uk/income-tax-rates', title: 'Income Tax rates and Personal Allowances' },
+	{ href: 'https://www.gov.uk/national-insurance/how-much-you-pay', title: 'National Insurance: how much you pay' },
+	{ href: 'https://www.gov.uk/repaying-your-student-loan/what-you-pay', title: 'Repaying your student loan: what you pay' },
+	{ href: 'https://www.gov.uk/child-benefit-tax-charge', title: 'High Income Child Benefit Charge' },
+];
+---
+
+<Guide
+	slug="marginal-rate-at-every-salary"
+	taxYears={[year.taxYear]}
+	status={status}
+	related={[
+		guideLink('100000-personal-allowance-trap', 'The allowance taper line by line, which is the tallest spike on the chart.'),
+		guideLink('which-student-loan-plan', 'Which plan you are on, and what each repays at three salaries.'),
+		{ title: 'High Income Child Benefit Charge calculator', href: '/calculators/child-benefit-charge/', desc: 'The charge for your own income and number of children.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>The share of the next pound that goes in income tax and National Insurance settles at {new Set([plateau.belowAllowance, plateau.basic, plateau.higher, plateau.taper, plateau.additional]).size} levels between {money(FROM, 0)} and {money(TO, 0)} in {year.label}, for someone in England, Wales or Northern Ireland with the standard tax code: {pct(plateau.belowAllowance)} below the personal allowance, {pct(plateau.basic)} up to {money(hrt, 0)}, {pct(plateau.higher)} up to {money(taperStart, 0)}, {pct(plateau.taper)} while the allowance is withdrawn, and {pct(plateau.additional)} above {money(taperEnd, 0)}. A Plan 2 loan adds {pct(plan2Rate)} above {money(plan2, 0)}. One child's child benefit adds about {pct(cbPoints)} between {money(cbFrom, 0)} and {money(cbTo, 0)}, so the rate there is {pct(plateau.childBand)}.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>The chart</h2>
+		<figure class="chart">
+			<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={chartSummary} class="marginal-chart">
+				{yTicks.map((t) => (
+					<>
+						<line x1={L} x2={W - R} y1={y(t)} y2={y(t)} class="grid" />
+						<text x={L - 8} y={y(t) + 4} class="tick" text-anchor="end">{pct(t)}</text>
+					</>
+				))}
+				{xTicks.map((t) => (
+					<text x={x(t)} y={H - B + 22} class="tick" text-anchor="middle">{money(t, 0)}</text>
+				))}
+				{marks.map((m) => (
+					<>
+						<line x1={x(m.at)} x2={x(m.at)} y1={T} y2={H - B} class="mark" />
+						<text x={x(m.at) + 4} y={T + 10} class="mark-label">{m.label}</text>
+					</>
+				))}
+				<path d={path(points[3].values)} class="line child" />
+				<path d={path(points[2].values)} class="line plan5" />
+				<path d={path(points[1].values)} class="line plan2" />
+				<path d={path(points[0].values)} class="line base" />
+				<line x1={L} x2={W - R} y1={H - B} y2={H - B} class="axis" />
+			</svg>
+			<figcaption>
+				The marginal rate at each salary in {year.label}, England, Wales and Northern Ireland, standard tax code, measured over the next {money(STEP, 0)}.
+				<span class="legend">
+					<span><i class="swatch base"></i>{series[0].label}</span>
+					<span><i class="swatch plan2"></i>{series[1].label}</span>
+					<span><i class="swatch plan5"></i>{series[2].label}</span>
+					<span><i class="swatch child"></i>{series[3].label}</span>
+				</span>
+			</figcaption>
+		</figure>
+		<p>The marginal rate is what the rules take from the next pound, not the share of the whole salary that goes in tax. Each flat stretch is a band; each step is a threshold. Below, each step on the no-loan line in turn.</p>
+	</Fragment>
+
+	<h2>{money(pa, 0)}: the allowance is used up</h2>
+	<p>Below the personal allowance of {money(pa, 0)} nothing is deducted. Above it, income tax starts at {pct(basicRate)} and National Insurance at {pct(niMain)} on pay over the primary threshold, which sits at the same {money(pa, 0)}. Together they make the {pct(plateau.basic)} that applies from here to {money(hrt, 0)}: a rise of {money(RISE, 0)} at {money(sample[0], 0)} keeps {money(keeps(sample[0]), 0)}.</p>
+
+	<h2>{money(hrt, 0)}: the higher rate begins and National Insurance drops</h2>
+	<p>Two things happen at the same salary. Income tax moves from {pct(basicRate)} to {pct(higherRate)} on pay above {money(hrt, 0)}, and National Insurance falls from {pct(niMain)} to {pct(niUpper)} above the upper earnings limit of {money(uel, 0)}. The net step is {pct(plateau.basic)} to {pct(plateau.higher)}: a rise of {money(RISE, 0)} at {money(sample[2], 0)} keeps {money(keeps(sample[2]), 0)}, against {money(keeps(sample[1]), 0)} at {money(sample[1], 0)}.</p>
+
+	<h2>{money(cbFrom, 0)} to {money(cbTo, 0)}: the child benefit charge, for parents who claim it</h2>
+	<p>The High Income Child Benefit Charge takes back child benefit at one per cent for every {money(cbStep, 0)} of the higher earner's adjusted net income above {money(cbFrom, 0)}, until all of it has gone at {money(cbTo, 0)}. One child's child benefit is {money(cbYear, 0)} in {year.label}, so across that band the charge adds about {pct(cbPoints)} to the rate: {pct(plateau.childBand)} in all. A rise of {money(RISE, 0)} at {money(sample[3], 0)} keeps {money(keeps(sample[3], series[3]), 0)} for a one-child household, against {money(keeps(sample[3]), 0)} with no charge. Each further child adds more, since the charge is a share of the whole child benefit.</p>
+
+	<h2>{money(taperStart, 0)} to {money(taperEnd, 0)}: the allowance taper</h2>
+	<p>Above {money(taperStart, 0)} the personal allowance falls by {money(1, 0)} for every {money(1 / taperRate, 0)} of adjusted net income, so each extra pound is taxed at {pct(higherRate)} and also removes {Math.round(taperRate * 100)}p of allowance, which is then taxed at {pct(higherRate)} as well. With National Insurance at {pct(niUpper)} the rate is {pct(plateau.taper)} until the allowance reaches zero at {money(taperEnd, 0)}. A rise of {money(RISE, 0)} at {money(sample[5], 0)} keeps {money(keeps(sample[5]), 0)}. With a Plan 2 loan the rate in this band is {pct(rateAt(series[1], mid(taperStart, taperEnd)))}; with one child it is {pct(plateau.childTaper)}, since the child benefit charge has already taken everything by {money(cbTo, 0)}.</p>
+
+	<h2>{money(taperEnd, 0)}: the additional rate</h2>
+	<p>Once the allowance is gone the rate falls back. Above {money(taperEnd, 0)} income tax is {pct(additionalRate)} and National Insurance {pct(niUpper)}, so the marginal rate is {pct(plateau.additional)}, lower than in the taper band just below it. A rise of {money(RISE, 0)} at {money(sample[6], 0)} keeps {money(keeps(sample[6]), 0)}.</p>
+
+	<h2>Student loans</h2>
+	<p>A loan repayment is a fixed share of pay above the plan's threshold, so it adds the same number of points from the threshold upwards. Plan 2 adds {pct(plan2Rate)} above {money(plan2, 0)}, making {pct(plateau.plan2Basic)} in the basic rate band and {pct(plateau.plan2Higher)} in the higher rate band. Plan 5 starts lower, at {money(plan5, 0)}, at the same rate, so the basic rate band reads {pct(plateau.plan5Basic)} from there. Someone on more than one of Plans 1, 2, 4 and 5 makes a single repayment above the lowest threshold; a Postgraduate Loan adds its own rate on top.</p>
+
+	<h2>The rate at eight salaries</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>Marginal rate on the next {money(STEP, 0)} in {year.label}, and what a {money(RISE, 0)} rise keeps with no loan or children</caption>
+			<thead><tr><th scope="col">Salary</th>{series.map((s) => <th scope="col" class="num">{s.label}</th>)}<th scope="col" class="num">A {money(RISE, 0)} rise keeps</th></tr></thead>
+			<tbody>
+				{table.map((r) => (
+					<tr>
+						<th scope="row">{live.includes(r.gross) ? <a href={`/salary/${r.gross}/`}>{money(r.gross, 0)}</a> : money(r.gross, 0)}</th>
+						{r.rates.map((m) => <td class="num">{pct(m)}</td>)}
+						<td class="num">{money(r.keep, 0)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+
+	<h2>What the chart leaves out</h2>
+	<ul>
+		<li>Scotland has its own bands, with more steps and higher rates in the middle; the <a href="/guides/scottish-income-tax/">Scottish income tax guide</a> sets them out and every salary page has a Scottish version.</li>
+		<li>Pension contributions by salary sacrifice or net pay reduce the income these thresholds are measured against, which is why the marginal rate matters for them: the <a href="/calculators/pension-contributions/">pension contribution calculator</a> shows the saving at any salary.</li>
+		<li>The child benefit line assumes one child claimed for the whole year and that the salary is the higher earner's adjusted net income. Two or more children raise the band's rate further.</li>
+		<li>Tax codes other than the standard one, benefits in kind, savings and dividend income, and the personal savings allowance, whose own thresholds add further steps for people with interest.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{sources.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
+	</Fragment>
+</Guide>
+
+<style>
+	.chart { margin: 1rem 0 1.5rem; }
+	.marginal-chart { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+	.marginal-chart .grid { stroke: var(--hairline); stroke-width: 1; }
+	.marginal-chart .axis { stroke: var(--ink); stroke-width: 1; }
+	.marginal-chart .tick { fill: var(--quiet); font-size: 12px; }
+	.marginal-chart .mark { stroke: var(--threshold); stroke-width: 1; stroke-dasharray: 3 3; }
+	.marginal-chart .mark-label { fill: var(--threshold); font-size: 11px; }
+	.marginal-chart .line { fill: none; stroke-linejoin: miter; }
+	.marginal-chart .line.base { stroke: var(--ink); stroke-width: 2.5; }
+	.marginal-chart .line.plan2 { stroke: var(--deduction); stroke-width: 1.5; }
+	.marginal-chart .line.plan5 { stroke: var(--deduction); stroke-width: 1.5; stroke-dasharray: 4 3; }
+	.marginal-chart .line.child { stroke: var(--threshold); stroke-width: 1.5; }
+	figcaption { color: var(--quiet); font-size: 0.9rem; margin-top: 0.5rem; }
+	.legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-top: 0.4rem; }
+	.legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+	.swatch { display: inline-block; width: 1.4rem; height: 0; border-top: 2px solid var(--ink); }
+	.swatch.plan2 { border-color: var(--deduction); }
+	.swatch.plan5 { border-color: var(--deduction); border-top-style: dashed; }
+	.swatch.child { border-color: var(--threshold); }
+	@media (max-width: 599px) { .marginal-chart .mark-label { display: none; } }
+</style>

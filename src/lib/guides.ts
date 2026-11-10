@@ -27,6 +27,10 @@ export interface Guide {
 	reviewedOn: string;
 	/** The calculator the guide belongs to. */
 	calculator: GuideCalculator;
+	/** A draft lives in src/drafts/guides and is built only with DRAFTS=1, at /drafts/<slug>/, noindex. */
+	draft?: boolean;
+	/** The date the draft is planned to go live, for the posting schedule. */
+	publishOn?: string;
 }
 
 const TAKE_HOME: GuideCalculator = {
@@ -114,6 +118,17 @@ export const GUIDES: Guide[] = [
 		reviewedOn: PUBLISHED,
 		calculator: STATE_PENSION,
 	},
+	{
+		slug: 'marginal-rate-at-every-salary',
+		title: `The real marginal tax rate at every salary, ${year.label}`,
+		h1: 'What is the marginal tax rate at every salary?',
+		description: `The share of the next pound taken at every salary in ${year.label}, charted from the rules file: each band, the ${money(taperStart, 0)} taper, loans and child benefit.`,
+		published: PUBLISHED,
+		reviewedOn: PUBLISHED,
+		calculator: TAKE_HOME,
+		draft: true,
+		publishOn: '2026-11-16',
+	},
 ];
 
 // The build's own limits, checked here so a rules change that lengthens a
@@ -122,6 +137,11 @@ for (const g of GUIDES) {
 	if (g.title.length > 60) throw new Error(`Guide ${g.slug}: title is ${g.title.length} characters ("${g.title}")`);
 	if (g.description.length > 160) throw new Error(`Guide ${g.slug}: description is ${g.description.length} characters`);
 }
+
+/** Guides on the live site, in the index, the feed and the share cards. */
+export const LIVE_GUIDES = GUIDES.filter((g) => !g.draft);
+/** Drafts, in the order they are planned to go live. */
+export const DRAFT_GUIDES = GUIDES.filter((g) => g.draft).sort((a, b) => (a.publishOn ?? '').localeCompare(b.publishOn ?? ''));
 
 export function guideBySlug(slug: string): Guide {
 	const g = GUIDES.find((x) => x.slug === slug);

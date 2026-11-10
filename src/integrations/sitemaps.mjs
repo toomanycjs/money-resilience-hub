@@ -30,7 +30,7 @@ export default function sitemaps() {
 				const byFamily = new Map(['pages', ...FAMILIES].map((f) => [f, []]));
 				for (const file of htmlFiles(root)) {
 					const rel = file.slice(root.length).replace(/\\/g, '/').replace(/^\//, '');
-					if (rel === '404.html' || rel.startsWith('design/')) continue;
+					if (rel === '404.html' || rel.startsWith('design/') || rel.startsWith('drafts/')) continue;
 					const html = readFileSync(file, 'utf8');
 					if (/<meta name="robots" content="[^"]*noindex/i.test(html)) continue;
 					const path = rel === 'index.html' ? '/' : '/' + rel.replace(/index\.html$/, '');

@@ -1,0 +1,16 @@
+---
+// Drafts for review: the guides in src/drafts/guides, built only when the
+// build runs with DRAFTS=1, at /drafts/<slug>/ and marked noindex. A draft
+// goes live by moving its file to src/pages/guides and clearing `draft` on
+// its registry entry.
+export async function getStaticPaths() {
+	if (process.env.DRAFTS !== '1') return [];
+	const pages = import.meta.glob('../../drafts/guides/*.astro');
+	return Object.entries(pages).map(([path, load]) => ({ params: { slug: path.split('/').pop()!.replace(/\.astro$/, '') }, props: { load } }));
+}
+
+const { load } = Astro.props as { load: () => Promise<{ default: unknown }> };
+const Page = (await load()).default as (props: Record<string, never>) => unknown;
+---
+
+<Page />

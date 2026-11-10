@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import satori from 'satori';
 import sharp from 'sharp';
 import { BUILD_DATE, SITE_NAME } from '../../config/site';
-import { GUIDES } from '../../lib/guides';
+import { LIVE_GUIDES as GUIDES } from '../../lib/guides';
 import { HOURS_PER_WEEK, liveAmounts, salaryForHourly, salaryForMonthlyPay } from '../../lib/pages';
 import { pagesPassingGuard } from '../../lib/salaryPage';
 

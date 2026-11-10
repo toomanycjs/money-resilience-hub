@@ -2,7 +2,7 @@
 import { longDate } from '@money-resilience-hub/calculators';
 import { CURRENT_YEAR } from '../../config/site';
 import Base from '../../layouts/Base.astro';
-import { GUIDES } from '../../lib/guides';
+import { LIVE_GUIDES as GUIDES } from '../../lib/guides';
 
 const reviewed = GUIDES.map((g) => g.reviewedOn).sort().at(-1) ?? '';
 ---
