@@ -6,6 +6,7 @@
 import { bandsFor, defaultTaxCode, getYear, listYears, nextYear, pensionTaxAllowance, previousYear, resolve } from '@money-resilience-hub/rules';
 import { longDate, money, pct } from '@money-resilience-hub/calculators';
 import { BUILD_DATE, CURRENT_YEAR } from '../config/site';
+import plan2 from '../data/student-loan-plan2.json' with { type: 'json' };
 
 export interface GuideCalculator {
 	href: string;
@@ -60,6 +61,12 @@ const SIDE_HUSTLE: GuideCalculator = {
 	desc: 'Enter what the side hustle brought in, its costs and your other income, and see the tax, Class 4 and what Self Assessment asks for and when.',
 };
 
+const PLAN2_LOAN: GuideCalculator = {
+	href: '/calculators/take-home-pay/',
+	title: 'Take-home pay calculator',
+	desc: "Enter your salary with a Plan 2 loan selected, and see this year's repayment on its own line, with the threshold and rate it uses.",
+};
+
 const PUBLISHED = '2026-11-09';
 
 const year = CURRENT_YEAR;
@@ -101,6 +108,11 @@ const propertyMonth = longDate(propertyYear.starts).replace(/^\d+ /, '');
 const tradingAllowance = resolve(year.incomeTax.tradingAllowance, 'incomeTax.tradingAllowance', asAt).value;
 const nextTradingAllowance = following ? resolve(following.incomeTax.tradingAllowance, 'incomeTax.tradingAllowance', following.starts).value : null;
 const tradingAllowanceVerb = nextTradingAllowance === tradingAllowance * 3 ? 'triples' : nextTradingAllowance === tradingAllowance * 2 ? 'doubles' : 'changes';
+
+/** The Plan 2 lifetime guide's starting balance and term, from the data file it reads. */
+const plan2Row = (id: string) => (plan2.rows as { id: string; value: number | string }[]).find((r) => r.id === id)?.value;
+const plan2Balance = plan2Row('slc.averageBalanceCohort2025') as number;
+const plan2WriteOff = plan2Row('plan2.writeOffYears') as number;
 
 export const GUIDES: Guide[] = [
 	{
@@ -223,6 +235,16 @@ export const GUIDES: Guide[] = [
 		published: '2026-11-10',
 		reviewedOn: '2026-11-10',
 		calculator: SIDE_HUSTLE,
+		draft: true,
+	},
+	{
+		slug: 'will-you-pay-off-your-plan-2-loan',
+		title: 'Will you ever pay off your Plan 2 student loan?',
+		h1: 'Will I ever pay off my Plan 2 student loan?',
+		description: `A ${money(plan2Balance, 0)} Plan 2 balance year by year: whether it clears before the ${plan2WriteOff}-year write-off, what is repaid in all, and what pay growth and RPI do to the answer.`,
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: PLAN2_LOAN,
 		draft: true,
 	},
 ];

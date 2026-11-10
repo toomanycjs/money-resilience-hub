@@ -8,13 +8,14 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { getYear, incomeTax, landlordTax, lifetimeIsaPenalty, marriageAllowanceSaving, pensionTaxAllowance, savingsTax, sideHustleTax, statePensionTax, takeHome, type Nation, type Plan, type SimpleResult } from '../src/index';
 import { bonusTax, childBenefitCharge, hourlyToSalary, maternityPay, mileageAllowance, paternityPay, payRise, pensionContributions } from '../src/index';
+import { lifetimeInterestRate, studentLoanLifetime, type LifetimeInput } from '../src/index';
 
 const DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures');
 
 interface Fixture {
 	id: string;
 	title: string;
-	fn?: 'takeHome' | 'pensionTaxAllowance' | 'marriageAllowanceSaving' | keyof typeof SIMPLE;
+	fn?: 'takeHome' | 'pensionTaxAllowance' | 'marriageAllowanceSaving' | 'studentLoanLifetime' | 'lifetimeInterestRate' | keyof typeof SIMPLE;
 	taxYear: string;
 	asAt?: string;
 	sources: string[];
@@ -63,6 +64,39 @@ for (const file of files) {
 				}
 				if (f.fn === 'marriageAllowanceSaving') {
 					expect(marriageAllowanceSaving(getYear(f.taxYear), f.input.nation, asAt)).toBeCloseTo(f.expected.saving as number, 2);
+					return;
+				}
+				if (f.fn === 'lifetimeInterestRate') {
+					// The Plan 2 rate for each salary, uncapped and capped.
+					const i = f.input as unknown as { salaries: number[]; lower: number; upper: number; rpi: number; extraMax: number; cap: number };
+					const rule = { rpi: i.rpi, extraMax: i.extraMax, lowerIncome: i.lower, upperIncome: i.upper, cap: null };
+					const got: Record<string, number> = {};
+					i.salaries.forEach((s, n) => {
+						got[`rate${n}`] = lifetimeInterestRate(s, i.lower, i.upper, rule);
+						got[`capped${n}`] = lifetimeInterestRate(s, i.lower, i.upper, rule, i.cap);
+					});
+					for (const [k, v] of Object.entries(f.expected)) expect(Math.abs(got[k] - (v as number)), `${k}: expected ${v}, got ${got[k]}`).toBeLessThanOrEqual(tol);
+					return;
+				}
+				if (f.fn === 'studentLoanLifetime') {
+					// The threshold and rate come from the rules file for the starting year; the rest of the input is the fixture's assumptions.
+					const year = getYear(f.taxYear);
+					const i = f.input as unknown as Omit<LifetimeInput, 'threshold' | 'rate' | 'startYear'>;
+					const cfg = year.studentLoans[i.plan];
+					const r = studentLoanLifetime({ ...i, threshold: cfg.threshold.value as number, rate: cfg.rate.value as number, startYear: f.taxYear });
+					const got: Record<string, number | string> = { yearsModelled: r.years.length, totalRepaid: r.totalRepaid, totalInterest: r.totalInterest, clearedInYear: r.clearedInYear ?? 'written off', clearedInTaxYear: r.clearedInTaxYear ?? 'written off', writtenOffBalance: r.writtenOffBalance };
+					for (const y of r.years) {
+						got[`year${y.year}Rate`] = y.interestRate;
+						got[`year${y.year}Salary`] = y.salary;
+						got[`year${y.year}Threshold`] = y.threshold;
+						got[`year${y.year}Repaid`] = y.repaid;
+						got[`year${y.year}Interest`] = y.interest;
+						got[`year${y.year}Closing`] = y.closing;
+					}
+					for (const [k, v] of Object.entries(f.expected)) {
+						if (typeof v === 'string') expect(got[k], k).toBe(v);
+						else expect(Math.abs((got[k] as number) - v), `${k}: expected ${v}, got ${got[k]}`).toBeLessThanOrEqual(tol);
+					}
 					return;
 				}
 				if (f.fn && f.fn in SIMPLE) {
