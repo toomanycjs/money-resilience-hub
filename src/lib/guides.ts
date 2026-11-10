@@ -102,6 +102,12 @@ const tradingAllowance = resolve(year.incomeTax.tradingAllowance, 'incomeTax.tra
 const nextTradingAllowance = following ? resolve(following.incomeTax.tradingAllowance, 'incomeTax.tradingAllowance', following.starts).value : null;
 const tradingAllowanceVerb = nextTradingAllowance === tradingAllowance * 3 ? 'triples' : nextTradingAllowance === tradingAllowance * 2 ? 'doubles' : 'changes';
 
+const LIFETIME_ISA: GuideCalculator = {
+	href: '/calculators/lifetime-isa-penalty/',
+	title: 'Lifetime ISA withdrawal charge calculator',
+	desc: 'Enter the amount, the reason and the date, and see the charge, what you receive and how it compares with what you paid in.',
+};
+
 export const GUIDES: Guide[] = [
 	{
 		slug: 'tax-codes-explained',
@@ -263,6 +269,16 @@ export const GUIDES: Guide[] = [
 		published: '2026-11-10',
 		reviewedOn: '2026-11-10',
 		calculator: TAKE_HOME,
+		draft: true,
+	},
+	{
+		slug: 'where-the-lifetime-isa-cap-bites',
+		title: 'Where the Lifetime ISA cap bites',
+		h1: `Where do home sales go over the ${money(lisaCap, 0)} Lifetime ISA cap?`,
+		description: `The share of home sales in England and Wales above the ${money(lisaCap, 0)} Lifetime ISA cap, by district and region since 2017, and HMRC's count of charged withdrawals.`,
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: LIFETIME_ISA,
 		draft: true,
 	},
 ];
