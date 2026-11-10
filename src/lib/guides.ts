@@ -4,6 +4,7 @@
 // they move when the rules do.
 
 import { bandsFor, defaultTaxCode, listYears, nextYear, pensionTaxAllowance, resolve } from '@money-resilience-hub/rules';
+import { bandsFor, defaultTaxCode, getYear, listYears, pensionTaxAllowance, previousYear, resolve } from '@money-resilience-hub/rules';
 import { longDate, money, pct } from '@money-resilience-hub/calculators';
 import { BUILD_DATE, CURRENT_YEAR } from '../config/site';
 
@@ -44,10 +45,17 @@ const STATE_PENSION: GuideCalculator = {
 	desc: 'Enter your State Pension and other income, and see the tax with and without the Pension Tax Allowance.',
 };
 
+<<<<<<< HEAD
 const SAVINGS_TAX: GuideCalculator = {
 	href: '/calculators/savings-tax/',
 	title: 'Savings interest tax calculator',
 	desc: 'Enter your interest and other income, and see how much is tax free and what the rest costs this year and from April 2027.',
+=======
+const LANDLORD: GuideCalculator = {
+	href: '/calculators/landlord-tax/',
+	title: 'Landlord tax calculator',
+	desc: 'Enter your rent, expenses, mortgage interest and other income, and see the tax on your profit this year and next, with the reduction on its own line.',
+>>>>>>> draft/landlord
 };
 
 const PUBLISHED = '2026-11-09';
@@ -79,6 +87,13 @@ const SAVINGS_RATE = 0.04;
 /** The first tax year that has a Pension Tax Allowance, with its maximum. */
 const ptaYear = listYears().find((y) => y.pensionTaxAllowance) ?? null;
 const pta = ptaYear ? pensionTaxAllowance(0, ptaYear, ptaYear.starts) : null;
+
+/** The year the property income rates start, the year before it, and the rates and relief the landlord guide names. */
+const propertyYear = getYear('2027-28');
+const propertyYearBefore = previousYear(propertyYear.taxYear);
+if (!propertyYearBefore) throw new Error(`No tax year recorded before ${propertyYear.label}`);
+const propertyRates = (['basic', 'higher', 'additional'] as const).map((n) => pct(resolve(propertyYear.incomeTax.property.rates[n], `incomeTax.property.rates.${n}`, propertyYear.starts).value));
+const propertyMonth = longDate(propertyYear.starts).replace(/^\d+ /, '');
 
 export const GUIDES: Guide[] = [
 	{
@@ -150,6 +165,7 @@ export const GUIDES: Guide[] = [
 		publishOn: '2026-11-16',
 	},
 	{
+<<<<<<< HEAD
 		slug: 'fiscal-drag-how-many-more-pay-40',
 		title: 'Fiscal drag: how many more people pay the higher rate',
 		h1: 'How many more people pay the higher rate than in 1990?',
@@ -181,6 +197,17 @@ export const GUIDES: Guide[] = [
 		calculator: SAVINGS_TAX,
 		draft: true,
 		publishOn: '2026-11-30',
+=======
+		slug: 'landlords-mortgage-interest-2027',
+		title: `Landlords: mortgage interest and the ${propertyYear.starts.slice(0, 4)} rate rise`,
+		h1: `How does mortgage interest relief work, and what changes in ${propertyMonth}?`,
+		description: `How finance cost relief works, one landlord's tax in ${propertyYearBefore.label} and ${propertyYear.label}, and what property rates of ${propertyRates[0]}, ${propertyRates[1]} and ${propertyRates[2]} do to the reduction.`,
+		published: PUBLISHED,
+		reviewedOn: '2026-11-10',
+		calculator: LANDLORD,
+		draft: true,
+		publishOn: '2026-12-07',
+>>>>>>> draft/landlord
 	},
 ];
 

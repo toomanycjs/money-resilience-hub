@@ -1,0 +1,231 @@
+---
+// Landlords and mortgage interest: the finance cost reduction as the engine
+// works it, one landlord under the year before the property rates start and
+// the year they do, a table by interest and taxpayer band, the cap, the
+// property allowance and Scotland. Every figure is computed; nothing is typed.
+import { financeCostReliefRate, getYear, landlordTax, leastSettled, previousYear, resolve, round2, RulesUnavailableError, STATUS_LABEL, type LandlordTaxInput, type Leaf, type YearConfig } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE } from '../../config/site';
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+
+// The year the property income rates start, and the year before it.
+const after = getYear('2027-28');
+const before = previousYear(after.taxYear);
+if (!before) throw new Error(`No tax year recorded before ${after.label}`);
+const atBefore = BUILD_DATE < before.starts ? before.starts : BUILD_DATE > before.ends ? before.ends : BUILD_DATE;
+const atAfter = after.starts;
+const v = (leaf: Leaf<number>, path: string, at: string): number => resolve(leaf, path, at).value;
+
+const pa = v(before.incomeTax.personalAllowance, 'incomeTax.personalAllowance', atBefore);
+const taperStart = v(before.incomeTax.taperStart, 'incomeTax.taperStart', atBefore);
+const allowance = v(before.incomeTax.propertyAllowance!, 'incomeTax.propertyAllowance', atBefore);
+const relief = { before: financeCostReliefRate(before, atBefore), after: financeCostReliefRate(after, atAfter) };
+const basisNote = after.incomeTax.property.financeCostReliefBasis?.note ?? '';
+
+// The three rates each year: the main rates property income is taxed at before, the property rates after.
+const RATE_NAMES = ['basic', 'higher', 'additional'] as const;
+const mainRates = RATE_NAMES.map((n) => v(before.incomeTax.property.rates[n], `incomeTax.property.rates.${n}`, atBefore));
+const propertyRates = RATE_NAMES.map((n) => v(after.incomeTax.property.rates[n], `incomeTax.property.rates.${n}`, atAfter));
+const rises = propertyRates.map((r, i) => round2(r - mainRates[i]));
+const reliefRise = round2(relief.after.rate - relief.before.rate);
+const sameRise = rises.every((r) => r === rises[0]) && rises[0] === reliefRise;
+const rise = rises[0];
+const risePoints = Math.round(rise * 100);
+const rateRows = RATE_NAMES.map((n, i) => ({ name: `Property ${n} rate`, before: mainRates[i], after: propertyRates[i], status: after.incomeTax.property.rates[n].status }));
+
+// The landlord: rent, expenses other than interest, mortgage interest, and pay from a job.
+const RENT = 15000;
+const EXPENSES = 2500;
+const INTEREST = 6000;
+const OTHER = 35000;
+const run = (input: Partial<LandlordTaxInput>, year: YearConfig, asAt: string) => {
+	const r = landlordTax({ rent: RENT, expenses: EXPENSES, financeCosts: INTEREST, otherIncome: OTHER, nation: 'england-ni', ...input, taxYear: year.taxYear, asAt, compare: false });
+	const f = r.facts;
+	return {
+		profit: f.profit as number,
+		taxBefore: f.taxBeforeRelief as number,
+		relief: f.financeCostRelief as number,
+		tax: f.tax as number,
+		unused: f.financeCostsUnused as number,
+		route: f.route as string,
+		rates: r.lines.filter((l) => l.kind === 'band' && l.amount > 0).map((l) => l.rate as number),
+	};
+};
+const ex = { before: run({}, before, atBefore), after: run({}, after, atAfter) };
+const exDiff = round2(ex.after.tax - ex.before.tax);
+const exRates = { before: ex.before.rates.map(pct).join(' and '), after: ex.after.rates.map(pct).join(' and ') };
+
+// Four levels of interest for three taxpayers, each named by the band their pay and profit land in.
+const INTERESTS = [3000, 6000, 9000, 15000];
+const bands = [
+	{ name: 'Basic rate taxpayer', other: 25000 },
+	{ name: 'Higher rate taxpayer', other: 60000 },
+	{ name: 'Additional rate taxpayer', other: 130000 },
+];
+const hrt = pa + (before.incomeTax.bands['england-ni'][0].upTo as number);
+const art = before.incomeTax.bands['england-ni'][1].upTo as number;
+const groups = bands.map((b) => ({
+	...b,
+	rows: INTERESTS.map((interest) => {
+		const a = run({ financeCosts: interest, otherIncome: b.other }, before, atBefore);
+		const z = run({ financeCosts: interest, otherIncome: b.other }, after, atAfter);
+		return { interest, a, z, diff: round2(z.tax - a.tax) };
+	}),
+}));
+// The band names stay true only while the pay and profit sit where the names say; a rules change fails the build rather than mislabelling a row.
+const profit = ex.before.profit;
+if (bands[0].other + profit > hrt) throw new Error('The basic rate landlord reaches the higher rate');
+if (bands[1].other + profit <= hrt || bands[1].other + profit > taperStart) throw new Error('The higher rate landlord is not wholly in the higher rate band');
+if (bands[2].other < art) throw new Error('The additional rate landlord is below the additional rate');
+const sameDiffAcrossBands = INTERESTS.every((_, i) => groups.every((g) => g.rows[i].diff === groups[0].rows[i].diff));
+
+// The three limits and the property allowance.
+const capProfit = run({ financeCosts: INTERESTS[INTERESTS.length - 1] }, before, atBefore);
+const LOW_OTHER = 8000;
+const LOW_INTEREST = 9000;
+const capIncome = run({ financeCosts: LOW_INTEREST, otherIncome: LOW_OTHER }, before, atBefore);
+const aboveAllowance = round2(LOW_OTHER + capIncome.profit - pa);
+const SMALL = { rent: 6000, expenses: 100, financeCosts: 600, otherIncome: 30000 };
+const viaAllowance = run(SMALL, before, atBefore);
+if (viaAllowance.route !== 'allowance') throw new Error('The small let no longer takes the property allowance route');
+
+// Scotland: the engine taxes the profit at the Scottish rates and gives the reduction at the recorded rate.
+const scot = run({ nation: 'scotland' }, before, atBefore);
+let scotAfter: ReturnType<typeof run> | null = null;
+let scotNote = '';
+try {
+	scotAfter = run({ nation: 'scotland' }, after, atAfter);
+} catch (e) {
+	if (!(e instanceof RulesUnavailableError)) throw e;
+	scotNote = after.incomeTax.property.scotlandRates?.note ?? '';
+}
+
+const status = leastSettled([
+	before.incomeTax.property.financeCostReliefRate?.status ?? 'unset',
+	after.incomeTax.property.financeCostReliefBasis?.status ?? 'unset',
+	after.incomeTax.property.rates.basic.status,
+	before.incomeTax.propertyAllowance!.status,
+]);
+
+const sources = [
+	{ href: before.incomeTax.property.financeCostReliefRate!.source, title: "Tax relief for residential landlords: how it's worked out" },
+	{ href: after.incomeTax.property.financeCostReliefBasis!.source, title: 'Change to tax rates for property, savings and dividend income: technical note' },
+	{ href: after.incomeTax.property.rates.basic.source, title: 'Income Tax: changes to tax rates for property and savings income' },
+	{ href: 'https://www.gov.uk/renting-out-a-property/paying-tax', title: 'Renting out your property: paying tax and National Insurance' },
+];
+---
+
+<Guide
+	slug="landlords-mortgage-interest-2027"
+	taxYears={[before.taxYear, after.taxYear]}
+	status={status}
+	related={[
+		{ title: 'Budget 2026: what changed', href: '/budget/2026-autumn/', desc: 'Every measure from April 2027 with its status, including the property and savings rates.' },
+		{ title: `Rates and allowances for ${after.label}`, href: `/rates/${after.taxYear}/`, desc: 'Each value the landlord tool uses for that year, its source and the date it was checked.' },
+		guideLink('100000-personal-allowance-trap', 'Rental profit counts towards the taper, and the third limit on the reduction is income above the allowance.'),
+	]}
+>
+	<Fragment slot="answer">
+		<p>Mortgage interest on a residential let is not deducted from rent. The tax on the rental profit is worked out first, then reduced by {relief.before.phrase} of the lowest of three amounts: the interest, the rental profit, and income above the {money(pa, 0)} personal allowance. A landlord with {money(RENT, 0)} of rent, {money(EXPENSES, 0)} of expenses, {money(INTEREST, 0)} of interest and a {money(OTHER, 0)} salary pays {money(ex.before.tax, 0)} on a profit of {money(ex.before.profit, 0)} in {before.label}: {money(ex.before.taxBefore, 0)} of tax less a reduction of {money(ex.before.relief, 0)}. From {longDate(after.starts)} the same landlord pays {money(ex.after.tax, 0)}, {money(exDiff, 0)} more: the profit is taxed at the property basic rate of {pct(propertyRates[0])} and the reduction is given at that rate too.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>One landlord, both years</h2>
+		<div class="table-wrap">
+			<table>
+				<caption>Rent of {money(RENT, 0)}, expenses of {money(EXPENSES, 0)}, mortgage interest of {money(INTEREST, 0)} and a salary of {money(OTHER, 0)}, England, Wales and Northern Ireland</caption>
+				<thead><tr><th scope="col">Line</th><th scope="col" class="num">{before.label}</th><th scope="col" class="num">{after.label}</th></tr></thead>
+				<tbody>
+					<tr><th scope="row">Rental profit (rent less expenses, interest not deducted)</th><td class="num">{money(ex.before.profit, 0)}</td><td class="num">{money(ex.after.profit, 0)}</td></tr>
+					<tr><th scope="row">Rate on the profit</th><td class="num">{exRates.before}</td><td class="num">{exRates.after}</td></tr>
+					<tr><th scope="row">Tax on the profit before the reduction</th><td class="num">{money(ex.before.taxBefore, 0)}</td><td class="num">{money(ex.after.taxBefore, 0)}</td></tr>
+					<tr><th scope="row">Reduction for finance costs</th><td class="num">{money(ex.before.relief, 0)} at {pct(relief.before.rate)}</td><td class="num">{money(ex.after.relief, 0)} at {pct(relief.after.rate)}</td></tr>
+					<tr><th scope="row">Tax on the profit</th><td class="num">{money(ex.before.tax, 0)}</td><td class="num">{money(ex.after.tax, 0)}</td></tr>
+				</tbody>
+			</table>
+		</div>
+		<p>The profit is the same in both years because interest never enters it; what moves is the rate on the profit and the rate of the reduction. The {money(INTEREST, 0)} of interest is the lowest of the three amounts, so the reduction is {pct(relief.before.rate)} of it in {before.label} and {pct(relief.after.rate)} in {after.label}. The <a href="/calculators/landlord-tax/">landlord tax calculator</a> shows the same lines for your own figures.</p>
+	</Fragment>
+
+	<h2>Four mortgages, three taxpayers</h2>
+	<p>The same let with the interest and the salary changed. The salary sets which band the profit lands in; the interest sets the reduction.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>Tax on a rental profit of {money(profit, 0)} by mortgage interest and taxpayer band, {before.label} and {after.label}</caption>
+			<thead>
+				<tr>
+					<th scope="col">Interest</th>
+					<th scope="col" class="num">Tax before reduction, {before.label}</th>
+					<th scope="col" class="num">Reduction</th>
+					<th scope="col" class="num">Tax after</th>
+					<th scope="col" class="num">Tax before reduction, {after.label}</th>
+					<th scope="col" class="num">Reduction</th>
+					<th scope="col" class="num">Tax after</th>
+					<th scope="col" class="num">Difference</th>
+				</tr>
+			</thead>
+			{groups.map((g) => (
+				<tbody>
+					<tr><th scope="rowgroup" colspan="8">{g.name}, salary {money(g.other, 0)}</th></tr>
+					{g.rows.map((r) => (
+						<tr>
+							<th scope="row">{money(r.interest, 0)}</th>
+							<td class="num">{money(r.a.taxBefore, 0)}</td>
+							<td class="num">{money(r.a.relief, 0)}</td>
+							<td class="num">{money(r.a.tax, 0)}</td>
+							<td class="num">{money(r.z.taxBefore, 0)}</td>
+							<td class="num">{money(r.z.relief, 0)}</td>
+							<td class="num">{money(r.z.tax, 0)}</td>
+							<td class="num">{r.diff === 0 ? 'None' : `${r.diff > 0 ? '+' : ''}${money(r.diff, 0)}`}</td>
+						</tr>
+					))}
+				</tbody>
+			))}
+		</table>
+	</div>
+	{sameRise && sameDiffAcrossBands ? (
+		<p>The difference column reads the same in every band. Each property rate is {risePoints} percentage points above the main rate it replaces and the reduction rises by the same {risePoints} points, so the extra tax is {pct(rise)} of the profit less the interest, whichever band the landlord is in. At {money(INTERESTS[INTERESTS.length - 1], 0)} of interest, more than the profit, the reduction is capped at the profit in both years and the rise does not reach this landlord at all.</p>
+	) : (
+		<p>Each property rate replaces the main rate for its band, and the reduction moves from {pct(relief.before.rate)} to {pct(relief.after.rate)}. At {money(INTERESTS[INTERESTS.length - 1], 0)} of interest, more than the profit, the reduction is capped at the profit in both years.</p>
+	)}
+
+	<h2>What changes from {longDate(after.starts)}</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>The rates on rental profit in England, Wales and Northern Ireland, and the rate of the reduction</caption>
+			<thead><tr><th scope="col">Rate</th><th scope="col" class="num">{before.label}</th><th scope="col" class="num">{after.label}</th><th scope="col">Status</th></tr></thead>
+			<tbody>
+				{rateRows.map((r) => (
+					<tr><th scope="row">{r.name}</th><td class="num">{pct(r.before)}</td><td class="num">{pct(r.after)}</td><td class={`status-${r.status}`}>{STATUS_LABEL[r.status]}</td></tr>
+				))}
+				<tr><th scope="row">Reduction for finance costs</th><td class="num">{pct(relief.before.rate)}</td><td class="num">{pct(relief.after.rate)}</td><td class={`status-${relief.after.provenance.status}`}>{STATUS_LABEL[relief.after.provenance.status]}</td></tr>
+			</tbody>
+		</table>
+	</div>
+	<p>In {before.label} rental profit is taxed at the same rates as pay. From {longDate(after.starts)} it has its own three rates, taxed after pay and pensions and before savings and dividends, so a salary still sets which rate the profit starts in. The Budget 2026 note says the rates are to be set in Finance Bill 2026-27; the rules file records them as announced.</p>
+	<p>The reduction is given at the property basic rate, not at the rate the landlord pays. That is why a basic rate taxpayer sees it rise too: their profit moves from {pct(mainRates[0])} to {pct(propertyRates[0])} and the reduction from {pct(relief.before.rate)} to {pct(relief.after.rate)} with it; a higher or additional rate taxpayer gets the same larger reduction. No gov.uk page states the {after.label} reduction rate as a figure. The rules file leaves that value unset and records the rule instead; its note reads: <em>{basisNote}</em>. The tool applies the property basic rate and its ledger says so.</p>
+
+	<h2>The property allowance, the cap and what carries forward</h2>
+	<p>The {money(allowance, 0)} property allowance cannot be claimed in the same year as the reduction: a landlord deducts either the allowance or actual expenses, and only the expenses route carries the reduction. With interest entered, the tool works out both routes and shows the one with less tax. For a let bringing in {money(SMALL.rent, 0)} with {money(SMALL.expenses, 0)} of expenses, {money(SMALL.financeCosts, 0)} of interest and a {money(SMALL.otherIncome, 0)} salary it takes the allowance, pays {money(viaAllowance.tax, 0)} and gives no reduction; the ledger line names the other route's figure.</p>
+	<p>The reduction is the relief rate times the lowest of the finance costs, the rental profit, and income above the personal allowance (pay, pensions and profit, not savings interest or dividends), and it cannot take the tax below nothing. Two cases in {before.label}:</p>
+	<ul>
+		<li>Interest of {money(INTERESTS[INTERESTS.length - 1], 0)} against the {money(capProfit.profit, 0)} profit: the profit is the lowest, the reduction is {money(capProfit.relief, 0)}, the tax on the profit is {money(capProfit.tax, 0)}, and {money(capProfit.unused, 0)} of interest earns nothing this year.</li>
+		<li>Interest of {money(LOW_INTEREST, 0)} with other income of {money(LOW_OTHER, 0)}: income above the allowance is {money(aboveAllowance, 0)}, the lowest of the three, so the reduction is {money(capIncome.relief, 0)}, the tax is {money(capIncome.tax, 0)}, and {money(capIncome.unused, 0)} of interest earns nothing this year.</li>
+	</ul>
+	<p>gov.uk says finance costs that earned no reduction are carried forward into the following year's calculation, and a property loss is carried forward against later property profits. The tool works one year at a time and carries neither; it says so under the figure when there is something to carry.</p>
+
+	<h2>Scotland and Wales</h2>
+	<p>A Scottish landlord's profit is taxed at the Scottish rates: the same let with a {money(OTHER, 0)} salary is taxed at {scot.rates.map(pct).join(' and ')} in {before.label}, {money(scot.taxBefore, 0)} before the reduction. The engine gives the reduction at {pct(relief.before.rate)}, the figure the rules file records from the gov.uk guidance, which does not name a nation, so the tax is {money(scot.tax, 0)}. {scotAfter ? `For ${after.label} the engine gives ${money(scotAfter.tax, 0)}.` : `For ${after.label} the tool shows no Scottish figure; the rules file's note: ${scotNote}`} The property rates are recorded for England, Wales and Northern Ireland, with a note that Scotland and Wales may set their own; the tool applies them to a Welsh landlord until a Welsh rate is recorded.</p>
+
+	<h2>What this leaves out</h2>
+	<ul>
+		<li>Companies, which pay Corporation Tax and deduct loan interest as an expense; the reduction is for individual landlords.</li>
+		<li>Finance costs on a property that is not wholly residential, which gov.uk says are apportioned.</li>
+		<li>Interest and losses brought forward from earlier years, which join this year's figures before the lowest of the three is found.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{sources.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
+	</Fragment>
+</Guide>
