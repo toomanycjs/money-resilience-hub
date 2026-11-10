@@ -1,0 +1,220 @@
+---
+// Pensioners and income tax: taxpayers aged 65 and over since 1990/91 from
+// HMRC Table 2.1 (src/data/taxpayers-by-age.json, with its source and
+// checksum), the full new State Pension against the personal allowance from
+// the rules file, and what the Pension Tax Allowance does from 2027/28, all
+// computed by the State Pension tool's engine.
+import { STATUS_LABEL, getYear, leastSettled, listYears, resolve, statePensionTax, RulesUnavailableError, type Status } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import data from '../../data/taxpayers-by-age.json' with { type: 'json' };
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+
+interface Row {
+	taxYear: string;
+	taxpayers: number | null;
+	under65: number | null;
+	age65AndOver: number | null;
+	statePensionAge: number | null;
+	projected: boolean;
+}
+const rows = (data.rows as Row[]).filter((r) => r.taxpayers !== null && r.age65AndOver !== null);
+const label = (y: string) => `${y.slice(0, 4)}/${y.slice(5)}`;
+const millions = (n: number) => `${(n / 1000).toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} million`;
+const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`;
+const share = (r: Row) => (r.age65AndOver as number) / (r.taxpayers as number);
+const first = rows[0];
+const last = rows[rows.length - 1];
+const lastOutturn = [...rows].reverse().find((r) => !r.projected)!;
+const firstProjected = rows.find((r) => r.projected)!;
+const crossedFifth = rows.find((r) => share(r) >= 0.2) ?? null;
+const retrieved = data.retrieved as string;
+
+// The State Pension against the personal allowance, year by year from the rules file.
+const years = listYears().filter((y) => y.statePension);
+const WEEKS = 52;
+const pensionRows = years.map((y) => {
+	const weekly = resolve(y.statePension!.fullNewWeekly, 'statePension.fullNewWeekly', y.starts);
+	const pa = resolve(y.incomeTax.personalAllowance, 'incomeTax.personalAllowance', y.starts).value;
+	const annual = Math.round(weekly.value * WEEKS * 100) / 100;
+	return { year: y, weekly: weekly.value, annual, pa, gap: Math.round((annual - pa) * 100) / 100, status: weekly.provenance.status, source: weekly.provenance.source, verified: weekly.provenance.verified, hasPta: !!y.pensionTaxAllowance };
+});
+const current = pensionRows.find((r) => r.year.taxYear === CURRENT_YEAR.taxYear)!;
+const next = pensionRows.find((r) => r.year.taxYear > CURRENT_YEAR.taxYear) ?? null;
+const firstOver = pensionRows.find((r) => r.gap > 0) ?? null;
+const status: Status = leastSettled(pensionRows.map((r) => r.status));
+
+// Worked examples: State Pension alone, then with private pension income, in this year and next.
+const others = [0, 2000, 5000, 10000];
+const run = (otherIncome: number, taxYear: string) => {
+	const y = getYear(taxYear);
+	const sp = pensionRows.find((r) => r.year.taxYear === taxYear)!.annual;
+	try {
+		const r = statePensionTax({ statePension: sp, otherIncome, nation: 'england-ni', taxYear, asAt: y.starts, compare: false });
+		return { total: r.facts.totalIncome as number, before: r.facts.incomeTaxBefore as number, pta: r.facts.pensionTaxAllowance as number, after: r.facts.incomeTaxAfter as number, withdrawnAt: r.facts.withdrawnAt as number };
+	} catch (e) {
+		if (e instanceof RulesUnavailableError) return null;
+		throw e;
+	}
+};
+const examples = others.map((o) => ({ other: o, now: run(o, CURRENT_YEAR.taxYear), next: next ? run(o, next.year.taxYear) : null }));
+const ptaYear = next?.hasPta ? next.year : null;
+const ptaMax = ptaYear ? (run(0, ptaYear.taxYear)?.pta ?? 0) : 0;
+const withdrawnAt = ptaYear ? (run(0, ptaYear.taxYear)?.withdrawnAt ?? 0) : 0;
+const ptaDivisor = ptaYear ? resolve(ptaYear.pensionTaxAllowance!.taperDivisor, 'pensionTaxAllowance.taperDivisor', ptaYear.starts).value : 0;
+const ptaLast = ptaYear ? resolve(ptaYear.pensionTaxAllowance!.lastYear, 'pensionTaxAllowance.lastYear', ptaYear.starts).value : '';
+
+// Chart: taxpayers aged 65 and over, in thousands.
+const W = 800;
+const H = 320;
+const L = 56;
+const R = 16;
+const T = 16;
+const B = 40;
+const x0 = Number(rows[0].taxYear.slice(0, 4));
+const x1 = Number(last.taxYear.slice(0, 4));
+const x = (y: number) => L + ((y - x0) / (x1 - x0)) * (W - L - R);
+const max = Math.ceil(Math.max(...rows.map((r) => r.age65AndOver as number)) / 2000) * 2000;
+const y = (v: number) => T + (1 - v / max) * (H - T - B);
+const pts = rows.map((r) => ({ x: x(Number(r.taxYear.slice(0, 4))), y: y(r.age65AndOver as number), projected: r.projected }));
+const line = (p: { x: number; y: number }[]) => p.map((q, i) => `${i ? 'L' : 'M'}${q.x.toFixed(1)},${q.y.toFixed(1)}`).join('');
+const outturn = pts.filter((p) => !p.projected);
+const projected = pts.filter((p, i) => p.projected || pts[i + 1]?.projected);
+const ticks = [0, max / 4, max / 2, (3 * max) / 4, max];
+const xTicks = rows.map((r) => Number(r.taxYear.slice(0, 4))).filter((v) => v % 5 === 0);
+const tableRows = rows.filter((r, i) => i % 5 === 0 || i >= rows.length - 4);
+
+const sources = [...(data.sources as { name: string; url: string; published: string }[]).map((s) => ({ title: `${s.name}, published ${longDate(s.published)}`, href: s.url })), ...pensionRows.map((r) => ({ title: `Full new State Pension for ${r.year.label}, checked ${longDate(r.verified)}`, href: r.source }))];
+const seen = new Set<string>();
+const uniqueSources = sources.filter((s) => !seen.has(s.href) && seen.add(s.href));
+---
+
+<Guide
+	slug="pensioners-and-income-tax"
+	taxYears={pensionRows.map((r) => r.year.taxYear)}
+	status={status}
+	related={[
+		guideLink('pension-tax-allowance', 'Who gets the Pension Tax Allowance, the taper and where it ends.'),
+		{ title: 'State Pension tax calculator', href: '/calculators/state-pension-tax/', desc: 'Your own State Pension and other income, with and without the allowance.' },
+		{ title: `Rates and allowances for ${CURRENT_YEAR.label}`, href: `/rates/${CURRENT_YEAR.taxYear}/`, desc: 'The personal allowance and the State Pension rate, with their sources.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>HMRC's projection for {label(last.taxYear)} has {millions(last.age65AndOver as number)} income tax payers aged 65 and over, {pct1(share(last))} of all taxpayers. In {label(first.taxYear)} there were {millions(first.age65AndOver as number)}, {pct1(share(first))}. The full new State Pension is {money(current.annual, 0)} a year in {current.year.label} against a personal allowance of {money(current.pa, 0)}{next ? `, and ${money(next.annual, 0)} in ${next.year.label}, ${next.gap > 0 ? `${money(next.gap, 0)} above the allowance` : `${money(Math.abs(next.gap), 0)} below it`}` : ''}. {ptaYear ? `The Pension Tax Allowance of up to ${money(ptaMax, 0)} begins the same year, so a pensioner with no other income pays ${money(run(0, ptaYear.taxYear)?.after ?? 0, 0)} of tax on it.` : ''}</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>Taxpayers aged 65 and over since {label(first.taxYear)}</h2>
+		<figure class="chart">
+			<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Income tax payers aged 65 and over, ${label(first.taxYear)} to ${label(last.taxYear)}: from ${millions(first.age65AndOver as number)} to ${millions(last.age65AndOver as number)}.`} class="story-chart">
+				{ticks.map((t) => (
+					<>
+						<line x1={L} x2={W - R} y1={y(t)} y2={y(t)} class="grid" />
+						<text x={L - 8} y={y(t) + 4} class="tick" text-anchor="end">{(t / 1000).toFixed(0)}m</text>
+					</>
+				))}
+				{xTicks.map((v) => <text x={x(v)} y={H - B + 22} class="tick" text-anchor="middle">{v}</text>)}
+				<path d={line(outturn)} class="line main" />
+				<path d={line(projected)} class="line main projected" />
+				<line x1={L} x2={W - R} y1={H - B} y2={H - B} class="axis" />
+			</svg>
+			<figcaption>People aged 65 and over paying income tax, by tax year. Dashed: HMRC's projections from {label(firstProjected.taxYear)}. No figure is published for 2008/09. Source: HMRC Table 2.1, retrieved {longDate(retrieved)}.</figcaption>
+		</figure>
+		<p>The count is {((last.age65AndOver as number) / (first.age65AndOver as number)).toFixed(1)} times what it was at the start, while the number of taxpayers under 65 grows by {pct1((last.under65 as number) / (first.under65 as number) - 1)}. The over-65 share passes one in five in {crossedFifth ? label(crossedFifth.taxYear) : 'no year in the table'}. The last outturn year is {label(lastOutturn.taxYear)}, at {millions(lastOutturn.age65AndOver as number)}; later years are projections on the Survey of Personal Incomes.</p>
+	</Fragment>
+
+	<h2>The State Pension against the personal allowance</h2>
+	<p>A pensioner pays income tax when total income passes the personal allowance, and the State Pension counts towards it. The full new State Pension has risen each April while the allowance has been {money(current.pa, 0)} since {label(rows.find((r) => r.taxYear === '2021-22')?.taxYear ?? '2021-22')}, so the gap between them has closed.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>Full new State Pension (weekly rate times {WEEKS} weeks) against the personal allowance</caption>
+			<thead><tr><th scope="col">Tax year</th><th scope="col" class="num">A week</th><th scope="col" class="num">A year</th><th scope="col" class="num">Personal allowance</th><th scope="col" class="num">Pension less allowance</th><th scope="col">Status</th></tr></thead>
+			<tbody>
+				{pensionRows.map((r) => (
+					<tr>
+						<th scope="row">{r.year.label}</th>
+						<td class="num">{money(r.weekly, 2)}</td>
+						<td class="num">{money(r.annual, 2)}</td>
+						<td class="num">{money(r.pa, 0)}</td>
+						<td class="num">{r.gap > 0 ? `+${money(r.gap, 2)}` : `−${money(Math.abs(r.gap), 2)}`}</td>
+						<td class={`status-${r.status}`}>{STATUS_LABEL[r.status]}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>{firstOver ? `${firstOver.year.label} is the first year in the rules file in which the full new State Pension on its own is above the allowance, by ${money(firstOver.gap, 2)}.` : 'In every year in the rules file the full new State Pension on its own stays below the allowance.'} The rate is paid weekly, so the annual figure depends on how many payment weeks fall in the year; HM Treasury's own explainer uses the {WEEKS}-week figure.</p>
+
+	{ptaYear && (
+		<>
+			<h2>What the Pension Tax Allowance does from {ptaYear.label}</h2>
+			<p>From {longDate(ptaYear.starts)} a person over State Pension age gets a tax reduction of up to {money(ptaMax, 0)}, which is the tax at the basic rate on the gap between the full new State Pension and the personal allowance, rounded up to a pound. It falls by {money(1, 0)} for every {money(ptaDivisor, 0)} of income above {money(next!.annual, 2)} and is gone at {money(withdrawnAt, 2)}. It runs to {ptaLast.replace('-', '/')}. The table runs four pensioners through the tool: each has the full new State Pension and the other income shown, in England, Wales or Northern Ireland, with the standard allowance.</p>
+			<div class="table-wrap">
+				<table>
+					<caption>Income tax on the full new State Pension plus other income, {CURRENT_YEAR.label} and {ptaYear.label}</caption>
+					<thead><tr><th scope="col">Other income</th><th scope="col" class="num">Tax in {CURRENT_YEAR.label}</th><th scope="col" class="num">Tax in {ptaYear.label} before the allowance</th><th scope="col" class="num">Pension Tax Allowance</th><th scope="col" class="num">Tax in {ptaYear.label}</th></tr></thead>
+					<tbody>
+						{examples.map((e) => (
+							<tr>
+								<th scope="row">{e.other === 0 ? 'None' : money(e.other, 0)}</th>
+								<td class="num">{e.now ? money(e.now.after, 0) : 'Not set'}</td>
+								<td class="num">{e.next ? money(e.next.before, 0) : 'Not set'}</td>
+								<td class="num">{e.next ? money(e.next.pta, 0) : ''}</td>
+								<td class="num">{e.next ? money(e.next.after, 0) : 'Not set'}</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+			<p>The allowance only ever removes the tax created by the State Pension rising past the personal allowance; anyone with a few thousand pounds of private pension on top is above {money(withdrawnAt, 0)} and gets none of it, and pays {pct(0.2)} on income above the allowance as before. The figures for {ptaYear.label} are {STATUS_LABEL[next!.status].toLowerCase()}: the State Pension rate is derived from HM Treasury's annual figure, and the allowance is in the Finance Bill.</p>
+		</>
+	)}
+
+	<h2>The figures</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>Income tax payers by age (thousands), selected years. Projected years are marked.</caption>
+			<thead><tr><th scope="col">Tax year</th><th scope="col" class="num">All taxpayers</th><th scope="col" class="num">Under 65</th><th scope="col" class="num">65 and over</th><th scope="col" class="num">Share 65 and over</th><th scope="col" class="num">Over State Pension age</th></tr></thead>
+			<tbody>
+				{tableRows.map((r) => (
+					<tr>
+						<th scope="row">{label(r.taxYear)}{r.projected ? ' (projected)' : ''}</th>
+						<td class="num">{r.taxpayers?.toLocaleString('en-GB')}</td>
+						<td class="num">{r.under65?.toLocaleString('en-GB')}</td>
+						<td class="num">{r.age65AndOver?.toLocaleString('en-GB')}</td>
+						<td class="num">{pct1(share(r))}</td>
+						<td class="num">{r.statePensionAge?.toLocaleString('en-GB')}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>The last column follows HMRC's State Pension age definition, which for women rose from 60 to 65 between April 2010 and November 2018, so it is above the 65-and-over count in the early years and below it once both ages passed 65.</p>
+
+	<h2>How to read it</h2>
+	<ul>
+		<li>HMRC counts people with an income tax liability in the year, whatever its source: the State Pension, private pensions, earnings, savings or rent.</li>
+		<li>The counts for {label(firstProjected.taxYear)} onwards are projections and will be revised when the table is republished each summer. No figure exists for 2008/09.</li>
+		<li>The State Pension rows are the full new State Pension for someone who reached State Pension age from April 2016 with a full record. The basic State Pension for earlier retirees is a different, lower rate, and many people get more or less than the full amount.</li>
+		<li>The worked examples use the standard allowance and the rates for England, Wales and Northern Ireland. Scottish rates differ above the allowance.</li>
+		<li>How many people receive the State Pension, and how much, is published by the Department for Work and Pensions through Stat-Xplore; it is not drawn on here.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{uniqueSources.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
+		<li>The data file this page reads: <a href="/data/taxpayers-by-age.json">taxpayers-by-age.json</a>, with the source file's address and checksum.</li>
+	</Fragment>
+</Guide>
+
+<style>
+	.chart { margin: 1rem 0 1.5rem; }
+	.story-chart { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+	.story-chart .grid { stroke: var(--hairline); stroke-width: 1; }
+	.story-chart .axis { stroke: var(--ink); stroke-width: 1; }
+	.story-chart .tick { fill: var(--quiet); font-size: 12px; }
+	.story-chart .line { fill: none; stroke-linejoin: round; }
+	.story-chart .line.main { stroke: var(--ink); stroke-width: 2.5; }
+	.story-chart .line.projected { stroke-dasharray: 5 4; }
+	figcaption { color: var(--quiet); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>

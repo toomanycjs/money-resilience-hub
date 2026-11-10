@@ -140,6 +140,17 @@ export const GUIDES: Guide[] = [
 		draft: true,
 		publishOn: '2026-11-23',
 	},
+	{
+		slug: 'pensioners-and-income-tax',
+		title: 'Pensioners and income tax: who pays, and the State Pension',
+		h1: 'How many pensioners pay income tax?',
+		description: 'Taxpayers aged 65 and over since 1990/91 from HMRC tables, the State Pension against the personal allowance, and what the Pension Tax Allowance removes.',
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: STATE_PENSION,
+		draft: true,
+		publishOn: '2026-12-21',
+	},
 ];
 
 // The build's own limits, checked here so a rules change that lengthens a
