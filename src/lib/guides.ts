@@ -185,10 +185,9 @@ export const GUIDES: Guide[] = [
 		title: `The marginal tax rate at every salary, ${year.label}`,
 		h1: 'What is the marginal tax rate at every salary?',
 		description: `The share of the next pound taken at every salary in ${year.label}, charted from the rules file: each band, the ${money(taperStart, 0)} taper, loans and child benefit.`,
-		published: PUBLISHED,
-		reviewedOn: PUBLISHED,
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
 		calculator: TAKE_HOME,
-		draft: true,
 	},
 	{
 		slug: 'fiscal-drag-how-many-more-pay-40',
