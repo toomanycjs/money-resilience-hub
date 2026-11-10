@@ -29,7 +29,7 @@ export interface Guide {
 	calculator: GuideCalculator;
 	/** A draft lives in src/drafts/guides and is built only with DRAFTS=1, at /drafts/<slug>/, noindex. */
 	draft?: boolean;
-	/** The date the draft is planned to go live, for the posting schedule. */
+	/** A date the draft is planned to go live, if one has been chosen. */
 	publishOn?: string;
 }
 
@@ -162,14 +162,13 @@ export const GUIDES: Guide[] = [
 	},
 	{
 		slug: 'marginal-rate-at-every-salary',
-		title: `The real marginal tax rate at every salary, ${year.label}`,
+		title: `The marginal tax rate at every salary, ${year.label}`,
 		h1: 'What is the marginal tax rate at every salary?',
 		description: `The share of the next pound taken at every salary in ${year.label}, charted from the rules file: each band, the ${money(taperStart, 0)} taper, loans and child benefit.`,
 		published: PUBLISHED,
 		reviewedOn: PUBLISHED,
 		calculator: TAKE_HOME,
 		draft: true,
-		publishOn: '2026-11-16',
 	},
 	{
 		slug: 'fiscal-drag-how-many-more-pay-40',
@@ -180,7 +179,6 @@ export const GUIDES: Guide[] = [
 		reviewedOn: '2026-11-10',
 		calculator: TAKE_HOME,
 		draft: true,
-		publishOn: '2026-11-23',
 	},
 	{
 		slug: 'pensioners-and-income-tax',
@@ -191,7 +189,6 @@ export const GUIDES: Guide[] = [
 		reviewedOn: '2026-11-10',
 		calculator: STATE_PENSION,
 		draft: true,
-		publishOn: '2026-12-21',
 	},
 	{
 		slug: 'savings-tax-24-how-much-before-tax',
@@ -204,7 +201,6 @@ export const GUIDES: Guide[] = [
 		reviewedOn: '2026-11-10',
 		calculator: SAVINGS_TAX,
 		draft: true,
-		publishOn: '2026-11-30',
 	},
 	{
 		slug: 'landlords-mortgage-interest-2027',
@@ -215,7 +211,6 @@ export const GUIDES: Guide[] = [
 		reviewedOn: '2026-11-10',
 		calculator: LANDLORD,
 		draft: true,
-		publishOn: '2026-12-07',
 	},
 	{
 		slug: 'side-hustles-after-the-trading-allowance-triples',
@@ -229,7 +224,6 @@ export const GUIDES: Guide[] = [
 		reviewedOn: '2026-11-10',
 		calculator: SIDE_HUSTLE,
 		draft: true,
-		publishOn: '2026-12-14',
 	},
 ];
 
@@ -242,8 +236,8 @@ for (const g of GUIDES) {
 
 /** Guides on the live site, in the index, the feed and the share cards. */
 export const LIVE_GUIDES = GUIDES.filter((g) => !g.draft);
-/** Drafts, in the order they are planned to go live. */
-export const DRAFT_GUIDES = GUIDES.filter((g) => g.draft).sort((a, b) => (a.publishOn ?? '').localeCompare(b.publishOn ?? ''));
+/** Drafts, in the order they were written. */
+export const DRAFT_GUIDES = GUIDES.filter((g) => g.draft);
 
 export function guideBySlug(slug: string): Guide {
 	const g = GUIDES.find((x) => x.slug === slug);
