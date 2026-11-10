@@ -1,0 +1,209 @@
+---
+// Savings tax at the Budget 2026 rates: the balance at which interest uses
+// up the tax-free allowances for each band, a sweep of balances against
+// three assumed interest rates, and the same interest inside an ISA. Every
+// figure comes from the savings tax engine or the rules file; the interest
+// rates and the balances are scenario assumptions, not market data.
+import { getYear, leastSettled, nextYear, resolve, savingsTax, STATUS_LABEL, type YearConfig } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { CURRENT_YEAR } from '../../config/site';
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const next = nextYear(year.taxYear);
+if (!next) throw new Error('The savings guide needs the following tax year in the rules file');
+
+// Each year's figures are read as at the day it starts, so the rates that
+// apply from 6 April 2027 resolve for 2027/28 and the current ones for 2026/27.
+const v = (leaf: Parameters<typeof resolve>[0], y: YearConfig) => resolve(leaf, 'p', y.starts).value;
+const s = year.incomeTax.savings;
+const sn = next.incomeTax.savings;
+const pa = v(year.incomeTax.personalAllowance, year);
+const srl = v(s.startingRateLimit, year);
+const ceiling = v(s.startingRateIncomeCeiling, year);
+const basicLimit = year.incomeTax.bands['england-ni'][0].upTo as number;
+const higherLimit = year.incomeTax.bands['england-ni'][1].upTo as number;
+const bands = ['basic', 'higher', 'additional'] as const;
+type BandKey = (typeof bands)[number];
+const BAND_LABEL: Record<BandKey, string> = { basic: 'Basic rate', higher: 'Higher rate', additional: 'Additional rate' };
+const psa = Object.fromEntries(bands.map((b) => [b, v(s.personalSavingsAllowance[b], year)])) as Record<BandKey, number>;
+const psaNext = Object.fromEntries(bands.map((b) => [b, v(sn.personalSavingsAllowance[b], next)])) as Record<BandKey, number>;
+const rates = Object.fromEntries(bands.map((b) => [b, v(s.rates[b], year)])) as Record<BandKey, number>;
+const ratesNext = Object.fromEntries(bands.map((b) => [b, v(sn.rates[b], next)])) as Record<BandKey, number>;
+const srlNext = v(sn.startingRateLimit, next);
+const isaLimit = v(year.isa!.annualLimit, year);
+const cashIsaNext = v(next.isa!.cashLimit ?? next.isa!.annualLimit, next);
+const cashIsaNote = next.isa!.cashLimit?.note ?? '';
+const status = leastSettled([s.rates.basic.status, s.personalSavingsAllowance.basic.status, s.startingRateLimit.status, sn.rates.basic.status, sn.personalSavingsAllowance.basic.status, sn.startingRateLimit.status, (next.isa!.cashLimit ?? next.isa!.annualLimit).status]);
+const nextStatus = STATUS_LABEL[sn.rates.basic.status];
+
+// Scenario assumptions: the interest rates, the balances and the other
+// income of each illustrative taxpayer. None is market data.
+const RATES = [0.03, 0.04, 0.05];
+const BALANCES = [10000, 25000, 50000, 100000];
+const STEP = 1000;
+interface Person {
+	id: BandKey;
+	other: number;
+}
+const people: Person[] = [
+	{ id: 'basic', other: 30000 },
+	{ id: 'higher', other: 60000 },
+	{ id: 'additional', other: 150000 },
+];
+const lowOther = 15000;
+
+const run = (interest: number, other: number, y: YearConfig) => savingsTax({ interest, otherIncome: other, nation: 'england-ni', taxYear: y.taxYear, asAt: y.starts, compare: false });
+const taxOn = (interest: number, other: number, y: YearConfig) => run(interest, other, y).facts.tax as number;
+const taxableOn = (interest: number, other: number, y: YearConfig) => run(interest, other, y).facts.taxableInterest as number;
+const bandOf = (interest: number, other: number) => run(interest, other, year).facts.band as BandKey;
+
+// The most interest the engine taxes at nothing for a given other income,
+// found by bisection to the pound rather than by adding allowances up.
+const capacity = (other: number, y: YearConfig): number => {
+	let lo = 0;
+	let hi = 100000;
+	for (let i = 0; i < 40; i++) {
+		const mid = (lo + hi) / 2;
+		if (taxOn(mid, other, y) > 0) hi = mid;
+		else lo = mid;
+	}
+	return Math.floor(lo);
+};
+const balanceFor = (interest: number, rate: number) => Math.round(interest / rate);
+const cap = Object.fromEntries(people.map((p) => [p.id, capacity(p.other, year)])) as Record<BandKey, number>;
+const capNext = Object.fromEntries(people.map((p) => [p.id, capacity(p.other, next)])) as Record<BandKey, number>;
+const sameCapacity = bands.every((b) => cap[b] === capNext[b]);
+const capNone = capacity(0, year);
+const capLow = capacity(lowOther, year);
+const lowStartingRate = run(capLow, lowOther, year).facts.startingRateUsed as number;
+const balances = (interest: number) => RATES.map((r) => ({ rate: r, balance: balanceFor(interest, r) }));
+const list = (items: string[]) => (items.length < 2 ? items.join('') : `${items.slice(0, -1).join(', ')} or ${items[items.length - 1]}`);
+const balanceWords = (interest: number) => list(balances(interest).map((b) => `${money(b.balance, 0)} at ${pct(b.rate)}`));
+
+// The sweep: each balance at each rate, for each taxpayer, in both years.
+const sweep = people.map((p) => ({
+	...p,
+	rows: BALANCES.flatMap((balance) =>
+		RATES.map((rate) => {
+			const interest = Math.round(balance * rate * 100) / 100;
+			return { balance, rate, interest, free: Math.round((interest - taxableOn(interest, p.other, year)) * 100) / 100, now: taxOn(interest, p.other, year), later: taxOn(interest, p.other, next), band: bandOf(interest, p.other) };
+		})
+	),
+}));
+// A check that each illustrative taxpayer stays in the band named for them across the sweep.
+for (const p of sweep) if (p.rows.some((r) => r.band !== p.id)) throw new Error(`The ${p.id} rate taxpayer leaves the band inside the sweep`);
+
+// The extra tax from April 2027 on the next STEP pounds of interest above each allowance.
+const extra = Object.fromEntries(people.map((p) => [p.id, Math.round((taxOn(cap[p.id] + STEP, p.other, next) - taxOn(cap[p.id] + STEP, p.other, year)) * 100) / 100])) as Record<BandKey, number>;
+
+// The ISA comparison: the cash ISA limit at the middle assumed rate, inside and outside.
+const isaRate = RATES[1];
+const isaInterest = Math.round(cashIsaNext * isaRate * 100) / 100;
+const isaOutside = people.map((p) => ({ id: p.id, now: taxOn(isaInterest, p.other, year), later: taxOn(isaInterest, p.other, next) }));
+
+const sources = [
+	{ href: 'https://www.gov.uk/apply-tax-free-interest-on-savings', title: 'Tax on savings interest' },
+	{ href: 'https://www.gov.uk/apply-tax-free-interest-on-savings/how-much-is-tax-free', title: 'Tax on savings interest: how much is tax free' },
+	{ href: 'https://www.gov.uk/individual-savings-accounts', title: 'Individual Savings Accounts (ISAs)' },
+	{ href: sn.rates.basic.source, title: 'Income Tax: changes to tax rates for property and savings income (Budget 2026 policy paper)' },
+	{ href: next.isa!.annualLimit.source, title: 'Budget 2026 overview of tax legislation and rates, Annex A: rates and allowances' },
+];
+---
+
+<Guide
+	slug="savings-tax-24-how-much-before-tax"
+	taxYears={[year.taxYear, next.taxYear]}
+	status={status}
+	related={[
+		guideLink('100000-personal-allowance-trap', 'Interest counts towards the income that tapers the personal allowance.'),
+		{ title: 'Budget 2026: what changed', href: '/budget/2026-autumn/', desc: 'Every measure announced at Budget 2026, with the date each takes effect and the tool that models it.' },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'Every figure on this page, with its source and the date it was checked.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>A basic rate taxpayer pays nothing on the first {money(cap.basic, 0)} of interest in {year.label}, which is the interest on {balanceWords(cap.basic)}. A higher rate taxpayer has {money(cap.higher, 0)}: {balanceWords(cap.higher)}. An additional rate taxpayer has {cap.additional === 0 ? 'no allowance, so the first pound of interest is taxed' : money(cap.additional, 0)}. Interest above the allowance is taxed at {pct(rates.basic)}, {pct(rates.higher)} or {pct(rates.additional)} this year and at {pct(ratesNext.basic)}, {pct(ratesNext.higher)} or {pct(ratesNext.additional)} from {longDate(next.starts)}, as announced at Budget 2026. With no other income at all, the allowances cover {money(capNone, 0)} of interest, the interest on {balanceWords(capNone)}.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>What is tax free</h2>
+		<p>Three things sit between interest and tax, and other income decides how much of each is left. Any personal allowance not used by pay or pension goes against interest first. Then the starting rate for savings, a {money(srl, 0)} band taxed at 0%, which shrinks by a pound for every pound of other income above the personal allowance and is gone once other income reaches {money(ceiling, 0)}. Then the personal savings allowance, set by the band that total income, interest included, reaches: {money(psa.basic, 0)} for taxable income up to {money(basicLimit, 0)}, {money(psa.higher, 0)} up to {money(higherLimit, 0)}, and {money(psa.additional, 0)} above that.</p>
+		<div class="table-wrap">
+			<table>
+				<caption>The allowances against savings interest, {year.label} and {next.label}</caption>
+				<thead><tr><th scope="col">Allowance</th><th scope="col" class="num">{year.label}</th><th scope="col" class="num">{next.label}</th><th scope="col">Status for {next.label}</th></tr></thead>
+				<tbody>
+					<tr><th scope="row">Starting rate for savings</th><td class="num">{money(srl, 0)}</td><td class="num">{money(srlNext, 0)}</td><td class={`status-${sn.startingRateLimit.status}`}>{STATUS_LABEL[sn.startingRateLimit.status]}</td></tr>
+					{bands.map((b) => (
+						<tr><th scope="row">Personal savings allowance, {BAND_LABEL[b].toLowerCase()}</th><td class="num">{money(psa[b], 0)}</td><td class="num">{money(psaNext[b], 0)}</td><td class={`status-${sn.personalSavingsAllowance[b].status}`}>{STATUS_LABEL[sn.personalSavingsAllowance[b].status]}</td></tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+		<p>The three taxpayers on this page have other income of {money(people[0].other, 0)}, {money(people[1].other, 0)} and {money(people[2].other, 0)}: pay or pension, nothing else. All three are past the starting rate, so the personal savings allowance is the whole of what they have. The interest rates of {list(RATES.map(pct))} and the balances are assumptions chosen to show where the tax starts, not a view of what accounts pay.</p>
+	</Fragment>
+
+	<h2>Where the tax starts</h2>
+	<p>The balance at which interest uses up the allowance is the allowance divided by the rate the account pays, so a lower rate means a larger balance before any tax. {sameCapacity ? `The allowances are the same in ${next.label}, so these balances do not move in April 2027; what changes is the rate on the interest above them.` : `The allowances change in ${next.label}, so the balances move in April 2027.`}</p>
+	<div class="table-wrap">
+		<table>
+			<caption>The balance whose interest equals the tax-free amount, by band and assumed interest rate</caption>
+			<thead><tr><th scope="col">Taxpayer</th><th scope="col" class="num">Tax-free interest</th>{RATES.map((r) => <th scope="col" class="num">Balance at {pct(r)}</th>)}</tr></thead>
+			<tbody>
+				{people.map((p) => (
+					<tr><th scope="row">{BAND_LABEL[p.id]}, other income {money(p.other, 0)}</th><td class="num">{money(cap[p.id], 0)}</td>{RATES.map((r) => <td class="num">{cap[p.id] === 0 ? 'None' : money(balanceFor(cap[p.id], r), 0)}</td>)}</tr>
+				))}
+				<tr><th scope="row">Low earner, other income {money(lowOther, 0)}</th><td class="num">{money(capLow, 0)}</td>{RATES.map((r) => <td class="num">{money(balanceFor(capLow, r), 0)}</td>)}</tr>
+				<tr><th scope="row">No other income</th><td class="num">{money(capNone, 0)}</td>{RATES.map((r) => <td class="num">{money(balanceFor(capNone, r), 0)}</td>)}</tr>
+			</tbody>
+		</table>
+	</div>
+	<p>The low earner keeps {money(lowStartingRate, 0)} of the starting rate, because other income of {money(lowOther, 0)} is {money(lowOther - pa, 0)} above the personal allowance, and adds the {money(psa.basic, 0)} personal savings allowance to it. With no other income the whole personal allowance of {money(pa, 0)} goes against interest too.</p>
+
+	<h2>Tax on the interest, this year and from April 2027</h2>
+	<p>Each table takes one taxpayer through the four balances at the three assumed rates. Tax-free is the part covered by the allowances; the rest is taxed at the band's savings rate, {pct(rates[people[0].id])} now and {pct(ratesNext[people[0].id])} from {longDate(next.starts)} for the basic rate, with the higher and additional rates moving the same way.</p>
+	{sweep.map((p) => (
+		<div class="table-wrap">
+			<table>
+				<caption>{BAND_LABEL[p.id]} taxpayer with other income of {money(p.other, 0)}: tax on interest at {pct(rates[p.id])} in {year.label} and {pct(ratesNext[p.id])} in {next.label}</caption>
+				<thead><tr><th scope="col">Balance</th><th scope="col" class="num">Rate</th><th scope="col" class="num">Interest</th><th scope="col" class="num">Tax free</th><th scope="col" class="num">Tax in {year.label}</th><th scope="col" class="num">Tax in {next.label}</th></tr></thead>
+				<tbody>
+					{p.rows.map((r) => (
+						<tr><th scope="row">{money(r.balance, 0)}</th><td class="num">{pct(r.rate)}</td><td class="num">{money(r.interest, 0)}</td><td class="num">{money(r.free, 0)}</td><td class="num">{money(r.now, 0)}</td><td class="num">{money(r.later, 0)}</td></tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+	))}
+	<p>{bands.every((b) => extra[b] === extra.basic) ? `On each ${money(STEP, 0)} of interest above the allowance the change adds ${money(extra.basic, 0)} of tax, whichever band the interest falls in.` : `On each ${money(STEP, 0)} of interest above the allowance the change adds ${money(extra.basic, 0)} for a basic rate taxpayer, ${money(extra.higher, 0)} for a higher rate taxpayer and ${money(extra.additional, 0)} for an additional rate taxpayer.`}</p>
+
+	<h2>The savings rates</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>Tax rates on savings interest above the allowances</caption>
+			<thead><tr><th scope="col">Band</th><th scope="col" class="num">{year.label}</th><th scope="col" class="num">{next.label}</th><th scope="col">Status for {next.label}</th></tr></thead>
+			<tbody>
+				{bands.map((b) => (
+					<tr><th scope="row">{BAND_LABEL[b]}</th><td class="num">{pct(rates[b])}</td><td class="num">{pct(ratesNext[b])}</td><td class={`status-${sn.rates[b].status}`}>{STATUS_LABEL[sn.rates[b].status]}</td></tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>The {next.label} rates are {nextStatus.toLowerCase()}: the policy paper says legislation will be introduced in the Finance Bill for them, and they apply across the UK. Income tax on pay and pensions is unchanged in {next.label}, so for most people the savings rate is the only line that moves. In Scotland and Wales the savings rates, the starting rate and the personal savings allowance are the same as in England and Northern Ireland; the devolved bands apply to pay and pensions, which is what sets how much allowance is left for interest.</p>
+
+	<h2>The same interest inside an ISA</h2>
+	<p>Interest on cash in an ISA is not taxed, is not reported to HMRC and does not go on a tax return. The ISA limit is {money(isaLimit, 0)} a year in {year.label}; for {next.label} the rules file records a cash ISA limit of {money(cashIsaNext, 0)}{cashIsaNote ? `, with the note that ${cashIsaNote.charAt(0).toLowerCase()}${cashIsaNote.slice(1)}` : ''}. At {pct(isaRate)}, {money(cashIsaNext, 0)} earns {money(isaInterest, 0)} in a year. Inside an ISA the tax on that is nil. Outside one, the same {money(isaInterest, 0)} added to the other income above costs {list(isaOutside.map((o) => `${money(o.now, 0)} now and ${money(o.later, 0)} from ${longDate(next.starts)} for the ${BAND_LABEL[o.id].toLowerCase()} taxpayer`))}. That is a comparison of the two tax treatments, not a view on where to hold money.</p>
+
+	<h2>What the figures leave out</h2>
+	<ul>
+		<li>Dividends, which have their own allowance and rates.</li>
+		<li>Joint accounts, where HMRC splits the interest equally between the holders unless told otherwise.</li>
+		<li>Interest above the allowance is collected after the year ends, through a tax code change or a tax calculation sent by HMRC, which the bank's report of interest paid triggers. ISA interest is not reported.</li>
+		<li>Interest counts towards adjusted net income, so above {money(v(year.incomeTax.taperStart, year), 0)} it also tapers the personal allowance, which the <a href="/guides/100000-personal-allowance-trap/">allowance trap guide</a> sets out.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{sources.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
+	</Fragment>
+</Guide>

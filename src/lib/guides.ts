@@ -3,8 +3,8 @@
 // Titles and descriptions that carry a figure build it from the rules, so
 // they move when the rules do.
 
-import { bandsFor, defaultTaxCode, listYears, pensionTaxAllowance, resolve } from '@money-resilience-hub/rules';
-import { longDate, money } from '@money-resilience-hub/calculators';
+import { bandsFor, defaultTaxCode, listYears, nextYear, pensionTaxAllowance, resolve } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
 import { BUILD_DATE, CURRENT_YEAR } from '../config/site';
 
 export interface GuideCalculator {
@@ -44,6 +44,12 @@ const STATE_PENSION: GuideCalculator = {
 	desc: 'Enter your State Pension and other income, and see the tax with and without the Pension Tax Allowance.',
 };
 
+const SAVINGS_TAX: GuideCalculator = {
+	href: '/calculators/savings-tax/',
+	title: 'Savings interest tax calculator',
+	desc: 'Enter your interest and other income, and see how much is tax free and what the rest costs this year and from April 2027.',
+};
+
 const PUBLISHED = '2026-11-09';
 
 const year = CURRENT_YEAR;
@@ -55,6 +61,20 @@ const taperEnd = taperStart + pa / taperRate;
 const taperWords = `${money(1, 0)} for every ${money(1 / taperRate, 0)}`;
 const code = defaultTaxCode(year, asAt);
 const scottishBands = bandsFor(year, 'scotland').length;
+
+/** The savings rates of the following tax year, read as at the day it starts, for the savings guide. */
+const following = nextYear(year.taxYear);
+const savingsNext = following
+	? {
+			starts: following.starts,
+			basic: resolve(following.incomeTax.savings.rates.basic, 'incomeTax.savings.rates.basic', following.starts).value,
+			higher: resolve(following.incomeTax.savings.rates.higher, 'incomeTax.savings.rates.higher', following.starts).value,
+			additional: resolve(following.incomeTax.savings.rates.additional, 'incomeTax.savings.rates.additional', following.starts).value,
+		}
+	: null;
+const psaBasic = resolve(year.incomeTax.savings.personalSavingsAllowance.basic, 'incomeTax.savings.personalSavingsAllowance.basic', asAt).value;
+/** The middle of the savings guide's assumed interest rates; a scenario assumption, not market data. */
+const SAVINGS_RATE = 0.04;
 
 /** The first tax year that has a Pension Tax Allowance, with its maximum. */
 const ptaYear = listYears().find((y) => y.pensionTaxAllowance) ?? null;
@@ -150,6 +170,17 @@ export const GUIDES: Guide[] = [
 		calculator: STATE_PENSION,
 		draft: true,
 		publishOn: '2026-12-21',
+		slug: 'savings-tax-24-how-much-before-tax',
+		title: savingsNext ? `Savings tax at ${pct(savingsNext.basic)}: how much can you hold before paying tax?` : 'Savings tax: how much can you hold before paying tax?',
+		h1: 'How much can I hold in savings before paying tax on the interest?',
+		description: savingsNext
+			? `The balance whose interest uses up the ${money(psaBasic, 0)} personal savings allowance at ${pct(SAVINGS_RATE)}, by band, and the tax above it at ${pct(savingsNext.basic)}, ${pct(savingsNext.higher)} and ${pct(savingsNext.additional)} from ${longDate(savingsNext.starts)}.`
+			: `The balance whose interest uses up the ${money(psaBasic, 0)} personal savings allowance at ${pct(SAVINGS_RATE)}, by band, and the tax on interest above it in ${year.label}.`,
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: SAVINGS_TAX,
+		draft: true,
+		publishOn: '2026-11-30',
 	},
 ];
 
