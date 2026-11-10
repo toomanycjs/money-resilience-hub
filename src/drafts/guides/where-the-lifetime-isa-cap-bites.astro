@@ -241,7 +241,7 @@ const pages = sources.filter((s) => !/complete yearly CSV/.test(s.name));
 	<h2>What HMRC counts</h2>
 	<div class="table-wrap">
 		<table>
-			<caption>Lifetime ISA withdrawals by tax year: people withdrawing for a home purchase, people making a charged withdrawal, and the charges collected. HMRC rounds people to the nearest 50 and values to the nearest £1,000.</caption>
+			<caption>Lifetime ISA withdrawals by tax year: people withdrawing for a home purchase, people making a charged withdrawal, and the charges collected. HMRC rounds people to the nearest 50 and values to the nearest {money(1000, 0)}.</caption>
 			<thead><tr><th scope="col">Tax year</th><th scope="col" class="num">Withdrew for a home</th><th scope="col" class="num">Average home withdrawal</th><th scope="col" class="num">Charged withdrawals</th><th scope="col" class="num">Charges collected</th></tr></thead>
 			<tbody>
 				{lisaRows.map((r) => (

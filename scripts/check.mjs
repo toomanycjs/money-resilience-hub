@@ -43,7 +43,7 @@ function literalText(src) {
 	return out;
 }
 
-for (const file of [...walk('src/pages', ['.astro']), ...walk('src/layouts', ['.astro']), ...walk('src/components', ['.astro']), ...walk('src/content', ['.md', '.mdx'])]) {
+for (const file of [...walk('src/pages', ['.astro']), ...walk('src/layouts', ['.astro']), ...walk('src/components', ['.astro']), ...walk('src/drafts', ['.astro']), ...walk('src/content', ['.md', '.mdx'])]) {
 	const text = literalText(readFileSync(file, 'utf8'));
 	for (const m of text.matchAll(/£\s?\d[\d,.]*/g)) errors.push(`${file}: typed figure "${m[0]}"; compute it from the rules or a data file`);
 	for (const m of text.matchAll(/\b\d{1,3}(?:,\d{3})+\b/g)) errors.push(`${file}: typed number "${m[0]}"; compute it from the rules or a data file`);
