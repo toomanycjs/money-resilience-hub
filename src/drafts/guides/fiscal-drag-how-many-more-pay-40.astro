@@ -1,0 +1,214 @@
+---
+// Fiscal drag: taxpayers at the higher and additional rates since 1990/91,
+// against the higher rate threshold in cash and in today's prices. Every
+// figure is read from src/data/fiscal-drag.json, which records its sources
+// (HMRC Tables 2.1, A.1 and A.2 and the ONS CPI series), or computed from
+// them; the current year's threshold is checked against the rules file.
+import { getYear, leastSettled, resolve } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import data from '../../data/fiscal-drag.json' with { type: 'json' };
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+import { liveAmounts } from '../../lib/pages';
+
+interface Row {
+	taxYear: string;
+	taxpayers: number | null;
+	basicRate: number | null;
+	higherRate: number | null;
+	additionalRate: number | null;
+	projected: boolean;
+	personalAllowance: number | null;
+	basicRateLimit: number | null;
+	additionalRateFrom: number | null;
+	higherRateThreshold: number | null;
+	cpi: number | null;
+	cpiBasis: string | null;
+}
+const rows = data.rows as Row[];
+const label = (y: string) => `${y.slice(0, 4)}/${y.slice(5)}`;
+const MONTHS: Record<string, string> = { JAN: 'January', FEB: 'February', MAR: 'March', APR: 'April', MAY: 'May', JUN: 'June', JUL: 'July', AUG: 'August', SEP: 'September', OCT: 'October', NOV: 'November', DEC: 'December' };
+// "2026 SEP" as "September 2026".
+const monthLabel = (l: string) => l.replace(/^(\d{4}) (\w{3})$/, (_, y, m) => `${MONTHS[m] ?? m} ${y}`);
+/** A share to one decimal place. */
+const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`;
+const thousands = (n: number) => `${(n / 1000).toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} million`;
+
+// The current year from the rules file, checked against the data file.
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const pa = resolve(year.incomeTax.personalAllowance, 'incomeTax.personalAllowance', asAt).value;
+const brl = year.incomeTax.bands['england-ni'][0].upTo as number;
+const hrtNow = pa + brl;
+const current = rows.find((r) => r.taxYear === year.taxYear);
+if (!current || current.higherRateThreshold !== hrtNow) throw new Error(`fiscal-drag.json gives a higher rate threshold of ${current?.higherRateThreshold} for ${year.taxYear}; the rules file gives ${hrtNow}`);
+const status = leastSettled([year.incomeTax.personalAllowance.status, year.incomeTax.bands['england-ni'][0].status]);
+
+// Taxpayers above the basic rate, as a count and a share.
+const above = (r: Row) => (r.higherRate ?? 0) + (r.additionalRate ?? 0);
+const share = (r: Row) => (r.taxpayers ? above(r) / r.taxpayers : null);
+const withCounts = rows.filter((r) => r.taxpayers !== null && r.higherRate !== null);
+const first = withCounts[0];
+const last = withCounts[withCounts.length - 1];
+const crossed = (threshold: number) => withCounts.find((r) => (share(r) ?? 0) >= threshold) ?? null;
+const peakShare = withCounts.reduce((a, b) => ((share(b) ?? 0) > (share(a) ?? 0) ? b : a));
+const lastOutturn = [...withCounts].reverse().find((r) => !r.projected)!;
+const firstProjected = withCounts.find((r) => r.projected)!;
+
+// The higher rate threshold in the latest prices.
+const latestCpi = data.latestCpi.value as number;
+const real = (r: Row) => (r.higherRateThreshold !== null && r.cpi ? Math.round((r.higherRateThreshold * latestCpi) / r.cpi) : null);
+const withThreshold = rows.filter((r) => r.higherRateThreshold !== null && r.cpi);
+const peakReal = withThreshold.reduce((a, b) => ((real(b) ?? 0) > (real(a) ?? 0) ? b : a));
+const freezeFrom = [...withThreshold].reverse().find((r, i, arr) => i === arr.length - 1 || arr[i + 1].higherRateThreshold !== r.higherRateThreshold)!;
+const firstReal = real(first) as number;
+const freezeStartReal = real(freezeFrom) as number;
+const lastReal = real(last) as number;
+const additionalStart = rows.find((r) => r.additionalRate !== null)!;
+const additionalCut = rows.find((r, i) => i > 0 && r.additionalRateFrom !== null && rows[i - 1].additionalRateFrom !== null && r.additionalRateFrom !== rows[i - 1].additionalRateFrom)!;
+
+// Charts.
+const W = 800;
+const H = 340;
+const L = 56;
+const R = 16;
+const T = 16;
+const B = 40;
+const years = rows.map((r) => Number(r.taxYear.slice(0, 4)));
+const x0 = years[0];
+const x1 = years[years.length - 1];
+const x = (y: number) => L + ((y - x0) / (x1 - x0)) * (W - L - R);
+const yScale = (max: number) => (v: number) => T + (1 - v / max) * (H - T - B);
+const decades = years.filter((y) => y % 5 === 0);
+const polyline = (pts: { x: number; y: number }[]) => pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join('');
+
+// Chart 1: taxpayers above the basic rate, in thousands, with the projected years marked.
+const countMax = Math.ceil(Math.max(...withCounts.map(above)) / 2000) * 2000;
+const yCount = yScale(countMax);
+const countPts = withCounts.map((r) => ({ x: x(Number(r.taxYear.slice(0, 4))), y: yCount(above(r)), projected: r.projected }));
+const countOutturn = countPts.filter((p) => !p.projected);
+const countProjected = countPts.filter((p, i) => p.projected || (i > 0 && countPts[i + 1]?.projected));
+const countTicks = [0, countMax / 4, countMax / 2, (3 * countMax) / 4, countMax];
+
+// Chart 2: the higher rate threshold in cash and in latest prices.
+const realMax = Math.ceil(Math.max(...withThreshold.map((r) => real(r) as number)) / 10000) * 10000;
+const yMoney = yScale(realMax);
+const cashPts = withThreshold.map((r) => ({ x: x(Number(r.taxYear.slice(0, 4))), y: yMoney(r.higherRateThreshold as number) }));
+const realPts = withThreshold.map((r) => ({ x: x(Number(r.taxYear.slice(0, 4))), y: yMoney(real(r) as number) }));
+const moneyTicks = [0, realMax / 4, realMax / 2, (3 * realMax) / 4, realMax];
+
+// The table: every fifth year, then the recent years.
+const tableRows = withCounts.filter((r, i) => i % 5 === 0 || i >= withCounts.length - 6);
+const live = liveAmounts('salary');
+const retrieved = data.retrieved as string;
+---
+
+<Guide
+	slug="fiscal-drag-how-many-more-pay-40"
+	taxYears={[year.taxYear]}
+	status={status}
+	related={[
+		guideLink('100000-personal-allowance-trap', 'The other frozen threshold, and the marginal rate it creates.'),
+		{ title: `${money(hrtNow, 0)} after tax`, href: `/salary/${hrtNow}/`, desc: 'The salary that sits exactly on the higher rate threshold, line by line.' },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'The personal allowance and basic rate limit that set this year\'s threshold, with their sources.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>HMRC's projection for {label(last.taxYear)} has {thousands(above(last))} people paying income tax at the higher or additional rate, {pct1(share(last) ?? 0)} of all taxpayers. In {label(first.taxYear)}, the first year of independent taxation, it was {thousands(above(first))}, {pct1(share(first) ?? 0)}. The higher rate threshold was {money(first.higherRateThreshold as number, 0)} then; had it kept pace with prices it would be {money(firstReal, 0)} today, against the {money(hrtNow, 0)} it is. That gap, not a change in the rate, is what fiscal drag means.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>Taxpayers above the basic rate since {label(first.taxYear)}</h2>
+		<figure class="chart">
+			<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Taxpayers at the higher or additional rate, ${label(first.taxYear)} to ${label(last.taxYear)}: from ${thousands(above(first))} to ${thousands(above(last))}.`} class="story-chart">
+				{countTicks.map((t) => (
+					<>
+						<line x1={L} x2={W - R} y1={yCount(t)} y2={yCount(t)} class="grid" />
+						<text x={L - 8} y={yCount(t) + 4} class="tick" text-anchor="end">{(t / 1000).toFixed(0)}m</text>
+					</>
+				))}
+				{decades.map((y) => <text x={x(y)} y={H - B + 22} class="tick" text-anchor="middle">{y}</text>)}
+				<path d={polyline(countOutturn)} class="line main" />
+				<path d={polyline(countProjected)} class="line main projected" />
+				<line x1={L} x2={W - R} y1={H - B} y2={H - B} class="axis" />
+			</svg>
+			<figcaption>People paying income tax at the higher or additional rate, by tax year. Dashed: HMRC's projections from {label(firstProjected.taxYear)}. No figure is published for 2008/09. Source: HMRC Table 2.1, retrieved {longDate(retrieved)}.</figcaption>
+		</figure>
+		<p>The line crosses one in ten taxpayers in {crossed(0.1) ? label(crossed(0.1)!.taxYear) : 'no year'}, one in seven in {crossed(1 / 7) ? label(crossed(1 / 7)!.taxYear) : 'no year'} and one in five in {crossed(0.2) ? label(crossed(0.2)!.taxYear) : 'no year'}. The last year of outturn data is {label(lastOutturn.taxYear)}, at {thousands(above(lastOutturn))}; the three years after it are HMRC's projections on the Survey of Personal Incomes, and the share peaks at {pct1(share(peakShare) ?? 0)} in {label(peakShare.taxYear)}.</p>
+	</Fragment>
+
+	<h2>The threshold in cash and in today's money</h2>
+	<figure class="chart">
+		<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`The higher rate threshold in cash and in ${monthLabel(data.latestCpi.label)} prices, ${label(first.taxYear)} to ${label(last.taxYear)}.`} class="story-chart">
+			{moneyTicks.map((t) => (
+				<>
+					<line x1={L} x2={W - R} y1={yMoney(t)} y2={yMoney(t)} class="grid" />
+					<text x={L - 8} y={yMoney(t) + 4} class="tick" text-anchor="end">{money(t, 0)}</text>
+				</>
+			))}
+			{decades.map((y) => <text x={x(y)} y={H - B + 22} class="tick" text-anchor="middle">{y}</text>)}
+			<path d={polyline(realPts)} class="line real" />
+			<path d={polyline(cashPts)} class="line main" />
+			<line x1={L} x2={W - R} y1={H - B} y2={H - B} class="axis" />
+		</svg>
+		<figcaption>
+			The higher rate threshold (personal allowance plus basic rate limit) by tax year. Solid: the cash figure. Amber: the same figure in {monthLabel(data.latestCpi.label)} prices, using the CPI average for the calendar year each tax year starts in. Sources: HMRC Tables A.1 and A.2, ONS CPI series D7BT, retrieved {longDate(retrieved)}.
+			<span class="legend"><span><i class="swatch main"></i>Cash</span><span><i class="swatch real"></i>In today's prices</span></span>
+		</figcaption>
+	</figure>
+	<p>In today's prices the threshold was highest in {label(peakReal.taxYear)}, when {money(peakReal.higherRateThreshold as number, 0)} was worth {money(real(peakReal) as number, 0)}. It has been {money(freezeFrom.higherRateThreshold as number, 0)} since {label(freezeFrom.taxYear)}: worth {money(freezeStartReal, 0)} in today's prices when the freeze began and {money(lastReal, 0)} now, a fall of {pct1(1 - lastReal / freezeStartReal)} in real terms. A threshold that stays still while pay rises pulls people across it; that is the whole mechanism, and it works without any Budget announcing a rate rise.</p>
+	<p>The additional rate adds a second step. It began in {label(additionalStart.taxYear)} on taxable income over {money(additionalStart.additionalRateFrom as number, 0)}, and its starting point was cut to {money(additionalCut.additionalRateFrom as number, 0)} in {label(additionalCut.taxYear)}, which is why the additional rate count rises faster from then.</p>
+
+	<h2>The figures</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>Taxpayers by marginal rate (thousands) and the higher rate threshold, selected years. Projected years are marked.</caption>
+			<thead><tr><th scope="col">Tax year</th><th scope="col" class="num">All taxpayers</th><th scope="col" class="num">Higher rate</th><th scope="col" class="num">Additional rate</th><th scope="col" class="num">Share above basic</th><th scope="col" class="num">Threshold</th><th scope="col" class="num">In today's prices</th></tr></thead>
+			<tbody>
+				{tableRows.map((r) => (
+					<tr>
+						<th scope="row">{label(r.taxYear)}{r.projected ? ' (projected)' : ''}</th>
+						<td class="num">{r.taxpayers?.toLocaleString('en-GB')}</td>
+						<td class="num">{r.higherRate?.toLocaleString('en-GB')}</td>
+						<td class="num">{r.additionalRate === null ? 'None' : r.additionalRate.toLocaleString('en-GB')}</td>
+						<td class="num">{pct1(share(r) ?? 0)}</td>
+						<td class="num">{r.higherRateThreshold === null ? '' : live.includes(r.higherRateThreshold) ? <a href={`/salary/${r.higherRateThreshold}/`}>{money(r.higherRateThreshold, 0)}</a> : money(r.higherRateThreshold, 0)}</td>
+						<td class="num">{real(r) === null ? '' : money(real(r) as number, 0)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+
+	<h2>How to read it</h2>
+	<ul>
+		<li>HMRC classifies each taxpayer by the marginal rate on their total taxable income, after allowances. Scottish taxpayers in the Scottish intermediate or advanced bands are placed by the UK band their income would fall in; HMRC's footnotes set this out.</li>
+		<li>The threshold is the personal allowance plus the basic rate limit for England, Wales and Northern Ireland, as HMRC's Tables A.1 and A.2 record them. Age-related allowances, which were higher, are left out, so for older taxpayers the cash threshold in the early years understates the real one.</li>
+		<li>Prices use the CPI average for the calendar year in which each tax year starts, so the price adjustment for a tax year is about nine months adrift of its mid-point. The current year uses the latest month published, {monthLabel(data.latestCpi.label)}.</li>
+		<li>The counts for {label(firstProjected.taxYear)} onwards are HMRC's projections and will be revised; the table is republished each summer. No figure exists for 2008/09.</li>
+		<li>The number of taxpayers also grows with the population and with employment, so the share column is the fairer comparison across the years.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{(data.sources as { name: string; url: string; published: string }[]).map((s) => <li><a href={s.url} rel="noopener">{s.name}</a>, published {longDate(s.published)}</li>)}
+		<li>The combined data file this page reads: <a href="/data/fiscal-drag.json">fiscal-drag.json</a>, with each source's file address and checksum.</li>
+	</Fragment>
+</Guide>
+
+<style>
+	.chart { margin: 1rem 0 1.5rem; }
+	.story-chart { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+	.story-chart .grid { stroke: var(--hairline); stroke-width: 1; }
+	.story-chart .axis { stroke: var(--ink); stroke-width: 1; }
+	.story-chart .tick { fill: var(--quiet); font-size: 12px; }
+	.story-chart .line { fill: none; stroke-linejoin: round; }
+	.story-chart .line.main { stroke: var(--ink); stroke-width: 2.5; }
+	.story-chart .line.projected { stroke-dasharray: 5 4; }
+	.story-chart .line.real { stroke: var(--threshold); stroke-width: 2; }
+	figcaption { color: var(--quiet); font-size: 0.9rem; margin-top: 0.5rem; }
+	.legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-top: 0.4rem; }
+	.legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+	.swatch { display: inline-block; width: 1.4rem; height: 0; border-top: 2px solid var(--ink); }
+	.swatch.real { border-color: var(--threshold); }
+</style>

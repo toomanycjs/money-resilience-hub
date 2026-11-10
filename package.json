@@ -21,7 +21,8 @@
     "sources:watch": "node packages/rules/scripts/source-watch.mjs",
     "lastmod": "node scripts/lastmod.mjs",
     "lighthouse": "node scripts/lighthouse.mjs",
-    "fonts:subset": "python scripts/subset-fonts.py"
+    "fonts:subset": "python scripts/subset-fonts.py",
+    "draft:publish": "node scripts/publish-draft.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "^5.0.2",

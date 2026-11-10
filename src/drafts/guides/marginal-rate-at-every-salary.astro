@@ -97,7 +97,7 @@ const W = 800;
 const H = 360;
 const L = 52;
 const R = 16;
-const T = 18;
+const T = 30;
 const B = 44;
 const yMax = 0.7;
 const x = (g: number) => L + ((g - FROM) / (TO - FROM)) * (W - L - R);
@@ -156,10 +156,10 @@ const sources = [
 				{xTicks.map((t) => (
 					<text x={x(t)} y={H - B + 22} class="tick" text-anchor="middle">{money(t, 0)}</text>
 				))}
-				{marks.map((m) => (
+				{marks.map((m, i) => (
 					<>
 						<line x1={x(m.at)} x2={x(m.at)} y1={T} y2={H - B} class="mark" />
-						<text x={x(m.at) + 4} y={T + 10} class="mark-label">{m.label}</text>
+						<text x={x(m.at) + 4} y={T + 10 + (i % 2) * 13} class="mark-label">{m.label}</text>
 					</>
 				))}
 				<path d={path(points[3].values)} class="line child" />

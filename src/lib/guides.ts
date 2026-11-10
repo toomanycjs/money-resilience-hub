@@ -129,6 +129,17 @@ export const GUIDES: Guide[] = [
 		draft: true,
 		publishOn: '2026-11-16',
 	},
+	{
+		slug: 'fiscal-drag-how-many-more-pay-40',
+		title: 'Fiscal drag: how many more people pay the higher rate',
+		h1: 'How many more people pay the higher rate than in 1990?',
+		description: 'Taxpayers at the higher and additional rates every year since 1990/91, from HMRC tables, next to the higher rate threshold in cash and in current prices.',
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: TAKE_HOME,
+		draft: true,
+		publishOn: '2026-11-23',
+	},
 ];
 
 // The build's own limits, checked here so a rules change that lengthens a
