@@ -192,6 +192,8 @@ export const GUIDES: Guide[] = [
 		calculator: STATE_PENSION,
 		draft: true,
 		publishOn: '2026-12-21',
+	},
+	{
 		slug: 'savings-tax-24-how-much-before-tax',
 		title: savingsNext ? `Savings tax at ${pct(savingsNext.basic)}: how much can you hold before paying tax?` : 'Savings tax: how much can you hold before paying tax?',
 		h1: 'How much can I hold in savings before paying tax on the interest?',
