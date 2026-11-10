@@ -1,0 +1,196 @@
+---
+// Are savers losing to inflation? Average quoted instant access and cash
+// ISA rates against CPI inflation each month since 2016, from the Bank of
+// England database and the ONS (src/data/savings-rates-and-inflation.json),
+// and what the savings tax rates from April 2027 do to the return after tax,
+// computed by the savings tax engine.
+import { getYear, leastSettled, nextYear, resolve, savingsTax, RulesUnavailableError } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import data from '../../data/savings-rates-and-inflation.json' with { type: 'json' };
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+
+interface Row {
+	month: string;
+	instantAccessIncBonus: number;
+	cashIsa: number;
+	cpiAnnualRate: number | null;
+	realInstantAccess: number | null;
+	realCashIsa: number | null;
+}
+const rows = data.rows as Row[];
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const monthLabel = (m: string) => `${MONTHS[Number(m.slice(5)) - 1]} ${m.slice(0, 4)}`;
+const pp = (v: number) => `${v.toFixed(1)}%`;
+const withCpi = rows.filter((r) => r.cpiAnnualRate !== null);
+const latest = withCpi[withCpi.length - 1];
+const latestRate = rows[rows.length - 1];
+const first = withCpi[0];
+const positive = withCpi.filter((r) => (r.realInstantAccess as number) > 0);
+const negative = withCpi.filter((r) => (r.realInstantAccess as number) < 0);
+const worst = withCpi.reduce((a, b) => ((b.realInstantAccess as number) < (a.realInstantAccess as number) ? b : a));
+const best = withCpi.reduce((a, b) => ((b.realInstantAccess as number) > (a.realInstantAccess as number) ? b : a));
+const peakRate = rows.reduce((a, b) => (b.instantAccessIncBonus > a.instantAccessIncBonus ? b : a));
+const peakCpi = withCpi.reduce((a, b) => ((b.cpiAnnualRate as number) > (a.cpiAnnualRate as number) ? b : a));
+// The latest run of months with the same sign.
+let runStart = withCpi.length - 1;
+while (runStart > 0 && Math.sign(withCpi[runStart - 1].realInstantAccess as number) === Math.sign(latest.realInstantAccess as number)) runStart--;
+const run = withCpi.slice(runStart);
+
+// After tax: the savings engine on a balance at the latest instant access rate.
+const year = getYear(CURRENT_YEAR.taxYear);
+const following = nextYear(year.taxYear);
+const asAt = BUILD_DATE;
+const status = leastSettled([year.incomeTax.savings.rates.basic.status, ...(following ? [following.incomeTax.savings.rates.basic.status] : [])]);
+const psa = resolve(year.incomeTax.savings.personalSavingsAllowance.basic, 'incomeTax.savings.personalSavingsAllowance.basic', asAt).value;
+const BALANCE = 100000;
+const OTHER = { basic: 30000, higher: 60000 };
+const rate = latestRate.instantAccessIncBonus / 100;
+const interest = Math.round(BALANCE * rate * 100) / 100;
+const run2 = (otherIncome: number, taxYear: string, at: string) => {
+	try {
+		const r = savingsTax({ interest, otherIncome, nation: 'england-ni', taxYear, asAt: at, compare: false });
+		return r.facts.tax as number;
+	} catch (e) {
+		if (e instanceof RulesUnavailableError) return null;
+		throw e;
+	}
+};
+const afterTax = (['basic', 'higher'] as const).map((band) => {
+	const now = run2(OTHER[band], year.taxYear, asAt);
+	const next = following ? run2(OTHER[band], following.taxYear, following.starts) : null;
+	const netRate = (tax: number | null) => (tax === null ? null : ((interest - tax) / BALANCE) * 100);
+	return { band, other: OTHER[band], taxNow: now, taxNext: next, rateNow: netRate(now), rateNext: netRate(next) };
+});
+const savingsNow = resolve(year.incomeTax.savings.rates.basic, 'incomeTax.savings.rates.basic', asAt).value;
+const savingsNext = following ? resolve(following.incomeTax.savings.rates.basic, 'incomeTax.savings.rates.basic', following.starts).value : null;
+
+// Chart: three monthly lines since 2016.
+const W = 800;
+const H = 320;
+const L = 44;
+const R = 16;
+const T = 16;
+const B = 40;
+const yMax = Math.ceil(Math.max(...rows.map((r) => Math.max(r.instantAccessIncBonus, r.cashIsa, r.cpiAnnualRate ?? 0))));
+const x = (i: number) => L + (i / (rows.length - 1)) * (W - L - R);
+const y = (v: number) => T + (1 - v / yMax) * (H - T - B);
+const line = (get: (r: Row) => number | null) => rows.map((r, i) => ({ i, v: get(r) })).filter((p) => p.v !== null).map((p, j) => `${j ? 'L' : 'M'}${x(p.i).toFixed(1)},${y(p.v as number).toFixed(1)}`).join('');
+const yearTicks = rows.map((r, i) => ({ i, y: r.month.slice(0, 4) })).filter((t, j, arr) => j === 0 || arr[j - 1].y !== t.y).filter((t) => Number(t.y) % 2 === 0);
+const ticks = Array.from({ length: yMax + 1 }, (_, i) => i).filter((v) => v % 2 === 0);
+const retrieved = data.retrieved as string;
+const sources = data.sources as { name: string; url: string; published: string }[];
+---
+
+<Guide
+	slug="are-savers-losing-to-inflation"
+	taxYears={[year.taxYear, ...(following ? [following.taxYear] : [])]}
+	status={status}
+	related={[
+		{ title: 'Savings interest tax calculator', href: '/calculators/savings-tax/', desc: 'Tax on your own interest this year and from April 2027.' },
+		guideLink('pension-tax-allowance', 'Another place where a frozen allowance meets a rising figure.'),
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'The savings allowances and rates with their sources.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>In {monthLabel(latest.month)} the average instant access account paid {pp(latest.instantAccessIncBonus)} and the average cash ISA {pp(latest.cashIsa)}, against CPI inflation of {pp(latest.cpiAnnualRate as number)}. The instant access saver therefore {(latest.realInstantAccess as number) >= 0 ? 'kept' : 'lost'} {pp(Math.abs(latest.realInstantAccess as number))} a year in real terms before tax. Since {monthLabel(first.month)} the average instant access rate has beaten inflation in {positive.length} months out of {withCpi.length} and fallen short in {negative.length}; the worst month was {monthLabel(worst.month)}, at {pp(worst.realInstantAccess as number)}. For a basic rate taxpayer with {money(BALANCE, 0)} at the latest rate, tax takes the return after allowances from {pp(latestRate.instantAccessIncBonus)} to {afterTax[0].rateNow === null ? 'not set' : pp(afterTax[0].rateNow)} now and {afterTax[0].rateNext === null ? 'not set' : pp(afterTax[0].rateNext)} from April 2027.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>Savings rates and inflation, month by month</h2>
+		<figure class="chart">
+			<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Average instant access and cash ISA rates and CPI inflation, monthly, ${monthLabel(rows[0].month)} to ${monthLabel(latestRate.month)}. Instant access peaked at ${pp(peakRate.instantAccessIncBonus)} in ${monthLabel(peakRate.month)}; inflation peaked at ${pp(peakCpi.cpiAnnualRate as number)} in ${monthLabel(peakCpi.month)}.`} class="story-chart">
+				{ticks.map((t) => (
+					<>
+						<line x1={L} x2={W - R} y1={y(t)} y2={y(t)} class="grid" />
+						<text x={L - 8} y={y(t) + 4} class="tick" text-anchor="end">{t}%</text>
+					</>
+				))}
+				{yearTicks.map((t) => <text x={x(t.i)} y={H - B + 22} class="tick" text-anchor="middle">{t.y}</text>)}
+				<path d={line((r) => r.cpiAnnualRate)} class="line cpi" />
+				<path d={line((r) => r.cashIsa)} class="line isa" />
+				<path d={line((r) => r.instantAccessIncBonus)} class="line access" />
+				<line x1={L} x2={W - R} y1={H - B} y2={H - B} class="axis" />
+			</svg>
+			<figcaption>
+				Monthly averages of quoted household rates (Bank of England) and the CPI annual rate (ONS), {monthLabel(rows[0].month)} to {monthLabel(latestRate.month)}; the CPI line ends at the latest month the ONS has published. Retrieved {longDate(retrieved)}.
+				<span class="legend"><span><i class="swatch access"></i>Instant access, including bonuses</span><span><i class="swatch isa"></i>Cash ISA, variable rate</span><span><i class="swatch cpi"></i>CPI inflation</span></span>
+			</figcaption>
+		</figure>
+		<p>Two things stand out. Rates stayed close to zero from {monthLabel(rows[0].month)} until 2022, then rose as the Bank of England raised Bank Rate, peaking at {pp(peakRate.instantAccessIncBonus)} in {monthLabel(peakRate.month)}. Inflation ran ahead of them throughout the rise, peaking at {pp(peakCpi.cpiAnnualRate as number)} in {monthLabel(peakCpi.month)}, and the gap only closed as it fell back. The latest run of {run.length} months has the instant access rate {(latest.realInstantAccess as number) >= 0 ? 'above' : 'below'} inflation.</p>
+	</Fragment>
+
+	<h2>The real return, before tax</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>Average instant access rate less CPI inflation, selected months</caption>
+			<thead><tr><th scope="col">Month</th><th scope="col" class="num">Instant access</th><th scope="col" class="num">Cash ISA</th><th scope="col" class="num">CPI inflation</th><th scope="col" class="num">Real instant access rate</th></tr></thead>
+			<tbody>
+				{[...new Set([first, peakCpi, worst, best, withCpi.find((r) => r.month.endsWith('-04') && r.month.startsWith(String(Number(latest.month.slice(0, 4)) - 1))) ?? withCpi[Math.floor(withCpi.length / 2)], latest])].map((r) => (
+					<tr>
+						<th scope="row">{monthLabel(r.month)}{r === worst ? ' (lowest)' : r === best ? ' (highest)' : r === peakCpi ? ' (inflation peak)' : r === latest ? ' (latest)' : ''}</th>
+						<td class="num">{pp(r.instantAccessIncBonus)}</td>
+						<td class="num">{pp(r.cashIsa)}</td>
+						<td class="num">{pp(r.cpiAnnualRate as number)}</td>
+						<td class="num">{(r.realInstantAccess as number) >= 0 ? '+' : '−'}{pp(Math.abs(r.realInstantAccess as number))}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>A real rate is the quoted rate less the inflation rate. It says whether the money in the account buys more or less a year later, before any tax. The Bank's quoted rates are averages across accounts on offer, weighted by balances, so a saver's own rate can be well above or below them.</p>
+
+	<h2>After tax, now and from April 2027</h2>
+	<p>Interest above the personal savings allowance is taxed. The allowance is {money(psa, 0)} for a basic rate taxpayer and half that for a higher rate taxpayer, and the savings rates rise from {pct(savingsNow)}{savingsNext !== null ? ` to ${pct(savingsNext)}` : ''} for basic rate taxpayers from {following ? longDate(following.starts) : 'April 2027'}, with the higher and additional rates up by the same four points. The table runs {money(BALANCE, 0)} at the latest average instant access rate through the savings tax tool for a basic rate taxpayer and a higher rate taxpayer.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>{money(BALANCE, 0)} at {pp(latestRate.instantAccessIncBonus)}, {money(interest, 0)} of interest a year: tax and the rate after tax</caption>
+			<thead><tr><th scope="col">Saver</th><th scope="col" class="num">Tax in {year.label}</th><th scope="col" class="num">Rate after tax</th><th scope="col" class="num">Tax from {following ? following.label : 'next year'}</th><th scope="col" class="num">Rate after tax</th><th scope="col" class="num">Latest inflation</th></tr></thead>
+			<tbody>
+				{afterTax.map((a) => (
+					<tr>
+						<th scope="row">{a.band === 'basic' ? 'Basic' : 'Higher'} rate taxpayer, other income {money(a.other, 0)}</th>
+						<td class="num">{a.taxNow === null ? 'Not set' : money(a.taxNow, 0)}</td>
+						<td class="num">{a.rateNow === null ? '' : pp(a.rateNow)}</td>
+						<td class="num">{a.taxNext === null ? 'Not set' : money(a.taxNext, 0)}</td>
+						<td class="num">{a.rateNext === null ? '' : pp(a.rateNext)}</td>
+						<td class="num">{pp(latest.cpiAnnualRate as number)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>Interest inside a cash ISA is not taxed, so its after-tax rate is its quoted rate, {pp(latestRate.cashIsa)} in {monthLabel(latestRate.month)}. The ISA limit and the Lifetime ISA rules are on the <a href={`/rates/${year.taxYear}/`}>rates page</a>.</p>
+
+	<h2>How to read it</h2>
+	<ul>
+		<li>The Bank of England series are monthly averages of rates quoted to households by UK banks and building societies, weighted by balances: instant access deposits including unconditional bonuses (series IUMB6VJ) and variable rate cash ISAs (IUMB6VL). The Bank notes that the sample widened in July 2018 and the method changed in 2016 and 2019.</li>
+		<li>Inflation is the CPI index in each month against the same month a year earlier, the ONS headline measure. The CPI for a month is published the month after, so the latest savings rate has no inflation figure yet.</li>
+		<li>The after-tax figures assume the whole balance earns the average rate for a full tax year, and use the standard allowance for England, Wales and Northern Ireland.</li>
+		<li>Nothing here says whether to hold cash, or where. It describes what average rates, inflation and the tax rules do to a sum of money.</li>
+		<li>The data file behind this page: <a href="/data/savings-rates-and-inflation.json">savings-rates-and-inflation.json</a>.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{sources.map((s) => <li><a href={s.url} rel="noopener">{s.name}</a>, {longDate(s.published)}</li>)}
+	</Fragment>
+</Guide>
+
+<style>
+	.chart { margin: 1rem 0 1.5rem; }
+	.story-chart { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+	.story-chart .grid { stroke: var(--hairline); stroke-width: 1; }
+	.story-chart .axis { stroke: var(--ink); stroke-width: 1; }
+	.story-chart .tick { fill: var(--quiet); font-size: 12px; }
+	.story-chart .line { fill: none; stroke-linejoin: round; stroke-width: 2; }
+	.story-chart .line.access { stroke: var(--ink); stroke-width: 2.5; }
+	.story-chart .line.isa { stroke: var(--threshold); }
+	.story-chart .line.cpi { stroke: var(--deduction); }
+	figcaption { color: var(--quiet); font-size: 0.9rem; margin-top: 0.5rem; }
+	.legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-top: 0.4rem; }
+	.legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+	.swatch { display: inline-block; width: 1.4rem; height: 0; border-top: 2px solid var(--ink); }
+	.swatch.isa { border-color: var(--threshold); }
+	.swatch.cpi { border-color: var(--deduction); }
+</style>

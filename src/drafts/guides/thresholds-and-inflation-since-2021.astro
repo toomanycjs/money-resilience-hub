@@ -1,0 +1,228 @@
+---
+// Thresholds against inflation since 2021: the personal allowance, the
+// higher and additional rate thresholds and the National Insurance
+// thresholds in cash and in current prices, from HMRC's own tables
+// (src/data/fiscal-drag.json and src/data/ni-thresholds-history.json) and
+// the ONS CPI series, plus what the engine says a frozen allowance costs a
+// salary that has kept pace with prices. The data is published as open data.
+import { getYear, incomeTax, leastSettled, nationalInsurance, resolve, type YearConfig } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import drag from '../../data/fiscal-drag.json' with { type: 'json' };
+import ni from '../../data/ni-thresholds-history.json' with { type: 'json' };
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+import { liveAmounts } from '../../lib/pages';
+
+interface DragRow {
+	taxYear: string;
+	personalAllowance: number | null;
+	basicRateLimit: number | null;
+	additionalRateFrom: number | null;
+	higherRateThreshold: number | null;
+	cpi: number | null;
+}
+interface NiRow {
+	taxYear: string;
+	primaryThresholdWeekly: number | null;
+	upperEarningsLimitWeekly: number | null;
+}
+const FROM = '2021-22';
+const label = (y: string) => `${y.slice(0, 4)}/${y.slice(5)}`;
+const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`;
+const latestCpi = drag.latestCpi.value as number;
+const latestLabel = (drag.latestCpi.label as string).replace(/^(\d{4}) (\w{3})$/, (_, y, m) => `${({ JAN: 'January', FEB: 'February', MAR: 'March', APR: 'April', MAY: 'May', JUN: 'June', JUL: 'July', AUG: 'August', SEP: 'September', OCT: 'October', NOV: 'November', DEC: 'December' } as Record<string, string>)[m]} ${y}`);
+const niBy = new Map((ni.rows as NiRow[]).map((r) => [r.taxYear, r]));
+const rows = (drag.rows as DragRow[])
+	.filter((r) => r.taxYear >= FROM && r.cpi && r.personalAllowance !== null && r.higherRateThreshold !== null)
+	.map((r) => {
+		const n = niBy.get(r.taxYear);
+		const real = (v: number | null) => (v === null ? null : Math.round((v * latestCpi) / (r.cpi as number)));
+		return {
+			taxYear: r.taxYear,
+			cpi: r.cpi as number,
+			pa: r.personalAllowance as number,
+			hrt: r.higherRateThreshold as number,
+			art: r.additionalRateFrom,
+			ptWeekly: n?.primaryThresholdWeekly ?? null,
+			uelWeekly: n?.upperEarningsLimitWeekly ?? null,
+			paReal: real(r.personalAllowance) as number,
+			hrtReal: real(r.higherRateThreshold) as number,
+			artReal: real(r.additionalRateFrom),
+			ptWeeklyReal: real(n?.primaryThresholdWeekly ?? null),
+		};
+	});
+const first = rows[0];
+const last = rows[rows.length - 1];
+// What each threshold would be today had it risen with prices from the first year.
+const uprated = (v: number) => Math.round((v * latestCpi) / first.cpi);
+const paUprated = uprated(first.pa);
+const hrtUprated = uprated(first.hrt);
+const priceRise = latestCpi / first.cpi - 1;
+
+// The engine on a salary that has kept pace with prices: tax under the
+// frozen thresholds against tax under thresholds uprated the same way.
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const status = leastSettled([year.incomeTax.personalAllowance.status, year.incomeTax.bands['england-ni'][0].status, year.nationalInsurance.employee.primaryThreshold.status]);
+const pa = resolve(year.incomeTax.personalAllowance, 'incomeTax.personalAllowance', asAt).value;
+const brl = year.incomeTax.bands['england-ni'][0].upTo as number;
+const pt = resolve(year.nationalInsurance.employee.primaryThreshold, 'nationalInsurance.employee.primaryThreshold', asAt).value;
+const uel = resolve(year.nationalInsurance.employee.upperEarningsLimit, 'nationalInsurance.employee.upperEarningsLimit', asAt).value;
+if (pa !== last.pa || pa + brl !== last.hrt) throw new Error(`The HMRC tables and the rules file disagree on ${year.label}: allowance ${last.pa} v ${pa}, threshold ${last.hrt} v ${pa + brl}`);
+// A copy of this year's rules with every threshold raised in line with prices since the first year.
+const upratedYear = JSON.parse(JSON.stringify(year)) as YearConfig;
+const factor = latestCpi / first.cpi;
+const paUp = Math.round((first.pa * factor) / 10) * 10;
+const brlUp = Math.round(((first.hrt - first.pa) * factor) / 10) * 10;
+upratedYear.incomeTax.personalAllowance.value = paUp;
+upratedYear.incomeTax.bands['england-ni'][0].upTo = brlUp;
+upratedYear.incomeTax.bands['england-ni'][1].upTo = Math.max(upratedYear.incomeTax.bands['england-ni'][1].upTo as number, brlUp + 1);
+upratedYear.nationalInsurance.employee.primaryThreshold.value = paUp;
+upratedYear.nationalInsurance.employee.upperEarningsLimit.value = paUp + brlUp;
+const salaries2021 = [25000, 35000, 45000, 60000];
+const examples = salaries2021.map((then) => {
+	const now = Math.round((then * factor) / 100) * 100;
+	const frozen = incomeTax(Math.max(0, now - pa), 'england-ni', year).total + nationalInsurance(now, year, asAt).total;
+	const kept = incomeTax(Math.max(0, now - paUp), 'england-ni', upratedYear).total + nationalInsurance(now, upratedYear, asAt).total;
+	return { then, now, frozen: Math.round(frozen), kept: Math.round(kept), extra: Math.round(frozen - kept) };
+});
+const live = liveAmounts('salary');
+
+// Chart: each threshold's value in current prices, indexed to its first year.
+const W = 800;
+const H = 320;
+const L = 52;
+const R = 16;
+const T = 16;
+const B = 40;
+const x = (i: number) => L + (i / (rows.length - 1)) * (W - L - R);
+const yMin = 70;
+const yMax = 110;
+const y = (v: number) => T + (1 - (v - yMin) / (yMax - yMin)) * (H - T - B);
+const index = (get: (r: (typeof rows)[number]) => number | null) => rows.map((r, i) => ({ x: x(i), v: get(r) !== null && get(first) !== null ? ((get(r) as number) / (get(first) as number)) * 100 : null })).filter((p) => p.v !== null) as { x: number; v: number }[];
+const line = (pts: { x: number; v: number }[]) => pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)},${y(p.v).toFixed(1)}`).join('');
+const seriesDef = [
+	{ id: 'pa', label: 'Personal allowance', pts: index((r) => r.paReal) },
+	{ id: 'hrt', label: 'Higher rate threshold', pts: index((r) => r.hrtReal) },
+	{ id: 'art', label: 'Additional rate threshold', pts: index((r) => r.artReal) },
+	{ id: 'pt', label: 'NI primary threshold (weekly)', pts: index((r) => r.ptWeeklyReal) },
+];
+const ticks = [70, 80, 90, 100, 110];
+const retrieved = drag.retrieved as string;
+---
+
+<Guide
+	slug="thresholds-and-inflation-since-2021"
+	taxYears={[year.taxYear]}
+	status={status}
+	related={[
+		guideLink('100000-personal-allowance-trap', 'The allowance taper, another threshold that has not moved.'),
+		{ title: `${money(pa + brl, 0)} after tax`, href: `/salary/${pa + brl}/`, desc: 'The salary on the higher rate threshold, line by line.' },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'This year\'s thresholds with their sources and status.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>The personal allowance has been {money(first.pa, 0)} and the higher rate threshold {money(first.hrt, 0)} since {label(first.taxYear)}. Prices have risen {pct1(priceRise)} since then, so in {latestLabel} money the allowance is worth {money(last.paReal, 0)} against {money(first.paReal, 0)} when the freeze began, and the threshold {money(last.hrtReal, 0)} against {money(first.hrtReal, 0)}. Had both risen with prices they would be {money(paUprated, 0)} and {money(hrtUprated, 0)} today. A salary of {money(examples[1].then, 0)} in {label(first.taxYear)} that has kept pace with prices is {money(examples[1].now, 0)} now and pays {money(examples[1].extra, 0)} a year more in income tax and National Insurance than it would under thresholds that had kept pace too.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>Each threshold in today's prices, {label(first.taxYear)} = 100</h2>
+		<figure class="chart">
+			<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Each threshold's value in ${latestLabel} prices, indexed to ${label(first.taxYear)}: the personal allowance falls to ${(last.paReal / first.paReal * 100).toFixed(0)} and the higher rate threshold to ${(last.hrtReal / first.hrtReal * 100).toFixed(0)} by ${label(last.taxYear)}.`} class="story-chart">
+				{ticks.map((t) => (
+					<>
+						<line x1={L} x2={W - R} y1={y(t)} y2={y(t)} class={t === 100 ? 'zero' : 'grid'} />
+						<text x={L - 8} y={y(t) + 4} class="tick" text-anchor="end">{t}</text>
+					</>
+				))}
+				{rows.map((r, i) => <text x={x(i)} y={H - B + 22} class="tick" text-anchor="middle">{label(r.taxYear)}</text>)}
+				{seriesDef.map((s) => <path d={line(s.pts)} class={`line ${s.id}`} />)}
+				<line x1={L} x2={W - R} y1={H - B} y2={H - B} class="axis" />
+			</svg>
+			<figcaption>
+				Each threshold converted to {latestLabel} prices with the CPI average for the calendar year the tax year starts in, then indexed to {label(first.taxYear)}. The line at 100 is a threshold keeping pace with prices. Sources: HMRC Tables A.1, A.2 and A.4, ONS CPI series D7BT, retrieved {longDate(retrieved)}.
+				<span class="legend">{seriesDef.map((s) => <span><i class={`swatch ${s.id}`}></i>{s.label}</span>)}</span>
+			</figcaption>
+		</figure>
+	</Fragment>
+
+	<h2>The thresholds, year by year</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>Thresholds in cash and in {latestLabel} prices. National Insurance thresholds are weekly, as HMRC publishes them.</caption>
+			<thead><tr><th scope="col">Tax year</th><th scope="col" class="num">Personal allowance</th><th scope="col" class="num">In today's prices</th><th scope="col" class="num">Higher rate threshold</th><th scope="col" class="num">In today's prices</th><th scope="col" class="num">Additional rate from</th><th scope="col" class="num">NI primary threshold, weekly</th><th scope="col" class="num">NI upper earnings limit, weekly</th></tr></thead>
+			<tbody>
+				{rows.map((r) => (
+					<tr>
+						<th scope="row">{label(r.taxYear)}</th>
+						<td class="num">{money(r.pa, 0)}</td>
+						<td class="num">{money(r.paReal, 0)}</td>
+						<td class="num">{live.includes(r.hrt) ? <a href={`/salary/${r.hrt}/`}>{money(r.hrt, 0)}</a> : money(r.hrt, 0)}</td>
+						<td class="num">{money(r.hrtReal, 0)}</td>
+						<td class="num">{r.art === null ? '' : money(r.art, 0)}</td>
+						<td class="num">{r.ptWeekly === null ? '' : money(r.ptWeekly, 0)}</td>
+						<td class="num">{r.uelWeekly === null ? '' : money(r.uelWeekly, 0)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>The additional rate threshold is the one figure that moved: it was cut from {money(rows.find((r) => r.art !== null)!.art as number, 0)} to {money(last.art as number, 0)} in {label(rows.find((r, i) => i > 0 && r.art !== rows[i - 1].art)!.taxYear)}, a cut in cash as well as in real terms. The National Insurance primary threshold rose to the personal allowance in July 2022 and has stayed there, so for most employees the first pound of National Insurance and the first pound of income tax now fall at the same salary.</p>
+
+	<h2>What the freeze costs a salary that kept pace with prices</h2>
+	<p>The table takes four salaries from {label(first.taxYear)}, raises each by the {pct1(priceRise)} that prices have risen, and runs the result through the {year.label} rules twice: once with the thresholds as they are, and once with the personal allowance, basic rate limit and National Insurance thresholds raised by the same {pct1(priceRise)}. The difference is the tax and National Insurance the freeze adds for someone whose pay has only kept pace with prices. England, Wales and Northern Ireland, standard tax code.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>Income tax and National Insurance in {year.label} on a salary that has risen with prices since {label(first.taxYear)}: frozen thresholds against uprated ones</caption>
+			<thead><tr><th scope="col">Salary in {label(first.taxYear)}</th><th scope="col" class="num">Same salary in today's prices</th><th scope="col" class="num">Tax and NI, frozen thresholds</th><th scope="col" class="num">Tax and NI, uprated thresholds</th><th scope="col" class="num">Extra from the freeze</th></tr></thead>
+			<tbody>
+				{examples.map((e) => (
+					<tr>
+						<th scope="row">{money(e.then, 0)}</th>
+						<td class="num">{live.includes(e.now) ? <a href={`/salary/${e.now}/`}>{money(e.now, 0)}</a> : money(e.now, 0)}</td>
+						<td class="num">{money(e.frozen, 0)}</td>
+						<td class="num">{money(e.kept, 0)}</td>
+						<td class="num">{money(e.extra, 0)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>Under uprated thresholds the allowance would be {money(paUp, 0)} and the higher rate threshold {money(paUp + brlUp, 0)}, rounded to the nearest ten pounds. The extra is largest where the uprated higher rate threshold would have lifted someone out of the higher rate altogether.</p>
+
+	<h2>How to read it</h2>
+	<ul>
+		<li>Cash thresholds are HMRC's Tables A.1, A.2 and A.4 for England, Wales and Northern Ireland; the higher rate threshold is the personal allowance plus the basic rate limit. Scotland sets its own bands above the allowance.</li>
+		<li>Prices use the ONS CPI average for the calendar year each tax year starts in; the current year uses the latest month published, {latestLabel}. The uprating in the second table uses the same ratio.</li>
+		<li>The National Insurance primary threshold changed during 2022/23; the table shows the figure in force at the end of that year, as HMRC's table footnote records.</li>
+		<li>The personal allowance and the basic rate limit are legislated to stay at these levels until April 2031, and the {year.label} rows carry that status.</li>
+		<li>The data files behind this page are published as open data: <a href="/data/fiscal-drag.json">fiscal-drag.json</a> and <a href="/data/ni-thresholds-history.json">ni-thresholds-history.json</a>.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{(drag.sources as { name: string; url: string; published: string }[]).map((s) => <li><a href={s.url} rel="noopener">{s.name}</a>, published {longDate(s.published)}</li>)}
+		{(ni.sources as { name: string; url: string; published: string }[]).map((s) => <li><a href={s.url} rel="noopener">{s.name}</a>, published {longDate(s.published)}</li>)}
+	</Fragment>
+</Guide>
+
+<style>
+	.chart { margin: 1rem 0 1.5rem; }
+	.story-chart { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+	.story-chart .grid { stroke: var(--hairline); stroke-width: 1; }
+	.story-chart .zero { stroke: var(--quiet); stroke-width: 1; }
+	.story-chart .axis { stroke: var(--ink); stroke-width: 1; }
+	.story-chart .tick { fill: var(--quiet); font-size: 12px; }
+	.story-chart .line { fill: none; stroke-linejoin: round; stroke-width: 2; }
+	.story-chart .line.pa { stroke: var(--ink); stroke-width: 2.5; }
+	.story-chart .line.hrt { stroke: var(--threshold); }
+	.story-chart .line.art { stroke: var(--deduction); }
+	.story-chart .line.pt { stroke: var(--quiet); stroke-dasharray: 4 3; }
+	figcaption { color: var(--quiet); font-size: 0.9rem; margin-top: 0.5rem; }
+	.legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-top: 0.4rem; }
+	.legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+	.swatch { display: inline-block; width: 1.4rem; height: 0; border-top: 2px solid var(--ink); }
+	.swatch.hrt { border-color: var(--threshold); }
+	.swatch.art { border-color: var(--deduction); }
+	.swatch.pt { border-color: var(--quiet); border-top-style: dashed; }
+</style>

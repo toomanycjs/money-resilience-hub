@@ -235,6 +235,26 @@ export const GUIDES: Guide[] = [
 		calculator: TAKE_HOME,
 		draft: true,
 	},
+	{
+		slug: 'thresholds-and-inflation-since-2021',
+		title: 'Tax thresholds against inflation since 2021',
+		h1: 'What has the freeze on tax thresholds cost since 2021?',
+		description: 'The personal allowance, the higher rate threshold and the National Insurance thresholds since 2021/22, in cash and in current prices, and what the freeze adds.',
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: TAKE_HOME,
+		draft: true,
+	},
+	{
+		slug: 'are-savers-losing-to-inflation',
+		title: 'Are savers losing to inflation?',
+		h1: 'Are savers losing to inflation?',
+		description: 'Average instant access and cash ISA rates against CPI inflation each month since 2016, from the Bank of England and the ONS, and the return after tax.',
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: TAKE_HOME,
+		draft: true,
+	},
 ];
 
 // The build's own limits, checked here so a rules change that lengthens a
