@@ -1,0 +1,209 @@
+---
+// Side hustles after the trading allowance rises: the allowance now and
+// from the next tax year, three people worked through the side hustle
+// engine in both years, Making Tax Digital, platform reporting and the
+// Self Assessment dates. Every figure is computed; nothing is typed.
+import { dayMonthAfter, getYear, leastSettled, makingTaxDigitalCheck, nextYear, resolve, sideHustleTax, STATUS_LABEL, type Status, type YearConfig } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import Guide from '../../layouts/Guide.astro';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const next = nextYear(year.taxYear);
+if (!next) throw new Error('This guide compares the current tax year with the next one; no later year is in the rules file');
+const asAt = BUILD_DATE;
+const years: { y: YearConfig; at: string }[] = [
+	{ y: year, at: asAt },
+	{ y: next, at: next.starts },
+];
+
+// The trading allowance in each year, with its status.
+const allowanceLeaf = year.incomeTax.tradingAllowance;
+const nextAllowanceLeaf = next.incomeTax.tradingAllowance;
+const allowance = resolve(allowanceLeaf, 'incomeTax.tradingAllowance', asAt).value;
+const nextAllowance = resolve(nextAllowanceLeaf, 'incomeTax.tradingAllowance', next.starts).value;
+const multiple = Math.round((nextAllowance / allowance) * 100) / 100;
+
+// Class 4 and Class 2 for each year.
+const selfEmployed = (y: YearConfig, at: string) => {
+	const se = y.nationalInsurance.selfEmployed;
+	return {
+		lpl: resolve(se.class4.lowerProfitsLimit, 'nationalInsurance.selfEmployed.class4.lowerProfitsLimit', at).value,
+		upl: resolve(se.class4.upperProfitsLimit, 'nationalInsurance.selfEmployed.class4.upperProfitsLimit', at).value,
+		mainRate: resolve(se.class4.mainRate, 'nationalInsurance.selfEmployed.class4.mainRate', at).value,
+		spt: resolve(se.smallProfitsThreshold, 'nationalInsurance.selfEmployed.smallProfitsThreshold', at).value,
+		class2Weekly: resolve(se.class2Weekly, 'nationalInsurance.selfEmployed.class2Weekly', at).value,
+		status: leastSettled([se.class4.lowerProfitsLimit.status, se.class4.mainRate.status, se.smallProfitsThreshold.status, se.class2Weekly.status]),
+	};
+};
+const ni = years.map(({ y, at }) => selfEmployed(y, at));
+
+// Self Assessment dates and the payments on account rules for each year.
+const sa = years.map(({ y, at }) => {
+	const s = y.selfAssessment;
+	if (!s) throw new Error(`No Self Assessment rules recorded for ${y.label}`);
+	const poa = s.paymentsOnAccount;
+	return {
+		due: dayMonthAfter(resolve(s.paymentDue, 'selfAssessment.paymentDue', at).value, y, 1),
+		second: dayMonthAfter(resolve(poa.secondDue, 'selfAssessment.paymentsOnAccount.secondDue', at).value, y, 1),
+		following: dayMonthAfter(resolve(s.paymentDue, 'selfAssessment.paymentDue', at).value, y, 2),
+		registerBy: s.registerBy ? dayMonthAfter(resolve(s.registerBy, 'selfAssessment.registerBy', at).value, y, 1) : null,
+		threshold: resolve(poa.billThreshold, 'selfAssessment.paymentsOnAccount.billThreshold', at).value,
+		share: resolve(poa.deductedAtSourceFraction, 'selfAssessment.paymentsOnAccount.deductedAtSourceFraction', at).value,
+		each: resolve(poa.eachPaymentFraction, 'selfAssessment.paymentsOnAccount.eachPaymentFraction', at).value,
+		status: leastSettled([s.paymentDue.status, poa.billThreshold.status, poa.secondDue.status]),
+	};
+});
+
+// Three people, each run through the engine in both years. The nation is
+// England, Wales and Northern Ireland; the other income is pay through PAYE.
+const nation = 'england-ni';
+const people = [
+	{ id: 'seller', name: 'An online seller', who: 'buys stock to sell on a marketplace', income: 2400, expenses: 300, otherIncome: 28000 },
+	{ id: 'tutor', name: 'A tutor', who: 'teaches in the evenings, with books and travel to pay for', income: 5000, expenses: 1400, otherIncome: 32000 },
+	{ id: 'walker', name: 'A dog walker', who: 'walks dogs most days around a part-time job', income: 18000, expenses: 2200, otherIncome: 26000 },
+].map((p) => ({
+	...p,
+	runs: years.map(({ y, at }, i) => {
+		const r = sideHustleTax({ income: p.income, expenses: p.expenses, otherIncome: p.otherIncome, nation, taxYear: y.taxYear, asAt: at, compare: false });
+		const f = r.facts;
+		return {
+			label: y.label,
+			secondDate: sa[i].second,
+			route: f.route as 'allowance' | 'expenses',
+			deducted: f.deducted as number,
+			profit: f.profit as number,
+			incomeTax: f.incomeTax as number,
+			class4: f.class4 as number,
+			total: f.total as number,
+			poa: f.paymentsOnAccount === 'yes',
+			poaReason: f.paymentsOnAccountReason as string,
+			payment: f.paymentOnAccount as number,
+			dueJanuary: f.dueJanuary as number,
+			paymentDue: f.paymentDue as string,
+			mtd: f.makingTaxDigital as string,
+			warnings: r.warnings,
+			reportable: (f.profit as number) > 0 || f.route === 'expenses',
+		};
+	}),
+}));
+const seller = people[0];
+const tutor = people[1];
+const walker = people[2];
+const walkerNow = walker.runs[0];
+const walkerNext = walker.runs[1];
+const class2Position = (profit: number, i: number) => (profit >= ni[i].spt ? 'Treated as paid' : `Voluntary, ${money(ni[i].class2Weekly)} a week`);
+const routeWords = (run: (typeof seller.runs)[number]) => (run.route === 'expenses' ? `Expenses, ${money(run.deducted, 0)}` : `Trading allowance, ${money(run.deducted, 0)}`);
+const poaWords = (run: (typeof seller.runs)[number]) => (run.total === 0 ? 'Nothing due' : run.poa ? `${money(run.payment)} each, by ${longDate(run.paymentDue)} and ${longDate(run.secondDate)}` : 'None');
+
+// Making Tax Digital for Income Tax: who is in it during each year, and the test on each year's own income.
+const slash = (taxYear: string) => taxYear.replace('-', '/');
+const mtd = years.map(({ y }) => {
+	const m = y.makingTaxDigital;
+	if (!m) throw new Error(`No Making Tax Digital rules recorded for ${y.label}`);
+	const inUse = m.inUse && m.inUse.threshold.value !== null && m.inUse.incomeYear.value !== null ? { threshold: m.inUse.threshold.value, incomeYear: slash(m.inUse.incomeYear.value), status: m.inUse.threshold.status as Status } : null;
+	const test = m.incomeTest.threshold.value !== null && m.incomeTest.startDate.value !== null ? { threshold: m.incomeTest.threshold.value, startDate: m.incomeTest.startDate.value, status: leastSettled([m.incomeTest.threshold.status, m.incomeTest.startDate.status]) } : null;
+	return { label: y.label, inUse, test };
+});
+const mtdChecks = people.map((p) => years.map(({ y }) => makingTaxDigitalCheck(y, p.income, 'trading income')?.position ?? 'not-set'));
+const noneAbove = mtdChecks.every((row) => row.every((pos) => pos === 'not-above'));
+
+// Digital platform reporting.
+const dp = year.digitalPlatforms;
+if (!dp || dp.salesOfGoodsLimit.value === null || dp.salesValueLimitEuros.value === null || dp.salesValueLimitApproxPounds.value === null || !dp.reportBy?.value) throw new Error(`Digital platform reporting rules are not complete for ${year.label}`);
+const platform = {
+	sales: dp.salesOfGoodsLimit.value,
+	euros: money(dp.salesValueLimitEuros.value, 0).slice(1),
+	pounds: dp.salesValueLimitApproxPounds.value,
+	reportBy: dp.reportBy.value,
+	status: dp.salesOfGoodsLimit.status as Status,
+};
+
+const status = leastSettled([allowanceLeaf.status, nextAllowanceLeaf.status, ...ni.map((n) => n.status), ...sa.map((s) => s.status), ...mtd.flatMap((m) => [m.inUse?.status ?? 'in-force', m.test?.status ?? 'in-force']), platform.status]);
+
+const sources = [
+	{ href: 'https://www.gov.uk/government/publications/income-tax-increasing-the-trading-allowance/increasing-the-trading-allowance', title: 'Increasing the trading allowance (HMRC tax information and impact note, Budget 2026)' },
+	{ href: 'https://www.gov.uk/guidance/tax-free-allowances-on-property-and-trading-income', title: 'Tax-free allowances on property and trading income' },
+	{ href: 'https://www.gov.uk/self-assessment-tax-returns/who-must-send-a-tax-return', title: 'Self Assessment tax returns: who must send a tax return' },
+	{ href: 'https://www.gov.uk/understand-self-assessment-bill/payments-on-account', title: 'Understand your Self Assessment tax bill: payments on account' },
+	{ href: 'https://www.gov.uk/guidance/find-out-if-and-when-you-need-to-use-making-tax-digital-for-income-tax', title: 'Find out if and when you need to use Making Tax Digital for Income Tax' },
+	{ href: 'https://www.gov.uk/guidance/selling-goods-or-services-on-a-digital-platform', title: 'Selling goods or services on a digital platform' },
+];
+---
+
+<Guide
+	slug="side-hustles-after-the-trading-allowance-triples"
+	taxYears={[year.taxYear]}
+	alsoReads={[next.taxYear]}
+	status={status}
+	related={[
+		{ title: 'Budget 2026: what changed', href: '/budget/2026-autumn/', desc: 'Every measure from the Budget with its effective date, including the trading allowance.' },
+		{ title: 'Landlord tax calculator', href: '/calculators/landlord-tax/', desc: 'Rent is the other kind of qualifying income for Making Tax Digital.' },
+		{ title: `Rates and allowances for ${next.label}`, href: `/rates/${next.taxYear}/`, desc: 'Every figure for the coming year with its source, status and the date it was checked.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>The trading allowance is {money(allowance, 0)} in {year.label} ({STATUS_LABEL[allowanceLeaf.status].toLowerCase()}) and {money(nextAllowance, 0)} from {longDate(next.starts)} ({STATUS_LABEL[nextAllowanceLeaf.status].toLowerCase()}), {multiple === 3 ? 'three times' : `${multiple} times`} the current figure. Trading income up to the allowance is tax free. HMRC's note on the Budget 2026 measure says the Self Assessment reporting threshold for trading income rises to the same {money(nextAllowance, 0)} on the same date, through the Finance Bill for {next.label}. The gov.uk pages on who must send a tax return and on the trading allowance, read on the date below, still give {money(allowance, 0)} and have not been updated for the change.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>Who has to report trading income</h2>
+		<p>In {year.label}, gov.uk says a sole trader who earned more than {money(allowance, 0)} before expenses must send a tax return, and that someone whose gross trading income is {money(allowance, 0)} or less does not have to tell HMRC unless they want to be in Self Assessment, for example to claim a loss or pay voluntary Class 2. Someone with more than the allowance registers by {sa[0].registerBy ? longDate(sa[0].registerBy) : 'the October after the tax year ends'} for {year.label}.</p>
+		<p>From {longDate(next.starts)} the allowance is {money(nextAllowance, 0)}. The HMRC note says the reporting threshold moves with it, so trading income up to {money(nextAllowance, 0)} would neither be taxed nor need a return. That part is announced, not yet law: the note names the Finance Bill for {next.label}, and the guidance pages have not changed. Above the allowance, either the allowance or actual expenses is deducted, never both. The calculator deducts whichever is larger, and so do the three examples below.</p>
+	</Fragment>
+
+	<h2>Three side hustles, worked for both years</h2>
+	<p>Each person lives in England, Wales or Northern Ireland and has pay through PAYE that already uses the personal allowance, so every pound of profit is taxed. Class 4 National Insurance is {pct(ni[0].mainRate)} on profit between {money(ni[0].lpl, 0)} and {money(ni[0].upl, 0)}, on the profit alone. Class 2 is treated as paid once profit reaches the small profits threshold of {money(ni[0].spt, 0)} in {year.label} and {money(ni[1].spt, 0)} in {next.label}, and is voluntary below it. The Self Assessment rows show a first year in Self Assessment, with nothing paid in advance.</p>
+
+	{people.map((p) => (
+		<div class="table-wrap">
+			<table>
+				<caption>{p.name}, who {p.who}: {money(p.income, 0)} of trading income, {money(p.expenses, 0)} of expenses, {money(p.otherIncome, 0)} of pay</caption>
+				<thead><tr><th scope="col">Line</th>{p.runs.map((r) => <th scope="col" class="num">{r.label}</th>)}</tr></thead>
+				<tbody>
+					<tr><th scope="row">Deducted</th>{p.runs.map((r) => <td class="num">{routeWords(r)}</td>)}</tr>
+					<tr><th scope="row">Taxable profit</th>{p.runs.map((r) => <td class="num">{money(r.profit)}</td>)}</tr>
+					<tr><th scope="row">Income tax</th>{p.runs.map((r) => <td class="num">{money(r.incomeTax)}</td>)}</tr>
+					<tr><th scope="row">Class 4 National Insurance</th>{p.runs.map((r) => <td class="num">{money(r.class4)}</td>)}</tr>
+					<tr><th scope="row">Class 2 National Insurance</th>{p.runs.map((r, i) => <td class="num">{class2Position(r.profit, i)}</td>)}</tr>
+					<tr><th scope="row">Total</th>{p.runs.map((r) => <td class="num">{money(r.total)}</td>)}</tr>
+					<tr><th scope="row">Payments on account</th>{p.runs.map((r) => <td class="num">{poaWords(r)}</td>)}</tr>
+					<tr><th scope="row">Due in the first January</th>{p.runs.map((r) => <td class="num">{r.total === 0 ? 'Nothing' : `${money(r.dueJanuary)} by ${longDate(r.paymentDue)}`}</td>)}</tr>
+				</tbody>
+			</table>
+		</div>
+	))}
+
+	<p>{seller.name.replace('An', 'The')} is the one the change reaches. In {year.label} the {money(allowance, 0)} allowance beats {money(seller.expenses, 0)} of expenses, {money(seller.runs[0].profit, 0)} is taxed and the return is due. In {next.label} the whole {money(seller.income, 0)} sits inside the {money(nextAllowance, 0)} allowance, so nothing is taxed and, if the reporting threshold rises as announced, no return is needed for the trade. {tutor.name.replace('A', 'The')} switches route: {money(tutor.expenses, 0)} of expenses is worth more than the {money(allowance, 0)} allowance this year and less than the {money(nextAllowance, 0)} allowance next year, which takes the bill from {money(tutor.runs[0].total)} to {money(tutor.runs[1].total)}. Both bills are under {money(sa[0].threshold, 0)}, so neither year brings payments on account. {walker.name.replace('A', 'The')} is above the Class 4 lower profits limit in both years and above the {money(sa[0].threshold, 0)} line in both, so payments on account apply.</p>
+
+	<h2>Making Tax Digital for Income Tax</h2>
+	<p>Making Tax Digital asks sole traders and landlords over a qualifying income threshold to keep digital records and send quarterly updates. Qualifying income is self-employment income and rent added together, before expenses, as reported on the tax return. HMRC tests one tax year's income to decide who is in from the 6 April two tax years later, so each year has two figures: the test that put people in it, and the test on that year's own income.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>Making Tax Digital for Income Tax thresholds from the rules file, with status</caption>
+			<thead><tr><th scope="col">Tax year</th><th scope="col">Already in it</th><th scope="col">Test on this year's income</th></tr></thead>
+			<tbody>
+				{mtd.map((m) => (
+					<tr>
+						<th scope="row">{m.label}</th>
+						<td>{m.inUse ? `Qualifying income over ${money(m.inUse.threshold, 0)} for ${m.inUse.incomeYear} (${STATUS_LABEL[m.inUse.status].toLowerCase()})` : STATUS_LABEL.unset}</td>
+						<td>{m.test ? `Over ${money(m.test.threshold, 0)} brings it in from ${longDate(m.test.startDate)} (${STATUS_LABEL[m.test.status].toLowerCase()})` : STATUS_LABEL.unset}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>{noneAbove ? `None of the three examples is over ${money(mtd[0].test?.threshold ?? 0, 0)} on trading income alone, so none is brought in by it; rent from a property would be added to the test.` : 'At least one of the three examples is over the threshold on trading income alone.'} Some people are exempt, for example those who are digitally excluded, and they carry on with a tax return.</p>
+
+	<h2>What platforms report to HMRC</h2>
+	<p>Marketplaces, apps and other digital platforms collect sellers' details and report each seller's income for a calendar year to HMRC by {platform.reportBy} of the following year, giving the seller a copy ({STATUS_LABEL[platform.status].toLowerCase()}). A seller of goods is left out when they make fewer than {platform.sales} sales in the year and receive less than {platform.euros} euros, about {money(platform.pounds, 0)}, for them. The report is a calendar year total, not a tax year one, and it is not a tax bill: gov.uk says being reported does not by itself mean tax is due, and that selling personal belongings from home is unlikely to be taxed, while buying or making goods to sell at a profit is likely to be trading. The trading allowance applies in the same way whether or not a platform has reported the seller.</p>
+
+	<h2>{longDate(sa[0].due)} and payments on account</h2>
+	<p>Tax and Class 4 on a side hustle are not collected during the year. The {year.label} bill is due by midnight on {longDate(sa[0].due)}. Payments on account are added when the bill is {money(sa[0].threshold, 0)} or more and no more than {pct(sa[0].share)} of the year's tax was collected outside Self Assessment, for example through PAYE on the day job. Each is {pct(sa[0].each)} of the bill.</p>
+	<p>In {year.label} the dog walker's bill is {money(walkerNow.total)}, the first payment on account is {money(walkerNow.payment)}, and {money(walkerNow.dueJanuary)} is due by {longDate(walkerNow.paymentDue)}. A second {money(walkerNow.payment)} is due by {longDate(walkerNow.secondDate)}. If the {next.label} bill comes to more than the two payments together, the rest is due by {longDate(sa[0].following)}; if it comes to less, the difference is repaid. In {next.label} the same trade bills {money(walkerNext.total)}, with payments on account of {money(walkerNext.payment)} and {money(walkerNext.dueJanuary)} due by {longDate(walkerNext.paymentDue)}.</p>
+	{walkerNext.warnings.map((w) => <p class="small quiet">{w}</p>)}
+
+	<Fragment slot="sources">
+		{sources.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
+	</Fragment>
+</Guide>

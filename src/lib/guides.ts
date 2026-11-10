@@ -6,6 +6,7 @@
 import { bandsFor, defaultTaxCode, listYears, nextYear, pensionTaxAllowance, resolve } from '@money-resilience-hub/rules';
 import { bandsFor, defaultTaxCode, getYear, listYears, pensionTaxAllowance, previousYear, resolve } from '@money-resilience-hub/rules';
 import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { longDate, money } from '@money-resilience-hub/calculators';
 import { BUILD_DATE, CURRENT_YEAR } from '../config/site';
 
 export interface GuideCalculator {
@@ -43,6 +44,11 @@ const STATE_PENSION: GuideCalculator = {
 	href: '/calculators/state-pension-tax/',
 	title: 'State Pension tax calculator',
 	desc: 'Enter your State Pension and other income, and see the tax with and without the Pension Tax Allowance.',
+};
+const SIDE_HUSTLE: GuideCalculator = {
+	href: '/calculators/side-hustle-tax/',
+	title: 'Side hustle tax calculator',
+	desc: 'Enter what the side hustle brought in, its costs and your other income, and see the tax, Class 4 and what Self Assessment asks for and when.',
 };
 
 <<<<<<< HEAD
@@ -88,12 +94,20 @@ const SAVINGS_RATE = 0.04;
 const ptaYear = listYears().find((y) => y.pensionTaxAllowance) ?? null;
 const pta = ptaYear ? pensionTaxAllowance(0, ptaYear, ptaYear.starts) : null;
 
+<<<<<<< HEAD
 /** The year the property income rates start, the year before it, and the rates and relief the landlord guide names. */
 const propertyYear = getYear('2027-28');
 const propertyYearBefore = previousYear(propertyYear.taxYear);
 if (!propertyYearBefore) throw new Error(`No tax year recorded before ${propertyYear.label}`);
 const propertyRates = (['basic', 'higher', 'additional'] as const).map((n) => pct(resolve(propertyYear.incomeTax.property.rates[n], `incomeTax.property.rates.${n}`, propertyYear.starts).value));
 const propertyMonth = longDate(propertyYear.starts).replace(/^\d+ /, '');
+=======
+/** The trading allowance now and in the next tax year, where the rules file has one. */
+const tradingAllowance = resolve(year.incomeTax.tradingAllowance, 'incomeTax.tradingAllowance', asAt).value;
+const following = nextYear(year.taxYear);
+const nextTradingAllowance = following ? resolve(following.incomeTax.tradingAllowance, 'incomeTax.tradingAllowance', following.starts).value : null;
+const tradingAllowanceVerb = nextTradingAllowance === tradingAllowance * 3 ? 'triples' : nextTradingAllowance === tradingAllowance * 2 ? 'doubles' : 'changes';
+>>>>>>> draft/sidehustle
 
 export const GUIDES: Guide[] = [
 	{
@@ -166,6 +180,7 @@ export const GUIDES: Guide[] = [
 	},
 	{
 <<<<<<< HEAD
+<<<<<<< HEAD
 		slug: 'fiscal-drag-how-many-more-pay-40',
 		title: 'Fiscal drag: how many more people pay the higher rate',
 		h1: 'How many more people pay the higher rate than in 1990?',
@@ -208,6 +223,20 @@ export const GUIDES: Guide[] = [
 		draft: true,
 		publishOn: '2026-12-07',
 >>>>>>> draft/landlord
+=======
+		slug: 'side-hustles-after-the-trading-allowance-triples',
+		title: `Side hustles after the trading allowance ${tradingAllowanceVerb}`,
+		h1: 'What does the higher trading allowance mean for a side hustle?',
+		description:
+			following && nextTradingAllowance !== null
+				? `The trading allowance is ${money(tradingAllowance, 0)} in ${year.label} and ${money(nextTradingAllowance, 0)} from ${longDate(following.starts)}. Three side hustles worked for both years: tax, Class 4, what is due and when.`
+				: `The trading allowance of ${money(tradingAllowance, 0)} in ${year.label} and what follows it. Three side hustles worked through the rules: tax, Class 4, what is due and when.`,
+		published: PUBLISHED,
+		reviewedOn: PUBLISHED,
+		calculator: SIDE_HUSTLE,
+		draft: true,
+		publishOn: '2026-12-14',
+>>>>>>> draft/sidehustle
 	},
 ];
 
