@@ -255,6 +255,16 @@ export const GUIDES: Guide[] = [
 		calculator: TAKE_HOME,
 		draft: true,
 	},
+	{
+		slug: 'student-loans-by-the-numbers',
+		title: 'Student loans by the numbers: balance, repayments, refunds',
+		h1: 'How big is the student loan book, and who repays it?',
+		description: "England's student loan balance by plan, borrowers, interest and repayments from the SLC, over-repayments through PAYE, and DfE's forecast of who repays in full.",
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: TAKE_HOME,
+		draft: true,
+	},
 ];
 
 // The build's own limits, checked here so a rules change that lengthens a

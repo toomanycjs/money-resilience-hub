@@ -1,0 +1,280 @@
+---
+// Student loans by the numbers: the balance by plan, borrowers, interest and
+// repayments from the Student Loans Company's 2025-26 release, the SLC's
+// over-repayment figures, what the engine repays at three salaries, and the
+// Department for Education's forecast of who repays in full. Every figure is
+// read from src/data/student-loans.json, which records its sources, or
+// computed by the rules engine; DfE's assumed thresholds are checked against
+// the rules file when the page is built.
+import { getYear, leastSettled, PLAN_LABEL, PLANS, resolve, studentLoan, type Plan } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import data from '../../data/student-loans.json' with { type: 'json' };
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+import { liveAmounts } from '../../lib/pages';
+
+type DataPlan = 'plan1' | 'plan2' | 'postgraduate' | 'plan5';
+interface PlanRow {
+	plan: DataPlan;
+	balance: number;
+	lent: number;
+	interest: number;
+	repayments: number;
+	viaHmrc: number;
+	voluntary: number;
+	refunded: number;
+}
+const plans = data.plans as PlanRow[];
+const totals = data.totals;
+const retrieved = data.retrieved as string;
+const fy = (y: string) => `${y.slice(0, 4)}/${y.slice(5)}`;
+/** £ million as "£294.6 billion". */
+const bn = (m: number) => `£${(m / 1000).toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} billion`;
+/** £ million as a one-decimal £ billion cell. */
+const bnCell = (m: number) => (m / 1000).toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+/** Pounds as "£155.3 million". */
+const mn = (pounds: number) => `£${(pounds / 1e6).toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} million`;
+/** Thousands as "7.3 million". */
+const millions = (thousands: number) => `${(thousands / 1000).toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} million`;
+const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`;
+const n = (v: number) => v.toLocaleString('en-GB');
+const share = (p: PlanRow) => p.balance / totals.balance;
+const byPlan = Object.fromEntries(plans.map((p) => [p.plan, p])) as Record<DataPlan, PlanRow>;
+const largest = plans.reduce((a, b) => (b.balance > a.balance ? b : a));
+
+// The rules file, checked against the thresholds DfE's forecast assumes.
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const assumed = data.forecast.assumedThresholds as { taxYear: string; values: Record<string, number> };
+if (year.taxYear === assumed.taxYear) {
+	for (const [plan, value] of Object.entries(assumed.values)) {
+		const rules = resolve(year.studentLoans[plan as Plan].threshold, `studentLoans.${plan}.threshold`, asAt).value;
+		if (rules !== value) throw new Error(`student-loans.json: DfE assumes a ${plan} threshold of ${value} for ${year.taxYear}; the rules file gives ${rules}`);
+	}
+}
+const status = leastSettled(PLANS.flatMap((p) => [year.studentLoans[p].threshold.status, year.studentLoans[p].rate.status]));
+const live = liveAmounts('salary');
+const salaries = [27000, 35000, 50000];
+const engine = PLANS.map((plan) => ({ plan, label: PLAN_LABEL[plan], results: salaries.map((s) => studentLoan(s, plan, year, asAt)) }));
+const undergraduateRate = engine[0].results[0].rate;
+const postgraduateRate = engine.find((e) => e.plan === 'postgraduate')!.results[0].rate;
+
+// Borrowers at 30 April 2026, Table 3A.
+const b = data.borrowers;
+const inUkTaxSystem = b.madePayment + b.liveEmploymentNoPayment + b.noLiveEmploymentUnder90Days + b.noLiveEmploymentOver90Days + b.awaitingFirstTaxReturn;
+const avg = data.averageBalance;
+
+// Over-repayments through PAYE, tax year 2025/26.
+const over = data.overRepayments;
+const planLabel = (p: string) => PLAN_LABEL[p as Plan];
+const belowThreshold = over.belowThreshold as { plan: string; customers: number | null; amount: number | null }[];
+const refundsLatestFull = over.refundsAllScenarios.find((r) => r.taxYear === over.taxYear)!;
+const refundsPrior = over.refundsAllScenarios.find((r) => r.taxYear === '2024/25')!;
+const wrongPlanCustomers = over.wrongPlan.reduce((s, r) => s + r.customers, 0);
+const beforeDueCustomers = over.beforeDue.reduce((s, r) => s + r.customers, 0);
+const overTotal = over.belowThresholdTotal + over.wrongPlanTotal + over.beforeDueTotal + over.afterRepaid.amount;
+
+// DfE's forecast of the share expected to repay in full, by plan and loan type.
+interface ForecastRow {
+	plan: DataPlan;
+	loanType: string;
+	cohort: string;
+	share: number | null;
+}
+const forecastRows = data.forecast.rows as ForecastRow[];
+const latestCohort = '2025/26';
+const forecastLatest = forecastRows.filter((r) => r.cohort === latestCohort && r.share !== null);
+/** The last cohort for which DfE gives a figure for each Plan 2 loan type. */
+const plan2Last = ['Higher education full time', 'Higher education part time', 'Advanced Learner loans'].map((t) => [...forecastRows].reverse().find((r) => r.plan === 'plan2' && r.loanType === t && r.share !== null)!);
+const plan5FullTime = forecastLatest.find((r) => r.plan === 'plan5' && r.loanType === 'Higher education full time')!;
+const plan2FullTime = plan2Last.find((r) => r.loanType === 'Higher education full time')!;
+const masters = forecastLatest.find((r) => r.plan === 'postgraduate')!;
+const plan5Prior = forecastRows.find((r) => r.plan === 'plan5' && r.loanType === 'Higher education full time' && r.cohort === '2024/25')!;
+const forecastTable = [...plan2Last, ...forecastLatest];
+
+// The chart: the balance by plan at the end of each financial year, stacked.
+const series = data.balanceByPlan.rows as { financialYear: string; plan1: number; plan2: number; postgraduate: number; plan5: number }[];
+const stack: DataPlan[] = ['plan1', 'plan2', 'postgraduate', 'plan5'];
+const W = 800;
+const H = 340;
+const L = 56;
+const R = 16;
+const T = 16;
+const B = 40;
+const slot = (W - L - R) / series.length;
+const barW = slot * 0.68;
+const totalOf = (r: (typeof series)[number]) => stack.reduce((s, k) => s + r[k], 0);
+const yMax = Math.ceil(Math.max(...series.map(totalOf)) / 50) * 50;
+const y = (v: number) => T + (1 - v / yMax) * (H - T - B);
+const ticks = [0, yMax / 4, yMax / 2, (3 * yMax) / 4, yMax];
+const bars = series.map((r, i) => {
+	let acc = 0;
+	const segs = stack.map((k) => {
+		const from = acc;
+		acc += r[k];
+		return { plan: k, y0: y(acc), y1: y(from) };
+	});
+	return { x: L + slot * i + (slot - barW) / 2, label: r.financialYear.slice(0, 4), segs, total: acc };
+});
+const first = series[0];
+const last = series[series.length - 1];
+const plan5Years = series.filter((r) => r.plan5 > 0).length;
+---
+
+<Guide
+	slug="student-loans-by-the-numbers"
+	taxYears={[year.taxYear]}
+	status={status}
+	related={[
+		guideLink('which-student-loan-plan', 'Who is on which plan, and the thresholds and rates behind the repayment table.'),
+		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'Your own salary with the student loan deduction on its own line, for any plan or two together.' },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'The plan thresholds and rates this page computes with, each with its source and the date it was checked.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>At {longDate(data.balanceDate)} the Student Loans Company was owed {bn(totals.balance)} on higher education loans to English and EU borrowers, {millions(b.withBalance)} of whom had a balance a month later. During {fy(data.financialYear)} it lent {bn(totals.lent)}, added {bn(totals.interest)} of interest and received {bn(totals.repayments)} in repayments. {PLAN_LABEL[largest.plan]} is {pct1(share(largest))} of the balance; {PLAN_LABEL.plan1} is {pct1(share(byPlan.plan1))}, {PLAN_LABEL.plan5} {pct1(share(byPlan.plan5))} and the postgraduate loans {pct1(share(byPlan.postgraduate))}.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>The balance by plan since {fy(first.financialYear)}</h2>
+		<figure class="chart">
+			<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`The higher education loan balance by plan at the end of each financial year, ${fy(first.financialYear)} to ${fy(last.financialYear)}: from £${totalOf(first).toFixed(1)} billion to £${totalOf(last).toFixed(1)} billion.`} class="story-chart">
+				{ticks.map((t) => (
+					<>
+						<line x1={L} x2={W - R} y1={y(t)} y2={y(t)} class="grid" />
+						<text x={L - 8} y={y(t) + 4} class="tick" text-anchor="end">£{t}bn</text>
+					</>
+				))}
+				{bars.map((bar) => (
+					<>
+						{bar.segs.map((s) => s.y1 - s.y0 > 0 && <rect x={bar.x} y={s.y0} width={barW} height={s.y1 - s.y0} class={`seg ${s.plan}`} />)}
+						<text x={bar.x + barW / 2} y={H - B + 22} class="tick" text-anchor="middle">{bar.label}</text>
+					</>
+				))}
+				<line x1={L} x2={W - R} y1={H - B} y2={H - B} class="axis" />
+			</svg>
+			<figcaption>
+				Income contingent loans to higher education borrowers, England and EU, at 31 March of each year, by repayment plan. {PLAN_LABEL.plan2} includes full-time and part-time loans; the postgraduate figure is the master's and doctoral loans. Source: SLC, Student loans in England, data for Figure 3, retrieved {longDate(retrieved)}.
+				<span class="legend">{stack.map((k) => <span><i class={`swatch ${k}`}></i>{PLAN_LABEL[k]}</span>)}</span>
+			</figcaption>
+		</figure>
+		<p>The book has grown from {bn(totalOf(first) * 1000)} to {bn(totalOf(last) * 1000)} in {series.length - 1} years. {PLAN_LABEL.plan1} closed to new borrowers after the 2011/12 academic year and has shrunk since; {PLAN_LABEL.plan2} took every new undergraduate from 2012 until {PLAN_LABEL.plan5} replaced it for courses starting from August 2023. After {plan5Years} years {PLAN_LABEL.plan5} is already {pct1(share(byPlan.plan5))} of the balance: new lending is {bn(byPlan.plan5.lent)} a year on that plan against {bn(byPlan.plan2.lent)} on {PLAN_LABEL.plan2}, where only students part way through a course still borrow.</p>
+	</Fragment>
+
+	<h2>The plans in {fy(data.financialYear)}</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>Higher education loans by repayment plan, financial year {fy(data.financialYear)}, £ billion. Balance at {longDate(data.balanceDate)}; the other columns are the year's flows. Source: SLC Table 1A.</caption>
+			<thead><tr><th scope="col">Plan</th><th scope="col" class="num">Balance</th><th scope="col" class="num">Share</th><th scope="col" class="num">Lent in year</th><th scope="col" class="num">Interest added</th><th scope="col" class="num">Repaid in year</th></tr></thead>
+			<tbody>
+				{plans.map((p) => (
+					<tr>
+						<th scope="row">{PLAN_LABEL[p.plan]}</th>
+						<td class="num">{bnCell(p.balance)}</td>
+						<td class="num">{pct1(share(p))}</td>
+						<td class="num">{p.lent > 0 ? bnCell(p.lent) : 'None'}</td>
+						<td class="num">{bnCell(p.interest)}</td>
+						<td class="num">{bnCell(p.repayments)}</td>
+					</tr>
+				))}
+				<tr>
+					<th scope="row">All higher education</th>
+					<td class="num">{bnCell(totals.balance)}</td>
+					<td class="num">{pct1(1)}</td>
+					<td class="num">{bnCell(totals.lent)}</td>
+					<td class="num">{bnCell(totals.interest)}</td>
+					<td class="num">{bnCell(totals.repayments)}</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<p>Interest added in the year was {(totals.interest / totals.repayments).toLocaleString('en-GB', { maximumFractionDigits: 1 })} times the repayments received; on {PLAN_LABEL.plan2} alone {bn(byPlan.plan2.interest)} was added and {bn(byPlan.plan2.repayments)} repaid. {PLAN_LABEL.plan5} had {bn(byPlan.plan5.lent)} lent and {mn(byPlan.plan5.repayments * 1e6)} repaid, almost all of it voluntary, because its first borrowers became liable only in April 2026. Of all repayments, {bn(totals.viaHmrc)} came through PAYE and Self Assessment and {bn(totals.voluntary)} was paid to the SLC voluntarily.</p>
+	<p>The SLC counts {millions(b.withBalance)} borrowers with a balance at {longDate(b.asAt)}, up from {millions(b.priorYearWithBalance)} a year earlier. {millions(inUkTaxSystem)} were in the UK tax system, of whom {millions(b.madePayment)} made a repayment in the year; {millions(b.notRequiredToRepayYet)} were not yet required to repay. The SLC does not publish borrowers by plan, so there is no average balance per plan; across all borrowers it was {money(avg.allWithBalance.value, 0)} at the end of {fy(avg.allWithBalance.financialYear)}, and the cohort that became liable in April 2026 entered repayment owing {money(avg.enteringRepayment2026, 0)} on average.</p>
+
+	<h2>Over-repayments through payroll</h2>
+	<p>Payroll takes a repayment whenever one pay period's earnings cross the period threshold, so a bonus month or some overtime can produce deductions from someone whose income for the whole year is under the annual threshold. The SLC's count for the {over.taxYear} tax year, PAYE repayers only, puts the money taken in the four refundable situations at {mn(overTotal)}.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>Repayments taken through PAYE in {over.taxYear} that the regulations allow to be refunded, effective date {longDate(over.effectiveDate)}. Source: SLC, Figures 2a, 3, 4 and 5. A customer with loans on more than one plan is counted under each.</caption>
+			<thead><tr><th scope="col">Situation</th><th scope="col" class="num">Customers</th><th scope="col" class="num">Taken</th></tr></thead>
+			<tbody>
+				{belowThreshold.map((r) => (
+					<tr><th scope="row">Earned under the annual threshold, {planLabel(r.plan)}</th><td class="num">{r.customers === null ? 'Nil' : n(r.customers)}</td><td class="num">{r.amount === null ? 'Nil' : money(r.amount, 0)}</td></tr>
+				))}
+				<tr><th scope="row">Employer used the wrong plan</th><td class="num">{n(wrongPlanCustomers)}</td><td class="num">{money(over.wrongPlanTotal, 0)}</td></tr>
+				<tr><th scope="row">Taken before the repayment start date</th><td class="num">{n(beforeDueCustomers)}</td><td class="num">{money(over.beforeDueTotal, 0)}</td></tr>
+				<tr><th scope="row">Taken after the loan was fully repaid</th><td class="num">{n(over.afterRepaid.customers)}</td><td class="num">{money(over.afterRepaid.amount, 0)}</td></tr>
+			</tbody>
+		</table>
+	</div>
+	<p>Under-threshold deductions are by far the largest group, {mn(over.belowThresholdTotal)}, and {PLAN_LABEL.plan2} is {pct1((belowThreshold.find((r) => r.plan === 'plan2')!.amount ?? 0) / over.belowThresholdTotal)} of that. Refunds actually paid in {over.taxYear}, across all four situations and for any earlier year, came to {mn(refundsLatestFull.refundedMillions * 1e6)} to {n(refundsLatestFull.customers)} customers, an average of {money(refundsLatestFull.average, 0)}; the year before it was {mn(refundsPrior.refundedMillions * 1e6)}, the first full year of the SLC's online refund request.</p>
+	<p>gov.uk lists the same four grounds for a refund; extra repayments made by choice are not refundable. An under-threshold refund can be asked for once the tax year has ended and the SLC has confirmed the year's income with HMRC, and the SLC says it then invites eligible borrowers to request it in their online account. Someone repaying {PLAN_LABEL.plan1}, {PLAN_LABEL.plan2} and {PLAN_LABEL.plan4} loans together qualifies only if income was under the lowest of those thresholds. After a loan is repaid in full, deductions can run for around four weeks; the SLC refunds the excess automatically where it holds bank details. Payslips and the P60 are the evidence gov.uk says to keep.</p>
+
+	<h2>What each plan repays in {year.label}</h2>
+	<p>The rules engine computes a repayment as the plan's rate on pay above its threshold, rounded down to the pound, the same arithmetic as the <a href="/calculators/take-home-pay/">take-home pay calculator</a>. The thresholds and rates, with their sources, are on the <a href={`/rates/${year.taxYear}/#student-loans`}>rates page for {year.label}</a>; DfE's forecast assumes the same {assumed.taxYear === year.taxYear ? 'thresholds for this year' : `thresholds for ${assumed.taxYear}`}, and the build checks the two agree.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>A year's repayments on a steady salary in {year.label}, by plan, computed from the rules file</caption>
+			<thead><tr><th scope="col">Plan</th><th scope="col" class="num">Threshold</th>{salaries.map((s) => <th scope="col" class="num">{live.includes(s) ? <a href={`/salary/${s}/`}>{money(s, 0)}</a> : money(s, 0)}</th>)}</tr></thead>
+			<tbody>
+				{engine.map((e) => (
+					<tr><th scope="row">{e.label}</th><td class="num">{money(e.results[0].threshold, 0)}</td>{e.results.map((r) => <td class="num">{money(r.amount, 0)}</td>)}</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>The rate is {pct(undergraduateRate)} for the undergraduate plans and {pct(postgraduateRate)} for the postgraduate loan, so at the same salary the lowest threshold takes the most: at {money(salaries[2], 0)}, {PLAN_LABEL.plan5} takes {money(engine.find((e) => e.plan === 'plan5')!.results[2].amount - engine.find((e) => e.plan === 'plan4')!.results[2].amount, 0)} a year more than {PLAN_LABEL.plan4}. The balance owed makes no difference to the deduction; it only sets how long the deductions run.</p>
+
+	<h2>Who is expected to repay in full</h2>
+	<p>DfE's forecast, produced in April 2026, expects {plan5FullTime.share}% of full-time undergraduates starting in {latestCohort} to repay their {PLAN_LABEL.plan5} loan in full. For the last {PLAN_LABEL.plan2} cohort it models, starting in {plan2FullTime.cohort}, the figure is {plan2FullTime.share}%. The difference is the plan design: {PLAN_LABEL.plan5} starts at {money(assumed.values.plan5, 0)} against {money(assumed.values.plan2, 0)} and runs for forty years instead of thirty.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>Share of borrowers expected to repay in full, by plan and loan type, DfE forecast. Source: Student loan forecasts for England, Table 5.</caption>
+			<thead><tr><th scope="col">Plan</th><th scope="col">Loan</th><th scope="col">Starting in</th><th scope="col" class="num">Repay in full</th></tr></thead>
+			<tbody>
+				{forecastTable.map((r) => (
+					<tr><th scope="row">{PLAN_LABEL[r.plan]}</th><td>{r.loanType}</td><td>{r.cohort}</td><td class="num">{r.share}%</td></tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>The same release expects a full-time undergraduate starting in {latestCohort} to borrow {money(data.forecast.averageBorrowingPlan5FullTime2526, 0)} over the course, and forecasts that the government will subsidise {data.forecast.subsidyPlan5FullTime2526Percent}% of the {PLAN_LABEL.plan5} full-time outlay issued in {fy(data.financialYear)}. Master's loans have the highest full repayment share, {masters.share}%.</p>
+
+	<h2>How to read it</h2>
+	<ul>
+		<li>The balance, lending, interest and repayment figures are the SLC's higher education tables for England domiciled borrowers and EU borrowers who studied in England. Further education loans (SLC Table 1B) and loans made by Scotland, Wales and Northern Ireland are left out.</li>
+		<li>Balances are at 31 March, borrower counts at 30 April, and the over-repayment figures run by tax year to 30 September. The SLC rounds amounts to the nearest hundred thousand pounds and borrowers to the nearest hundred, and computes totals from unrounded figures, so columns do not always add.</li>
+		<li>The over-repayment table counts PAYE repayers only, across all UK student finance bodies and the EU; a borrower with two plans is counted under each. It is the amount taken, not the amount refunded.</li>
+		<li>The engine's table assumes one steady salary, no pension deduction and no second job. DfE's shares are forecasts over a term of up to forty years and move with each year's earnings and inflation assumptions; the {PLAN_LABEL.plan5} full-time figure was {plan5Prior.share}% for the {plan5Prior.cohort} cohort in the same release.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{(data.sources as { name: string; url: string; published: string; updated?: string }[]).map((s) => (
+			<li>
+				<a href={s.url} rel="noopener">{s.name}</a>, published {longDate(s.published)}{s.updated ? `, updated ${longDate(s.updated)}` : ''}
+			</li>
+		))}
+		<li>The combined data file this page reads: <a href="/data/student-loans.json">student-loans.json</a>, with each source's file address and checksum.</li>
+	</Fragment>
+</Guide>
+
+<style>
+	.chart { margin: 1rem 0 1.5rem; }
+	.story-chart { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+	.story-chart .grid { stroke: var(--hairline); stroke-width: 1; }
+	.story-chart .axis { stroke: var(--ink); stroke-width: 1; }
+	.story-chart .tick { fill: var(--quiet); font-size: 12px; }
+	.story-chart .seg.plan1 { fill: var(--quiet); }
+	.story-chart .seg.plan2 { fill: var(--ink); }
+	.story-chart .seg.postgraduate { fill: var(--threshold); }
+	.story-chart .seg.plan5 { fill: var(--deduction); }
+	figcaption { color: var(--quiet); font-size: 0.9rem; margin-top: 0.5rem; }
+	.legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-top: 0.4rem; }
+	.legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+	.swatch { display: inline-block; width: 0.9rem; height: 0.9rem; }
+	.swatch.plan1 { background: var(--quiet); }
+	.swatch.plan2 { background: var(--ink); }
+	.swatch.postgraduate { background: var(--threshold); }
+	.swatch.plan5 { background: var(--deduction); }
+</style>

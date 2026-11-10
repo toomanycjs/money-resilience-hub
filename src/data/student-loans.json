@@ -1,0 +1,604 @@
+{
+	"title": "Student loans in England: balances, borrowers, repayments, over-repayments and forecasts",
+	"retrieved": "2026-11-10",
+	"licence": "Open Government Licence v3.0 (Student Loans Company, Department for Education, gov.uk)",
+	"sources": [
+		{
+			"name": "Student Loans Company, Student loans in England: financial year 2025-26",
+			"url": "https://www.gov.uk/government/statistics/student-loans-in-england-2025-to-2026",
+			"file": "https://assets.publishing.service.gov.uk/media/6a44d1241a04d4dae8b8155e/slcsp012026.xlsx",
+			"published": "2026-06-18",
+			"updated": "2026-07-02",
+			"sha256": "9e1e524997974aa3251bc138f07d97437cb551d7b3a1c944cad0be2bdd863dd1",
+			"note": "Tables 1A (balance sheet by plan, £ million, at 31 March), 3A (borrowers with a balance by repayment status at 30 April 2026, thousands) and 5A (average balance). Higher education only; further education loans (£2.0 billion) are in Table 1B and left out. Amounts rounded to £100,000 and borrowers to 100 by the SLC."
+		},
+		{
+			"name": "Student Loans Company, data for Figure 3: balance by plan type, 2013-14 to 2025-26",
+			"url": "https://www.gov.uk/government/statistics/student-loans-in-england-2025-to-2026/student-loans-in-england-financial-year-2025-26",
+			"file": "https://assets.publishing.service.gov.uk/media/6a268b5d56960b0542c0b148/England_Figure_3.ods",
+			"published": "2026-06-18",
+			"sha256": "5ebb0cc46aaab7f6036c7fe0bbc58f81aa9cd267fe404e0f8a1a00e86dd46d0c",
+			"note": "£ billion. Plan 2 includes full-time and part-time; Plan 3 is the postgraduate master's and doctoral loans."
+		},
+		{
+			"name": "Student Loans Company, Student loan repayments via PAYE eligible for refund: tax year 2025/26",
+			"url": "https://www.gov.uk/government/statistics/student-loan-repayments-via-paye-eligible-for-refund-tax-year-202526/student-loans-repayments-via-paye-eligible-for-refund-tax-year-202526-6-april-2025-5-april-2026",
+			"published": "2026-10-29",
+			"note": "HTML publication, no data file. Figures 1 to 5, effective date 30 September 2026. PAYE repayers only, all UK domiciles and the EU; customers with more than one plan are counted under each."
+		},
+		{
+			"name": "Department for Education, Student loan forecasts for England: financial year 2025-26",
+			"url": "https://explore-education-statistics.service.gov.uk/find-statistics/student-loan-forecasts-for-england/2025-26",
+			"file": "https://content.explore-education-statistics.service.gov.uk/api/releases/d2c1e9ca-c6db-47c4-920d-a76ae3acc2cd/files?fromPage=ReleaseDownloads",
+			"published": "2026-07-09",
+			"sha256": "cbe7e1725a7cff0d1528dc5d72cfa3408cdf0c80c47fd8aacae790336b45ec67",
+			"note": "Table 5 (long_5.csv): forecast percentage of borrowers expected to fully repay, by plan and loan type, by starting cohort. Table 6b (long_6b.csv): the repayment thresholds the forecast assumes. Key statistics files for the headline figures. Forecasts produced in April 2026."
+		},
+		{
+			"name": "gov.uk, Repaying your student loan: getting a refund",
+			"url": "https://www.gov.uk/repaying-your-student-loan/getting-a-refund",
+			"published": "2024-10-18",
+			"note": "The four grounds for a refund and how one is claimed. Read for the wording only; no figure is taken from it."
+		}
+	],
+	"financialYear": "2025-26",
+	"balanceDate": "2026-03-31",
+	"unit": "£ million unless stated",
+	"plans": [
+		{
+			"plan": "plan1",
+			"columns": [
+				"Plan 1"
+			],
+			"balance": 31779.5,
+			"lent": -0.1,
+			"interest": 1181.3,
+			"repayments": 1604.2,
+			"viaHmrc": 1409.7,
+			"voluntary": 138.6,
+			"refunded": -40.2
+		},
+		{
+			"plan": "plan2",
+			"columns": [
+				"Plan 2 Full-time",
+				"Plan 2 Part-time"
+			],
+			"balance": 224167.2,
+			"lent": 4646.0,
+			"interest": 9779.6,
+			"repayments": 3234.4,
+			"viaHmrc": 2671.6,
+			"voluntary": 532.8,
+			"refunded": -64.4
+		},
+		{
+			"plan": "postgraduate",
+			"columns": [
+				"Plan 3 Postgraduate Masters",
+				"Plan 3 Postgraduate Doctoral"
+			],
+			"balance": 7858.7,
+			"lent": 823.2,
+			"interest": 482.8,
+			"repayments": 427.0,
+			"viaHmrc": 349.3,
+			"voluntary": 68.4,
+			"refunded": -6.7
+		},
+		{
+			"plan": "plan5",
+			"columns": [
+				"Plan 5 Full-time",
+				"Plan 5 Part-time"
+			],
+			"balance": 30776.4,
+			"lent": 15876.6,
+			"interest": 790.2,
+			"repayments": 73.7,
+			"viaHmrc": 0.0,
+			"voluntary": 55.1,
+			"refunded": -0.1
+		}
+	],
+	"totals": {
+		"balance": 294581.8,
+		"lent": 21345.7,
+		"interest": 12234.0,
+		"repayments": 5339.3,
+		"viaHmrc": 4430.6,
+		"voluntary": 794.9,
+		"refunded": -111.5
+	},
+	"balanceByPlan": {
+		"unit": "£ billion",
+		"rows": [
+			{
+				"financialYear": "2013-14",
+				"plan1": 46.007,
+				"plan2": 8.349,
+				"postgraduate": 0.0,
+				"plan5": 0.0
+			},
+			{
+				"financialYear": "2014-15",
+				"plan1": 46.295,
+				"plan2": 18.44,
+				"postgraduate": 0.0,
+				"plan5": 0.0
+			},
+			{
+				"financialYear": "2015-16",
+				"plan1": 45.405,
+				"plan2": 30.848,
+				"postgraduate": 0.0,
+				"plan5": 0.0
+			},
+			{
+				"financialYear": "2016-17",
+				"plan1": 44.061,
+				"plan2": 44.955,
+				"postgraduate": 0.328,
+				"plan5": 0.0
+			},
+			{
+				"financialYear": "2017-18",
+				"plan1": 42.515,
+				"plan2": 61.001,
+				"postgraduate": 0.941,
+				"plan5": 0.0
+			},
+			{
+				"financialYear": "2018-19",
+				"plan1": 41.049,
+				"plan2": 79.088,
+				"postgraduate": 1.676,
+				"plan5": 0.0
+			},
+			{
+				"financialYear": "2019-20",
+				"plan1": 38.194,
+				"plan2": 99.43,
+				"postgraduate": 2.469,
+				"plan5": 0.0
+			},
+			{
+				"financialYear": "2020-21",
+				"plan1": 36.393,
+				"plan2": 120.779,
+				"postgraduate": 3.423,
+				"plan5": 0.0
+			},
+			{
+				"financialYear": "2021-22",
+				"plan1": 34.56,
+				"plan2": 142.663,
+				"postgraduate": 4.389,
+				"plan5": 0.0
+			},
+			{
+				"financialYear": "2022-23",
+				"plan1": 33.036,
+				"plan2": 167.295,
+				"postgraduate": 5.238,
+				"plan5": 0.0
+			},
+			{
+				"financialYear": "2023-24",
+				"plan1": 32.67,
+				"plan2": 193.725,
+				"postgraduate": 6.105,
+				"plan5": 3.668
+			},
+			{
+				"financialYear": "2024-25",
+				"plan1": 32.322,
+				"plan2": 213.089,
+				"postgraduate": 6.985,
+				"plan5": 14.196
+			},
+			{
+				"financialYear": "2025-26",
+				"plan1": 31.781,
+				"plan2": 224.177,
+				"postgraduate": 7.859,
+				"plan5": 30.768
+			}
+		]
+	},
+	"borrowers": {
+		"asAt": "2026-04-30",
+		"unit": "thousands",
+		"withBalance": 7285.2,
+		"madePayment": 3081.5,
+		"liveEmploymentNoPayment": 1130.9,
+		"noLiveEmploymentUnder90Days": 44.9,
+		"noLiveEmploymentOver90Days": 161.4,
+		"awaitingFirstTaxReturn": 539.5,
+		"notRequiredToRepayYet": 1940.9,
+		"overseasRepaying": 61.1,
+		"overseasInArrears": 89.1,
+		"overseasBelowThreshold": 98.6,
+		"overseasNoIncomeDetails": 44.6,
+		"statusToBeConfirmed": 92.8,
+		"priorYearWithBalance": 6991.3
+	},
+	"averageBalance": {
+		"allWithBalance": {
+			"financialYear": "2024-25",
+			"value": 40330,
+			"borrowersThousands": 5749.7
+		},
+		"enteringRepayment2026": 47730
+	},
+	"overRepayments": {
+		"taxYear": "2025/26",
+		"effectiveDate": "2026-09-30",
+		"payeShare": {
+			"taxYear": "2024/25",
+			"paye": 90,
+			"selfAssessment": 7
+		},
+		"refundsAllScenarios": [
+			{
+				"taxYear": "2026/27 to date",
+				"refundedMillions": 65.3,
+				"customers": 277500,
+				"average": 240.0
+			},
+			{
+				"taxYear": "2025/26",
+				"refundedMillions": 125.2,
+				"customers": 514700,
+				"average": 240.0
+			},
+			{
+				"taxYear": "2024/25",
+				"refundedMillions": 175.2,
+				"customers": 721100,
+				"average": 240.0
+			},
+			{
+				"taxYear": "2023/24",
+				"refundedMillions": 61.1,
+				"customers": 216300,
+				"average": 280.0
+			}
+		],
+		"belowThreshold": [
+			{
+				"plan": "plan1",
+				"customers": 257102,
+				"amount": 44098601.0
+			},
+			{
+				"plan": "plan2",
+				"customers": 650602,
+				"amount": 92404764.0
+			},
+			{
+				"plan": "postgraduate",
+				"customers": 57266,
+				"amount": 8203262.0
+			},
+			{
+				"plan": "plan4",
+				"customers": 86769,
+				"amount": 10638961.0
+			},
+			{
+				"plan": "plan5",
+				"customers": null,
+				"amount": null
+			}
+		],
+		"belowThresholdTotal": 155345588.0,
+		"belowThresholdRefunded": {
+			"refundedMillions": 97.6,
+			"customers": 416400
+		},
+		"wrongPlan": [
+			{
+				"correct": "plan2",
+				"used": "plan1",
+				"customers": 12994,
+				"amount": 4169833.0
+			},
+			{
+				"correct": "plan4",
+				"used": "plan1",
+				"customers": 370,
+				"amount": 144631.0
+			},
+			{
+				"correct": "plan4",
+				"used": "plan2",
+				"customers": 1158,
+				"amount": 304339.0
+			}
+		],
+		"wrongPlanTotal": 4618803.0,
+		"beforeDue": [
+			{
+				"plan": "plan1",
+				"customers": 1087,
+				"amount": 296289.0
+			},
+			{
+				"plan": "plan2",
+				"customers": 25045,
+				"amount": 4422886.0
+			},
+			{
+				"plan": "postgraduate",
+				"customers": 5466,
+				"amount": 1412692.0
+			},
+			{
+				"plan": "plan4",
+				"customers": 1209,
+				"amount": 198980.0
+			},
+			{
+				"plan": "plan5",
+				"customers": 2758,
+				"amount": 353031.0
+			}
+		],
+		"beforeDueTotal": 6683877.0,
+		"afterRepaid": {
+			"customers": 56376,
+			"amount": 23237898.0
+		},
+		"afterRepaidRefunded": {
+			"refundedMillions": 26.8,
+			"customers": 76100
+		}
+	},
+	"forecast": {
+		"producedIn": "2026-04",
+		"rows": [
+			{
+				"plan": "plan2",
+				"loanType": "Advanced Learner loans",
+				"cohort": "2022/23",
+				"share": 37
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Higher education full time",
+				"cohort": "2022/23",
+				"share": 32
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Higher education part time",
+				"cohort": "2022/23",
+				"share": 59
+			},
+			{
+				"plan": "postgraduate",
+				"loanType": "Master's loans",
+				"cohort": "2022/23",
+				"share": 73
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Advanced Learner loans",
+				"cohort": "2022/23",
+				"share": null
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Higher education full time",
+				"cohort": "2022/23",
+				"share": null
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Higher education part time",
+				"cohort": "2022/23",
+				"share": null
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Advanced Learner loans",
+				"cohort": "2023/24",
+				"share": null
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Higher education full time",
+				"cohort": "2023/24",
+				"share": null
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Higher education part time",
+				"cohort": "2023/24",
+				"share": null
+			},
+			{
+				"plan": "postgraduate",
+				"loanType": "Master's loans",
+				"cohort": "2023/24",
+				"share": 77
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Advanced Learner loans",
+				"cohort": "2023/24",
+				"share": 53
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Higher education full time",
+				"cohort": "2023/24",
+				"share": 56
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Higher education part time",
+				"cohort": "2023/24",
+				"share": 72
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Advanced Learner loans",
+				"cohort": "2024/25",
+				"share": null
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Higher education full time",
+				"cohort": "2024/25",
+				"share": null
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Higher education part time",
+				"cohort": "2024/25",
+				"share": null
+			},
+			{
+				"plan": "postgraduate",
+				"loanType": "Doctoral loans",
+				"cohort": "2024/25",
+				"share": null
+			},
+			{
+				"plan": "postgraduate",
+				"loanType": "Master's loans",
+				"cohort": "2024/25",
+				"share": 79
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Advanced Learner loans",
+				"cohort": "2024/25",
+				"share": 58
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Higher education full time",
+				"cohort": "2024/25",
+				"share": 56
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Higher education part time",
+				"cohort": "2024/25",
+				"share": 68
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Advanced Learner loans",
+				"cohort": "2025/26",
+				"share": null
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Higher education full time",
+				"cohort": "2025/26",
+				"share": null
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Higher education part time",
+				"cohort": "2025/26",
+				"share": null
+			},
+			{
+				"plan": "postgraduate",
+				"loanType": "Doctoral loans",
+				"cohort": "2025/26",
+				"share": null
+			},
+			{
+				"plan": "postgraduate",
+				"loanType": "Master's loans",
+				"cohort": "2025/26",
+				"share": 68
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Advanced Learner loans",
+				"cohort": "2025/26",
+				"share": 51
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Higher education full time",
+				"cohort": "2025/26",
+				"share": 55
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Higher education part time",
+				"cohort": "2025/26",
+				"share": 63
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Advanced Learner loans",
+				"cohort": "2026/27",
+				"share": null
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Higher education full time",
+				"cohort": "2026/27",
+				"share": null
+			},
+			{
+				"plan": "plan2",
+				"loanType": "Higher education part time",
+				"cohort": "2026/27",
+				"share": null
+			},
+			{
+				"plan": "postgraduate",
+				"loanType": "Doctoral loans",
+				"cohort": "2026/27",
+				"share": null
+			},
+			{
+				"plan": "postgraduate",
+				"loanType": "Master's loans",
+				"cohort": "2026/27",
+				"share": 69
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Advanced Learner loans",
+				"cohort": "2026/27",
+				"share": 51
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Higher education full time",
+				"cohort": "2026/27",
+				"share": 55
+			},
+			{
+				"plan": "plan5",
+				"loanType": "Higher education part time",
+				"cohort": "2026/27",
+				"share": 63
+			}
+		],
+		"averageBorrowingPlan5FullTime2526": 45190,
+		"subsidyPlan5FullTime2526Percent": 33,
+		"medianRepaymentTermYears2526": 30,
+		"assumedThresholds": {
+			"taxYear": "2026-27",
+			"values": {
+				"plan1": 26900,
+				"plan2": 29385,
+				"postgraduate": 21000,
+				"plan5": 25000
+			},
+			"note": "Table 6b: the annual thresholds the forecast assumes for the year, checked against the rules file when the page is built."
+		}
+	}
+}
