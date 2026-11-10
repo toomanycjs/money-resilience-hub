@@ -5,6 +5,7 @@ import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
 import Guide from '../../layouts/Guide.astro';
 import { guideLink } from '../../lib/guides';
 import { liveAmounts } from '../../lib/pages';
+import { pagesPassingGuard } from '../../lib/salaryPage';
 
 const year = getYear(CURRENT_YEAR.taxYear);
 const following = nextYear(year.taxYear);
@@ -72,6 +73,29 @@ if (following) {
 	}
 }
 
+// The difference at every salary, for the chart: Scottish take-home less the rest of the UK's.
+const SWEEP_FROM = 15000;
+const SWEEP_TO = 150000;
+const SWEEP_STEP = 500;
+const sweep: { gross: number; diff: number }[] = [];
+for (let g = SWEEP_FROM; g <= SWEEP_TO; g += SWEEP_STEP) sweep.push({ gross: g, diff: pair(g).diff });
+const widest = sweep.reduce((a, b) => (Math.abs(b.diff) > Math.abs(a.diff) ? b : a));
+const bestFor = sweep.reduce((a, b) => (b.diff > a.diff ? b : a));
+const CW = 800;
+const CH = 300;
+const CL = 60;
+const CR = 16;
+const CT = 16;
+const CB = 40;
+const yAbs = Math.ceil(Math.max(...sweep.map((p) => Math.abs(p.diff))) / 500) * 500;
+const cx = (g: number) => CL + ((g - SWEEP_FROM) / (SWEEP_TO - SWEEP_FROM)) * (CW - CL - CR);
+const cy = (d: number) => CT + (1 - (d + yAbs) / (2 * yAbs)) * (CH - CT - CB);
+const sweepPath = sweep.map((p, i) => `${i ? 'L' : 'M'}${cx(p.gross).toFixed(1)},${cy(p.diff).toFixed(1)}`).join('');
+const sweepTicks = [-yAbs, -yAbs / 2, 0, yAbs / 2, yAbs];
+const sweepX = [SWEEP_FROM, 50000, 100000, SWEEP_TO];
+const common = [20000, 30000, 40000, 50000, 60000, 80000, 100000, 125000, 150000].map(pair);
+const scottishLive = pagesPassingGuard(liveAmounts('salary'), asAt, 'scotland');
+
 const sources = [
 	{ href: 'https://www.gov.uk/scottish-income-tax', title: 'Income Tax in Scotland: current rates' },
 	{ href: 'https://www.gov.uk/scottish-income-tax/who-pays', title: 'Income Tax in Scotland: who pays' },
@@ -127,6 +151,36 @@ const sources = [
 	</div>
 	<p>{sameNi ? 'The whole difference is income tax: the National Insurance line is identical in both columns.' : 'The difference is in the income tax lines.'} {crossover !== null && `Scottish take-home is the higher of the two up to a salary of about ${money(crossover, 0)} and the lower of the two above it.`} The gap widens where the Scottish higher rate of {pct(sco.find((b) => b.name === 'Higher rate')?.rate ?? 0)} starts, at {money(sco.find((b) => b.name === 'Higher rate')?.from ?? 0, 0)} against {money(ruk.find((b) => b.name === 'Higher rate')?.from ?? 0, 0)} elsewhere.</p>
 
+	<h2>The difference at every salary</h2>
+	<figure class="chart">
+		<svg viewBox={`0 0 ${CW} ${CH}`} role="img" aria-label={`Scottish take-home less the rest of the UK's, by salary from ${money(SWEEP_FROM, 0)} to ${money(SWEEP_TO, 0)} in ${year.label}: at most ${money(bestFor.diff, 0)} more at ${money(bestFor.gross, 0)}, and ${money(Math.abs(widest.diff), 0)} less at ${money(widest.gross, 0)}.`} class="diff-chart">
+			{sweepTicks.map((t) => (
+				<>
+					<line x1={CL} x2={CW - CR} y1={cy(t)} y2={cy(t)} class={t === 0 ? 'zero' : 'grid'} />
+					<text x={CL - 8} y={cy(t) + 4} class="tick" text-anchor="end">{t === 0 ? money(0, 0) : `${t > 0 ? '+' : '−'}${money(Math.abs(t), 0)}`}</text>
+				</>
+			))}
+			{sweepX.map((g) => <text x={cx(g)} y={CH - CB + 22} class="tick" text-anchor="middle">{money(g, 0)}</text>)}
+			{crossover !== null && <line x1={cx(crossover)} x2={cx(crossover)} y1={CT} y2={CH - CB} class="mark" />}
+			<path d={sweepPath} class="line" />
+			<line x1={CL} x2={CW - CR} y1={CH - CB} y2={CH - CB} class="axis" />
+		</svg>
+		<figcaption>Take-home in Scotland less take-home in England, Wales and Northern Ireland, a year, by salary in {year.label}: standard tax code, no pension or student loan. Above the zero line Scotland keeps more; below it, less.{crossover !== null && ` The dashed line marks the crossover near ${money(crossover, 0)}.`}</figcaption>
+	</figure>
+	<p>The gap is widest in Scotland's favour at {money(bestFor.gross, 0)}, where it is {money(bestFor.diff, 0)} a year, and widest against it at {money(widest.gross, 0)}, where a Scottish taxpayer keeps {money(Math.abs(widest.diff), 0)} less. Between the two the line turns at each Scottish band.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>The same comparison at common salaries, {year.label}</caption>
+			<thead><tr><th scope="col">Salary</th><th scope="col" class="num">Scotland, a month</th><th scope="col" class="num">Rest of the UK, a month</th><th scope="col" class="num">Difference a year</th></tr></thead>
+			<tbody>
+				{common.map((r) => (
+					<tr><th scope="row">{scottishLive.includes(r.gross) ? <a href={`/salary/${r.gross}/scotland/`}>{money(r.gross, 0)}</a> : money(r.gross, 0)}</th><td class="num">{money(r.scotland / 12, 0)}</td><td class="num">{money(r.rest / 12, 0)}</td><td class="num">{signed(r.diff)}</td></tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>Each linked salary opens its page under the Scottish bands, with the working line by line.</p>
+
 	<h2>Who pays it and what it covers</h2>
 	<ul>
 		<li>You pay Scottish Income Tax if you live in Scotland. gov.uk has separate rules for people who move during a year, have homes in more than one part of the UK or have no home.</li>
@@ -168,3 +222,15 @@ const sources = [
 		{sources.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
 	</Fragment>
 </Guide>
+
+<style>
+	.chart { margin: 1rem 0 1.5rem; }
+	.diff-chart { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+	.diff-chart .grid { stroke: var(--hairline); stroke-width: 1; }
+	.diff-chart .zero { stroke: var(--quiet); stroke-width: 1; }
+	.diff-chart .axis { stroke: var(--ink); stroke-width: 1; }
+	.diff-chart .tick { fill: var(--quiet); font-size: 12px; }
+	.diff-chart .mark { stroke: var(--threshold); stroke-width: 1; stroke-dasharray: 3 3; }
+	.diff-chart .line { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+	figcaption { color: var(--quiet); font-size: 0.9rem; margin-top: 0.5rem; }
+</style>
