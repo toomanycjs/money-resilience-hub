@@ -93,6 +93,21 @@ export default function indexNow({ key }) {
 						return;
 					}
 
+					// The build runs before its own deploy is live. If the key file is not
+					// on the live site yet (a first deploy, or a new key), Bing checks it,
+					// finds nothing and rejects the key for a long time afterwards, so skip
+					// this round; the next deploy submits these pages once the file is live.
+					try {
+						const live = await fetch(new URL(`/${key}.txt`, site), { signal: AbortSignal.timeout(10_000) });
+						if (!live.ok || (await live.text()).trim() !== key) {
+							logger.warn(`key file not live yet (HTTP ${live.status}); skipping IndexNow this deploy`);
+							return;
+						}
+					} catch (err) {
+						logger.warn(`could not check the live key file (${err.message}); skipping IndexNow this deploy`);
+						return;
+					}
+
 					try {
 						const res = await fetch(ENDPOINT, {
 							method: 'POST',
