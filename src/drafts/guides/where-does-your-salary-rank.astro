@@ -1,0 +1,371 @@
+---
+// Where a salary ranks: the UK distribution of full-time pay, median pay by
+// region, country and parliamentary constituency, and the median since 1999,
+// from the ONS Annual Survey of Hours and Earnings 2026 (provisional). Every
+// pay figure is read from src/data/ashe-pay-distribution.json, which records
+// its sources; every take-home figure is computed from the rules at build time.
+import { bandsFor, getYear, resolve, takeHome } from '@money-resilience-hub/rules';
+import { longDate, money } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import data from '../../data/ashe-pay-distribution.json' with { type: 'json' };
+import Guide from '../../layouts/Guide.astro';
+import { liveAmounts } from '../../lib/pages';
+
+interface Area {
+	code: string;
+	name: string;
+	kind: 'aggregate' | 'country' | 'region';
+	jobs: number | null;
+	median: number | null;
+	mean: number | null;
+	p10: number | null;
+	p25: number | null;
+	p75: number | null;
+	p90: number | null;
+}
+interface Constituency {
+	code: string;
+	name: string;
+	jobs: number | null;
+	median: number | null;
+}
+interface Point {
+	year: number;
+	column: string;
+	median: number | null;
+}
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const run = (gross: number) => takeHome({ gross, nation: 'england-ni', asAt }, { withMarginal: false });
+const rate1 = (v: number) => `${(v * 100).toFixed(1)}%`;
+const times = (v: number) => v.toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const whole = (v: number) => Math.round(v).toLocaleString('en-GB');
+
+// The UK distribution: the published percentiles, in order.
+const uk = data.uk as { jobs: number; median: number; mean: number; percentiles: Record<string, number> };
+const percentiles = Object.entries(uk.percentiles)
+	.map(([p, v]) => ({ p: Number(p), value: v }))
+	.sort((a, b) => a.p - b.p);
+const p = (n: number) => percentiles.find((x) => x.p === n)!.value;
+const status = run(uk.median).rulesUsed.status;
+
+/**
+ * The share of full-time jobs paid less than an amount, read off the published
+ * percentiles by straight-line interpolation between the two either side.
+ * Outside the 10th to 90th range the share is only known as a bound.
+ */
+const shareBelow = (amount: number): { kind: 'under' | 'over' | 'about'; share: number } => {
+	const first = percentiles[0];
+	const last = percentiles[percentiles.length - 1];
+	if (amount < first.value) return { kind: 'under', share: first.p };
+	if (amount > last.value) return { kind: 'over', share: last.p };
+	for (let i = 1; i < percentiles.length; i++) {
+		const a = percentiles[i - 1];
+		const b = percentiles[i];
+		if (amount <= b.value) return { kind: 'about', share: Math.round(a.p + ((amount - a.value) / (b.value - a.value)) * (b.p - a.p)) };
+	}
+	return { kind: 'over', share: last.p };
+};
+type Share = ReturnType<typeof shareBelow>;
+const shareWords = (s: Share) => (s.kind === 'under' ? `fewer than ${s.share}%` : s.kind === 'over' ? `more than ${s.share}%` : `about ${s.share}%`);
+const ordinal = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
+/** "at about the 68th percentile", "below the 10th percentile", "above the 90th percentile". */
+const percentileWords = (s: Share) => (s.kind === 'under' ? `below the ${ordinal(s.share)} percentile` : s.kind === 'over' ? `above the ${ordinal(s.share)} percentile` : `at about the ${ordinal(s.share)} percentile`);
+
+// Salaries with their own page: every live multiple of five thousand from the
+// last one at or below the 10th percentile to the first at or above the 90th,
+// and the live salary pages that sit on a threshold of the tax system.
+const live = liveAmounts('salary');
+const STEP = 5000;
+const steps = live.filter((a) => a % STEP === 0);
+const from = [...steps].reverse().find((a) => a <= p(10)) ?? steps[0];
+const to = steps.find((a) => a >= p(90)) ?? (steps.at(-1) as number);
+const wanted = live.filter((a) => (a % STEP === 0 || a % 1000 !== 0) && a >= from && a <= to);
+const salaryRows = wanted
+	.map((a) => {
+		const b = run(a);
+		return { amount: a, share: shareBelow(a), monthly: b.periods.monthly, rate: b.effectiveRate };
+	});
+
+// The thresholds of the tax system against the distribution.
+const bands = bandsFor(year, 'england-ni');
+const pa = resolve(year.incomeTax.personalAllowance, 'incomeTax.personalAllowance', asAt).value;
+const hrt = bands[0].upTo === null ? null : pa + bands[0].upTo;
+const hrtShare = hrt === null ? null : shareBelow(hrt);
+const meanShare = shareBelow(uk.mean);
+const ukRun = run(uk.median);
+
+// Regions and countries, with take-home at each median.
+const areas = (data.regions as Area[]).filter((a) => a.median !== null);
+const regionRows = areas
+	.filter((a) => a.kind !== 'aggregate' || a.code === 'K02000001')
+	.map((a) => {
+		const b = run(a.median as number);
+		return { ...a, monthly: b.periods.monthly, rate: b.effectiveRate };
+	});
+const ranked = regionRows.filter((a) => a.kind !== 'aggregate').sort((a, b) => (b.median as number) - (a.median as number));
+const topArea = ranked[0];
+const bottomArea = ranked[ranked.length - 1];
+const scotland = regionRows.find((a) => a.code === 'S92000003');
+let scotlandOwnRates: number | null = null;
+try {
+	scotlandOwnRates = scotland ? takeHome({ gross: scotland.median as number, nation: 'scotland', asAt }, { withMarginal: false }).periods.monthly : null;
+} catch {
+	scotlandOwnRates = null;
+}
+/** "the North East", "the East", but "London", "Wales", "Yorkshire and The Humber". */
+const inArea = (name: string) => (/^(North|South|East|West)\b/.test(name) ? `the ${name}` : name);
+const aboveLondonQuartile = ranked.filter((a) => a.code !== topArea.code && (a.median as number) < (topArea.p25 as number));
+
+// Parliamentary constituencies, by place of residence: the ten highest and ten lowest medians.
+const constituencies = (data.constituencies as Constituency[]).filter((c) => c.median !== null);
+const suppressed = (data.constituencies as Constituency[]).length - constituencies.length;
+const byMedian = [...constituencies].sort((a, b) => (b.median as number) - (a.median as number));
+const withTakeHome = (c: Constituency) => ({ ...c, monthly: run(c.median as number).periods.monthly });
+const highest = byMedian.slice(0, 10).map(withTakeHome);
+const lowest = byMedian.slice(-10).reverse().map(withTakeHome);
+const constituencyMedianShare = shareBelow(highest[0].median as number);
+
+// The long run: one point a year, taking the later basis where the ONS gives two.
+const series = data.series as Point[];
+const byYear = new Map<number, Point>();
+for (const pt of series) if (pt.median !== null) byYear.set(pt.year, pt);
+const line = [...byYear.values()];
+const first = line[0];
+const last = line[line.length - 1];
+const breaks = series.filter((pt, i) => i > 0 && series[i - 1].year === pt.year).map((pt) => pt.year);
+const at = (y: number) => byYear.get(y)?.median ?? null;
+const growth = (from: number, to: number) => ((at(to) as number) / (at(from) as number) - 1);
+const fiveYearsAgo = last.year - 5;
+const tenYearsAgo = last.year - 10;
+
+// Charts.
+const W = 800;
+const H = 320;
+const L = 60;
+const R = 16;
+const T = 16;
+const B = 40;
+const x0 = first.year;
+const x1 = last.year;
+const x = (y: number) => L + ((y - x0) / (x1 - x0)) * (W - L - R);
+const lineMax = Math.ceil((last.median as number) / 10000) * 10000;
+const yLine = (v: number) => T + (1 - v / lineMax) * (H - T - B);
+const linePath = line.map((pt, i) => `${i ? 'L' : 'M'}${x(pt.year).toFixed(1)},${yLine(pt.median as number).toFixed(1)}`).join('');
+const lineTicks = [0, lineMax / 4, lineMax / 2, (3 * lineMax) / 4, lineMax];
+const xTicks = line.map((pt) => pt.year).filter((y) => y % 5 === 0 || y === last.year);
+
+// The ruler: the 10th, 25th, 50th, 75th and 90th percentiles along a salary axis.
+const RW = 480;
+const RH = 96;
+const RL = 12;
+const RR = 12;
+const rulerMax = Math.ceil(p(90) / 10000) * 10000;
+const rx = (v: number) => RL + (v / rulerMax) * (RW - RL - RR);
+const rulerMarks = [10, 25, 50, 75, 90].map((n) => ({ p: n, value: p(n) }));
+const rulerY = 46;
+
+const tableYears = line.filter((pt, i) => pt.year % 3 === 0 || i >= line.length - 4);
+const retrieved = data.retrieved as string;
+---
+
+<Guide
+	slug="where-does-your-salary-rank"
+	taxYears={[year.taxYear]}
+	status={status}
+	related={[
+		{ title: 'Salary pages', href: '/salary/', desc: 'One page per salary, every deduction on its own line, with a Scottish version of each.' },
+		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'Your own pay, tax code, pension and student loan, with the arithmetic shown.' },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'The thresholds and rates behind every take-home figure on this page, with their sources.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>Half of the UK's full-time employee jobs paid less than {money(uk.median, 0)} in the year to April 2026, on the ONS's Annual Survey of Hours and Earnings. One in ten paid less than {money(p(10), 0)} and one in ten paid more than {money(p(90), 0)}. The survey counts employee jobs paid through PAYE, measured in April and sampled at one in a hundred; it counts jobs rather than people, it leaves out the self-employed, and the 2026 figures are provisional until the ONS revises them in October 2027.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>The share of full-time jobs paid less than a salary</h2>
+		<figure class="chart">
+			<svg viewBox={`0 0 ${RW} ${RH}`} role="img" aria-label={`The UK distribution of full-time gross annual pay: ${rulerMarks.map((m) => `${m.p}% of jobs pay less than ${money(m.value, 0)}`).join(', ')}.`} class="story-chart ruler">
+				<line x1={RL} x2={RW - RR} y1={rulerY} y2={rulerY} class="axis" />
+				{rulerMarks.map((m, i) => (
+					<>
+						<line x1={rx(m.value)} x2={rx(m.value)} y1={rulerY - 8} y2={rulerY + 8} class={m.p === 50 ? 'mark median' : 'mark'} />
+						<text x={rx(m.value)} y={rulerY - 14} class="tick" text-anchor="middle">{m.p}%</text>
+						<text x={rx(m.value)} y={rulerY + (i % 2 ? 40 : 24)} class="amount" text-anchor="middle">{money(m.value, 0)}</text>
+					</>
+				))}
+			</svg>
+			<figcaption>Gross annual pay for full-time employee jobs, UK, year to April 2026 (provisional). Each mark is the pay below which that share of jobs fall; the amber mark is the median. Source: ONS ASHE Table 1.7a, retrieved {longDate(retrieved)}.</figcaption>
+		</figure>
+		<div class="table-wrap">
+			<table>
+				<caption>Salaries with their own page, the share of full-time jobs paid less than each, and take-home a month under the {year.label} rules for England and Northern Ireland. The share is read between the published percentiles, so it is approximate.</caption>
+				<thead><tr><th scope="col">Salary</th><th scope="col" class="num">Full-time jobs paid less</th><th scope="col" class="num">Take-home a month</th><th scope="col" class="num">Effective rate</th></tr></thead>
+				<tbody>
+					{salaryRows.map((r) => (
+						<tr>
+							<th scope="row"><a href={`/salary/${r.amount}/`}>{money(r.amount, 0)}</a></th>
+							<td class="num">{shareWords(r.share)}</td>
+							<td class="num">{money(r.monthly, 0)}</td>
+							<td class="num">{rate1(r.rate)}</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+		<p>The distribution leans to the right: the mean, {money(uk.mean, 0)}, sits {percentileWords(meanShare)}, because a small number of very high salaries pull it up while the median stays put.{hrt !== null && hrtShare !== null ? ` The higher rate threshold of ${money(hrt, 0)} falls ${percentileWords(hrtShare)}, so roughly ${whole(100 - hrtShare.share)} in every hundred full-time jobs pay more than it.` : ''} The median job takes home {money(ukRun.periods.monthly, 0)} a month, an effective rate of {rate1(ukRun.effectiveRate)}.</p>
+	</Fragment>
+
+	<h2>By region and country</h2>
+	<p>Median full-time pay runs from {money(bottomArea.median as number, 0)} in {inArea(bottomArea.name)} to {money(topArea.median as number, 0)} in {inArea(topArea.name)}, a gap of {money((topArea.median as number) - (bottomArea.median as number), 0)} a year before tax and {money(topArea.monthly - bottomArea.monthly, 0)} a month after it.{aboveLondonQuartile.length > 0 ? ` The lower quartile in ${inArea(topArea.name)}, ${money(topArea.p25 as number, 0)}, is above the median in ${aboveLondonQuartile.length === ranked.length - 1 ? 'every other region and country' : aboveLondonQuartile.map((a) => inArea(a.name)).join(', ')}.` : ''} These are jobs by where the employee lives, not where the job is. Press a heading to sort.</p>
+	<div class="table-wrap">
+		<table data-sortable>
+			<caption>Full-time employee jobs by region and country of residence, UK, year to April 2026 (provisional). Pay from ASHE Table 10.7a; take-home a month and effective rate from the {year.label} rules for England and Northern Ireland at each median.</caption>
+			<thead>
+				<tr>
+					<th scope="col"><button type="button" data-sort="text">Area</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">10th percentile</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">Median pay</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">90th percentile</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">Take-home a month</button></th>
+					<th scope="col" class="num"><button type="button" data-sort="num">Effective rate</button></th>
+				</tr>
+			</thead>
+			<tbody>
+				{regionRows.map((a) => (
+					<tr class={a.kind}>
+						<th scope="row">{a.name}</th>
+						<td class="num" data-value={a.p10 ?? ''}>{a.p10 === null ? '' : money(a.p10, 0)}</td>
+						<td class="num" data-value={a.median}>{money(a.median as number, 0)}</td>
+						<td class="num" data-value={a.p90 ?? ''}>{a.p90 === null ? '' : money(a.p90, 0)}</td>
+						<td class="num" data-value={a.monthly}>{money(a.monthly, 0)}</td>
+						<td class="num" data-value={a.rate}>{rate1(a.rate)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	{scotland && scotlandOwnRates !== null && (
+		<p>The table uses the England and Northern Ireland rates throughout so that the areas compare like for like. Under the Scottish income tax bands, Scotland's median of {money(scotland.median as number, 0)} takes home {money(scotlandOwnRates, 0)} a month, {money(Math.abs(scotlandOwnRates - scotland.monthly), 0)} {scotlandOwnRates < scotland.monthly ? 'less' : 'more'} than the figure shown.</p>
+	)}
+
+	<h2>By parliamentary constituency</h2>
+	<p>The same table gives a median for {constituencies.length} of the {constituencies.length + suppressed} parliamentary constituencies, again by where people live. The highest, {highest[0].name}, has a median of {money(highest[0].median as number, 0)}, which is {percentileWords(constituencyMedianShare)} of the UK as a whole; the lowest, {lowest[0].name}, has {money(lowest[0].median as number, 0)}. The ten at each end:</p>
+	<div class="two-up">
+		<div class="table-wrap">
+			<table>
+				<caption>The ten highest constituency medians, full-time jobs by place of residence, with take-home a month at each.</caption>
+				<thead><tr><th scope="col">Constituency</th><th scope="col" class="num">Median pay</th><th scope="col" class="num">A month</th></tr></thead>
+				<tbody>
+					{highest.map((c) => (
+						<tr>
+							<th scope="row">{c.name}</th>
+							<td class="num">{money(c.median as number, 0)}</td>
+							<td class="num">{money(c.monthly, 0)}</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+		<div class="table-wrap">
+			<table>
+				<caption>The ten lowest constituency medians, on the same basis.</caption>
+				<thead><tr><th scope="col">Constituency</th><th scope="col" class="num">Median pay</th><th scope="col" class="num">A month</th></tr></thead>
+				<tbody>
+					{lowest.map((c) => (
+						<tr>
+							<th scope="row">{c.name}</th>
+							<td class="num">{money(c.median as number, 0)}</td>
+							<td class="num">{money(c.monthly, 0)}</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+		</div>
+	</div>
+	<p>Every constituency's median is in the data file linked under Sources. Each rests on a far smaller share of the one per cent sample than the national figure, so it is less precise; the ONS publishes a coefficient of variation for each in Table 10.7b, and the order moves from year to year.</p>
+
+	<h2>The median since {first.year}</h2>
+	<figure class="chart">
+		<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Median gross annual pay for full-time employee jobs, UK, ${first.year} to ${last.year}: from ${money(first.median as number, 0)} to ${money(last.median as number, 0)}.`} class="story-chart">
+			{lineTicks.map((t) => (
+				<>
+					<line x1={L} x2={W - R} y1={yLine(t)} y2={yLine(t)} class="grid" />
+					<text x={L - 8} y={yLine(t) + 4} class="tick" text-anchor="end">{money(t, 0)}</text>
+				</>
+			))}
+			{xTicks.map((y) => <text x={x(y)} y={H - B + 22} class="tick" text-anchor="middle">{y}</text>)}
+			{breaks.map((y) => <line x1={x(y)} x2={x(y)} y1={T} y2={H - B} class="break" />)}
+			<path d={linePath} class="line main" />
+			<line x1={L} x2={W - R} y1={H - B} y2={H - B} class="axis" />
+		</svg>
+		<figcaption>Median gross annual pay for full-time employee jobs, UK, April each year, in cash terms. Dotted verticals: the years the ONS changed its method or classification ({breaks.slice(0, -1).join(', ')} and {breaks.at(-1)}); the line follows the later basis in each. Source: ONS ASHE time series of selected estimates, Table 2, retrieved {longDate(retrieved)}.</figcaption>
+	</figure>
+	<p>In cash the median is {times((last.median as number) / (first.median as number))} times its {first.year} level. It rose {rate1(growth(tenYearsAgo, fiveYearsAgo))} in the five years to {fiveYearsAgo} and {rate1(growth(fiveYearsAgo, last.year))} in the five years to {last.year}; the latest year's rise is {rate1(growth(last.year - 1, last.year))}. The line says nothing about prices, so it is not a measure of what the median buys.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>Median gross annual pay for full-time employee jobs, UK, selected years. Where the ONS gives two figures for a year, both are shown with its own column labels.</caption>
+			<thead><tr><th scope="col">Year</th><th scope="col" class="num">Median pay</th><th scope="col">Basis</th></tr></thead>
+			<tbody>
+				{tableYears.map((pt) =>
+					series
+						.filter((s) => s.year === pt.year && s.median !== null)
+						.map((s) => (
+							<tr>
+								<th scope="row">{s.year}</th>
+								<td class="num">{money(s.median as number, 0)}</td>
+								<td>{s.column === String(s.year) ? '' : s.column}</td>
+							</tr>
+						)),
+				)}
+			</tbody>
+		</table>
+	</div>
+
+	<h2>How to read it</h2>
+	<ul>
+		<li>ASHE is a one per cent sample of employee jobs from HMRC's PAYE records, taken in April. Annual pay is gross pay for the tax year that ended on 5 April 2026, for employees on adult rates who had been in the same job for more than a year. Full-time means more than 30 paid hours a week, or 25 or more in the teaching professions. Someone with two jobs appears twice; the self-employed do not appear at all.</li>
+		<li>A percentile is a share of jobs, not of people or households, and the regional and constituency tables place a job where its holder lives. The share column in the first table is read off the published percentiles in a straight line between the two either side of each salary, so it is accurate to within a few percentage points; below the 10th and above the 90th percentile only a bound is known.</li>
+		<li>Take-home is computed at each median as if it were one person's only income: the {year.label} rates for England and Northern Ireland, the standard tax code, no pension contribution and no student loan. The <a href="/salary/">salary pages</a> show the Scottish figure alongside.</li>
+		<li>The 2026 estimates are provisional and will be revised in October 2027. The long-run series has breaks in {breaks.slice(0, -1).join(', ')} and {breaks.at(-1)}, where the ONS changed its sample, its weighting or its occupation classification and published both figures; the ONS says figures either side of a break are not directly comparable. The median for 2020 and 2021 includes furloughed employees.</li>
+		<li>The ONS publishes this data under the Open Government Licence v3.0.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{(data.sources as { name: string; url: string; published: string }[]).map((s) => <li><a href={s.url} rel="noopener">{s.name}</a>, published {longDate(s.published)}</li>)}
+		<li>The data file this page reads, including every constituency: <a href="/data/ashe-pay-distribution.json">ashe-pay-distribution.json</a>, with each file's address and checksum. Licence: {data.licence}.</li>
+	</Fragment>
+</Guide>
+
+<script>
+	import '../../scripts/sort-table';
+</script>
+
+<style>
+	.chart { margin: 1rem 0 1.5rem; }
+	.story-chart { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+	.story-chart.ruler { max-width: 600px; }
+	.story-chart .grid { stroke: var(--hairline); stroke-width: 1; }
+	.story-chart .axis { stroke: var(--ink); stroke-width: 1; }
+	.story-chart .break { stroke: var(--quiet); stroke-width: 1; stroke-dasharray: 2 4; }
+	.story-chart .tick { fill: var(--quiet); font-size: 12px; }
+	.story-chart .amount { fill: var(--ink); font-size: 12px; font-variant-numeric: tabular-nums; }
+	.story-chart .mark { stroke: var(--ink); stroke-width: 2; }
+	.story-chart .mark.median { stroke: var(--threshold); stroke-width: 3; }
+	.story-chart .line { fill: none; stroke-linejoin: round; }
+	.story-chart .line.main { stroke: var(--ink); stroke-width: 2.5; }
+	figcaption { color: var(--quiet); font-size: 0.9rem; margin-top: 0.5rem; }
+	thead th button { all: unset; cursor: pointer; font: inherit; color: inherit; text-decoration: underline; text-decoration-color: var(--hairline); text-underline-offset: 0.2em; }
+	thead th button:hover, thead th button:focus-visible { text-decoration-color: var(--ink); outline: none; }
+	thead th[aria-sort] button { text-decoration-color: var(--ink); }
+	thead th[aria-sort='descending'] button::after { content: ' \2193'; }
+	thead th[aria-sort='ascending'] button::after { content: ' \2191'; }
+	tr.aggregate th { font-weight: 600; }
+	tr.region th, tr.country th { font-weight: 400; }
+	.two-up { display: grid; gap: 0 2rem; grid-template-columns: 1fr; }
+	@media (min-width: 760px) {
+		.two-up { grid-template-columns: 1fr 1fr; }
+	}
+</style>

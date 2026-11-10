@@ -315,6 +315,26 @@ export const GUIDES: Guide[] = [
 		calculator: TAKE_HOME,
 		draft: true,
 	},
+	{
+		slug: 'what-each-job-takes-home',
+		title: 'What each job takes home: UK pay by occupation, 2026',
+		h1: 'What does each job actually take home?',
+		description: 'Median full-time pay by occupation group and industry from the ONS earnings survey 2026, run through the 2026/27 rules: take-home a month and effective rate.',
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: TAKE_HOME,
+		draft: true,
+	},
+	{
+		slug: 'where-does-your-salary-rank',
+		title: 'Where does your salary rank? UK full-time pay in 2026',
+		h1: 'Where does your salary rank?',
+		description: 'The share of UK full-time jobs paid less than each salary, median pay by region and constituency with take-home, and the median since 1999, from ASHE 2026.',
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: TAKE_HOME,
+		draft: true,
+	},
 ];
 
 // The build's own limits, checked here so a rules change that lengthens a
