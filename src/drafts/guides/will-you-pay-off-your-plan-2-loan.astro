@@ -1,0 +1,286 @@
+---
+// Will you ever pay off your Plan 2 loan: a lifetime repayment model run
+// from the rules file's threshold and rate, with the Plan 2 interest and
+// write-off rules and the Student Loans Company and Department for Education
+// figures read from src/data/student-loan-plan2.json, which records its
+// sources. The future is an explicit set of assumptions, each stated on the
+// page and varied in its own section. Every figure is computed; nothing is typed.
+import { breakEvenSalary, getYear, leastSettled, nextYear, resolve, studentLoanLifetime, type InterestRule, type LifetimeInput } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import data from '../../data/student-loan-plan2.json' with { type: 'json' };
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+import { liveAmounts } from '../../lib/pages';
+
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const live = liveAmounts('salary');
+const retrieved = data.retrieved as string;
+
+// The data file's rows by id, and the source each cites.
+interface Row {
+	id: string;
+	label: string;
+	value: number | string;
+	unit: string;
+	source: string;
+	cell?: string;
+}
+const rows = Object.fromEntries((data.rows as Row[]).map((r) => [r.id, r]));
+const num = (id: string) => {
+	const r = rows[id];
+	if (!r || typeof r.value !== 'number') throw new Error(`student-loan-plan2.json: no numeric row ${id}`);
+	return r.value;
+};
+const text = (id: string) => {
+	const r = rows[id];
+	if (!r || typeof r.value !== 'string') throw new Error(`student-loan-plan2.json: no text row ${id}`);
+	return r.value;
+};
+const sourceById = Object.fromEntries((data.sources as { id: string; name: string; url: string; published: string }[]).map((s) => [s.id, s]));
+
+// The repayment threshold and rate from the rules file, checked against the
+// data file and against the following year's rules, which carry the freeze.
+const threshold = resolve(year.studentLoans.plan2.threshold, 'studentLoans.plan2.threshold', asAt).value;
+const rate = resolve(year.studentLoans.plan2.rate, 'studentLoans.plan2.rate', asAt).value;
+if (num('plan2.interest.lowerIncome') !== threshold) throw new Error(`student-loan-plan2.json gives a lower interest threshold of ${num('plan2.interest.lowerIncome')}; the rules file's Plan 2 threshold is ${threshold}`);
+const following = nextYear(year.taxYear);
+if (following && following.studentLoans.plan2.threshold.value !== threshold) throw new Error(`The ${following.label} Plan 2 threshold is ${following.studentLoans.plan2.threshold.value}; the data file records a freeze at ${threshold}`);
+const status = leastSettled([year.studentLoans.plan2.threshold.status, year.studentLoans.plan2.rate.status, ...(following ? [following.studentLoans.plan2.threshold.status] : [])]);
+
+// The Plan 2 rules from the data file.
+const rpi = num('plan2.interest.rpi');
+const extraMax = num('plan2.interest.extraMax');
+const upperIncome = num('plan2.interest.upperIncome');
+const cap = num('plan2.interest.cap');
+const capYears = num('plan2.interest.capYears');
+const capFrom = rows['plan2.interest.cap'].from as string;
+const capTo = rows['plan2.interest.cap'].to as string;
+const writeOffYears = num('plan2.writeOffYears');
+const frozenUntil = text('plan2.threshold.frozenUntil');
+const frozenYears = Number(frozenUntil.slice(0, 4)) - Number(year.taxYear.slice(0, 4)) + 1;
+const writeOffTaxYear = `${Number(year.taxYear.slice(0, 4)) + writeOffYears - 1}/${String((Number(year.taxYear.slice(0, 4)) + writeOffYears) % 100).padStart(2, '0')}`;
+const freezeEnds = `April ${Number(frozenUntil.slice(0, 4)) + 1}`;
+
+// The assumptions. RPI_LOW and REAL_PAY_GROWTH are scenario choices, not rules.
+const REAL_PAY_GROWTH = 0.02;
+const RPI_LOW = 0.03;
+const interest = (r: number, withCap = true): InterestRule => ({ rpi: r, extraMax, lowerIncome: threshold, upperIncome, cap: withCap ? { rate: cap, years: capYears } : null });
+const base: Omit<LifetimeInput, 'balance' | 'salary'> = {
+	plan: 'plan2',
+	threshold,
+	rate,
+	earningsGrowth: rpi + REAL_PAY_GROWTH,
+	thresholdGrowth: rpi,
+	thresholdFrozenYears: frozenYears,
+	interest: interest(rpi),
+	writeOffYears,
+	startYear: year.taxYear,
+};
+const run = (balance: number, salary: number, over: Partial<LifetimeInput> = {}) => studentLoanLifetime({ ...base, balance, salary, ...over });
+
+// The headline: the average balance of the last all-Plan 2 cohort, at a
+// stated starting salary.
+const balance = num('slc.averageBalanceCohort2025');
+const SALARY = 35000;
+const head = run(balance, SALARY);
+const headYear1 = head.years[0];
+const headLast = head.years[head.years.length - 1];
+const headKeepsPace = run(balance, SALARY, { earningsGrowth: rpi });
+// The first year the repayment is larger than the year's interest, and the highest balance reached.
+const headTurn = head.years.find((r) => r.repaid > r.interest) ?? null;
+const headPeakBalance = Math.max(...head.years.map((r) => r.closing));
+
+// The sweep: total repaid by starting salary.
+const FROM = 25000;
+const TO = 80000;
+const STEP = 1000;
+const salaries: number[] = [];
+for (let s = FROM; s <= TO; s += STEP) salaries.push(s);
+const sweep = salaries.map((s) => ({ salary: s, base: run(balance, s), pace: run(balance, s, { earningsGrowth: rpi }) }));
+const firstCleared = sweep.find((p) => p.base.clearedInYear !== null) ?? null;
+const firstClearedPace = sweep.find((p) => p.pace.clearedInYear !== null) ?? null;
+const peak = sweep.reduce((a, b) => (b.base.totalRepaid > a.base.totalRepaid ? b : a));
+const top = sweep[sweep.length - 1];
+
+// The table.
+const sample = [25000, 30000, 35000, 40000, 45000, 50000, 60000, 70000, 80000];
+const table = sample.map((s) => ({ salary: s, r: run(balance, s) }));
+
+// What the assumptions do, at three starting salaries.
+const scenarioSalaries = [SALARY, 45000, 60000];
+const scenarios = [
+	{ label: `Pay up ${pct(rpi + REAL_PAY_GROWTH)} a year, RPI ${pct(rpi)} (the page's base case)`, over: {} as Partial<LifetimeInput> },
+	{ label: `Pay keeps pace with RPI at ${pct(rpi)}`, over: { earningsGrowth: rpi } },
+	{ label: `RPI ${pct(RPI_LOW)}, pay up ${pct(RPI_LOW + REAL_PAY_GROWTH)}`, over: { earningsGrowth: RPI_LOW + REAL_PAY_GROWTH, thresholdGrowth: RPI_LOW, interest: interest(RPI_LOW) } },
+	{ label: `RPI ${pct(RPI_LOW)}, pay keeps pace with it`, over: { earningsGrowth: RPI_LOW, thresholdGrowth: RPI_LOW, interest: interest(RPI_LOW) } },
+	{ label: `Base case with no ${pct(cap)} cap in the first year`, over: { interest: interest(rpi, false) } },
+].map((s) => ({ ...s, results: scenarioSalaries.map((salary) => run(balance, salary, s.over)) }));
+const outcome = (r: ReturnType<typeof run>) => (r.clearedInYear === null ? `written off, ${money(r.writtenOffBalance, 0)} left` : `cleared in year ${r.clearedInYear}`);
+
+// The pay at which the first year's repayment matches its interest, with the cap and without.
+const breakEven = breakEvenSalary({ ...base, balance });
+const breakEvenNoCap = breakEvenSalary({ ...base, balance, interest: interest(rpi, false) });
+
+// The Student Loans Company and Department for Education figures.
+const plan2Balance = num('slc.plan2FullTimeBalance2025_26') + num('slc.plan2PartTimeBalance2025_26');
+const heBalance = num('slc.higherEducationBalance2025_26');
+const plan2Interest = num('slc.plan2FullTimeInterest2025_26');
+const plan2Repayments = num('slc.plan2FullTimeRepayments2025_26');
+const firstCohort = num('slc.averageBalanceCohort2016');
+const cohort2026 = num('slc.averageBalanceCohort2026');
+const subsidy = num('dfe.plan2FullTimeSubsidy2025_26');
+const subsidyBefore = num('dfe.plan2FullTimeSubsidy2024_25');
+const plan5Balance = num('dfe.plan5FullTimeBalanceAtSrdd');
+const plan5RepayInFull = num('dfe.plan5FullTimeRepayInFull');
+const billions = (m: number) => `£${(m / 1000).toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} billion`;
+const interestRate = (r: ReturnType<typeof run>) => r.years[0].interestRate;
+
+// The chart: total repaid by starting salary, two lines. Drawn as SVG at build time.
+const W = 800;
+const H = 360;
+const L = 60;
+const R = 16;
+const T = 24;
+const B = 44;
+const yMax = Math.ceil(Math.max(...sweep.map((p) => Math.max(p.base.totalRepaid, p.pace.totalRepaid))) / 25000) * 25000;
+const x = (s: number) => L + ((s - FROM) / (TO - FROM)) * (W - L - R);
+const y = (v: number) => T + (1 - v / yMax) * (H - T - B);
+const polyline = (pick: (p: (typeof sweep)[number]) => number) => sweep.map((p, i) => `${i ? 'L' : 'M'}${x(p.salary).toFixed(1)},${y(pick(p)).toFixed(1)}`).join('');
+const xTicks = salaries.filter((s) => s % 10000 === 0);
+const yTicks = [0, yMax / 4, yMax / 2, (3 * yMax) / 4, yMax];
+const chartSummary = `Total repaid on a ${money(balance, 0)} Plan 2 balance by starting salary from ${money(FROM, 0)} to ${money(TO, 0)}: with pay rising ${pct(rpi + REAL_PAY_GROWTH)} a year it peaks at ${money(peak.base.totalRepaid, 0)} at ${money(peak.salary, 0)}; with pay keeping pace with RPI the balance clears only from ${firstClearedPace ? money(firstClearedPace.salary, 0) : 'no salary in the range'}.`;
+
+const sources = (data.sources as { id: string; name: string; url: string; published: string }[]);
+---
+
+<Guide
+	slug="will-you-pay-off-your-plan-2-loan"
+	taxYears={[year.taxYear]}
+	alsoReads={following ? [following.taxYear] : []}
+	status={status}
+	related={[
+		guideLink('which-student-loan-plan', 'Which plan you are on, and what each repays at three salaries.'),
+		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'Your own salary with a Plan 2 loan selected: this year\'s repayment on its own line.' },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'The Plan 2 threshold and rate the model starts from, with their sources.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>Someone who owes {money(balance, 0)}, the average balance of the last cohort to enter repayment before Plan 5 borrowers joined them, and starts on {money(SALARY, 0)} does not clear the loan. With pay rising {pct(rpi + REAL_PAY_GROWTH)} a year, the threshold frozen at {money(threshold, 0)} until {freezeEnds} and then rising with RPI at {pct(rpi)}, the repayments come to {money(head.totalRepaid, 0)} over {writeOffYears} years, the interest added comes to {money(head.totalInterest, 0)}, and {money(head.writtenOffBalance, 0)} is written off in {writeOffTaxYear}. In the first year {money(headYear1.repaid, 0)} is repaid against {money(headYear1.interest, 0)} of interest at {pct(Math.round(interestRate(head) * 10000) / 10000)}. {headTurn ? headTurn.opening >= headPeakBalance ? `The repayment first exceeds the year's interest in year ${headTurn.year}, when the balance is at its highest, ${money(headPeakBalance, 0)}.` : `The repayment first exceeds the year's interest in year ${headTurn.year}, when the balance is ${money(headTurn.opening, 0)}; its highest is ${money(headPeakBalance, 0)}.` : `The repayment never exceeds the year's interest, so the balance grows every year, to ${money(headPeakBalance, 0)}.`} On these assumptions the balance clears before write-off only from a starting salary of {firstCleared ? money(firstCleared.salary, 0) : `above ${money(TO, 0)}`}.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>Total repaid by starting salary</h2>
+		<figure class="chart">
+			<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={chartSummary} class="loan-chart">
+				{yTicks.map((t) => (
+					<>
+						<line x1={L} x2={W - R} y1={y(t)} y2={y(t)} class="grid" />
+						<text x={L - 8} y={y(t) + 4} class="tick" text-anchor="end">{money(t, 0)}</text>
+					</>
+				))}
+				{xTicks.map((t) => (
+					<text x={x(t)} y={H - B + 22} class="tick" text-anchor="middle">{money(t, 0)}</text>
+				))}
+				{firstCleared && (
+					<>
+						<line x1={x(firstCleared.salary)} x2={x(firstCleared.salary)} y1={T} y2={H - B} class="mark" />
+						<text x={x(firstCleared.salary) + 4} y={T + 10} class="mark-label">Cleared before write-off from here</text>
+					</>
+				)}
+				<path d={polyline((p) => p.pace.totalRepaid)} class="line pace" />
+				<path d={polyline((p) => p.base.totalRepaid)} class="line base" />
+				<line x1={L} x2={W - R} y1={H - B} y2={H - B} class="axis" />
+			</svg>
+			<figcaption>
+				Total repaid over {writeOffYears} years on a {money(balance, 0)} Plan 2 balance, by salary in the first year of repayment, {year.label} rules. Threshold frozen until {freezeEnds}, then RPI {pct(rpi)}.
+				<span class="legend">
+					<span><i class="swatch base"></i>Pay rises {pct(rpi + REAL_PAY_GROWTH)} a year</span>
+					<span><i class="swatch pace"></i>Pay keeps pace with RPI</span>
+				</span>
+			</figcaption>
+		</figure>
+		<p>The line rises with salary to around the point where the balance is cleared and then falls. The people who repay the most are those whose repayments only just keep up: they carry a large balance, and its interest, for almost the whole term. On the base case the most repaid is {money(peak.base.totalRepaid, 0)}, by someone starting on {money(peak.salary, 0)}, {peak.base.clearedInYear === null ? `whose balance is still written off, ${money(peak.base.writtenOffBalance, 0)} of it` : `who clears it in year ${peak.base.clearedInYear}`}. Someone starting on {money(top.salary, 0)} clears it in year {top.base.clearedInYear} and repays {money(top.base.totalRepaid, 0)}. Below the peak, a higher salary means more repaid and less written off.</p>
+	</Fragment>
+
+	<h2>How the model works</h2>
+	<p>The rules come from gov.uk, read on {longDate(retrieved)}. Repayments are {pct(rate)} of pay above the Plan 2 threshold of {money(threshold, 0)}, taken monthly. Interest is added each month at an annual rate that depends on pay: RPI alone at or below {money(threshold, 0)}, RPI plus {pct(extraMax)} at or above {money(upperIncome, 0)}, and in between RPI plus the same share of {pct(extraMax)} as pay's share of the gap, so {money(SALARY, 0)} is charged {pct(Math.round(interestRate(head) * 10000) / 10000)} in the first year. RPI is {pct(rpi)} for the year from {longDate(capFrom)}, and the rate is capped at {pct(cap)} until {longDate(capTo)}. Whatever is left {writeOffYears} years after the April repayments first fell due is written off.</p>
+	<p>The future has to be assumed, and the page says what it assumes. RPI stays at {pct(rpi)}. The threshold stays at {money(threshold, 0)} until {freezeEnds}, as the Department for Education's forecast methodology records, and then rises with RPI; the two interest thresholds move with it. Pay rises each April by RPI plus {pct(REAL_PAY_GROWTH)}. The cap applies to the first year only, since that is the period announced. The borrower is employed every year, makes no voluntary repayments and has no other plan.</p>
+
+	<h2>Nine starting salaries</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>A {money(balance, 0)} Plan 2 balance from {year.label}, by salary in the first year, base case: pay up {pct(rpi + REAL_PAY_GROWTH)} a year, RPI {pct(rpi)}</caption>
+			<thead><tr><th scope="col">Starting salary</th><th scope="col" class="num">First year's repayment</th><th scope="col" class="num">First year's interest</th><th scope="col" class="num">Cleared</th><th scope="col" class="num">Total repaid</th><th scope="col" class="num">Interest added</th><th scope="col" class="num">Written off</th></tr></thead>
+			<tbody>
+				{table.map(({ salary, r }) => (
+					<tr>
+						<th scope="row">{live.includes(salary) ? <a href={`/salary/${salary}/`}>{money(salary, 0)}</a> : money(salary, 0)}</th>
+						<td class="num">{money(r.years[0].repaid, 0)}</td>
+						<td class="num">{money(r.years[0].interest, 0)}</td>
+						<td class="num">{r.clearedInYear === null ? 'Written off' : `Year ${r.clearedInYear}`}</td>
+						<td class="num">{money(r.totalRepaid, 0)}</td>
+						<td class="num">{money(r.totalInterest, 0)}</td>
+						<td class="num">{r.writtenOffBalance === 0 ? 'Nothing' : money(r.writtenOffBalance, 0)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>In the first year the repayment matches the interest only from a salary of {breakEven === null ? `above ${money(TO, 0)}` : money(breakEven, 0)} with the {pct(cap)} cap, or {breakEvenNoCap === null ? `above ${money(TO, 0)}` : money(breakEvenNoCap, 0)} without it. Below that, the balance grows until pay has pulled far enough ahead of the threshold, which the freeze brings forward by holding the threshold still while pay moves.</p>
+
+	<h2>What the assumptions do</h2>
+	<p>Two assumptions decide the answer: how fast pay rises against the threshold, and the RPI figure that sets both the interest and, from {freezeEnds}, the threshold. The table runs the same {money(balance, 0)} balance under each.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>The same balance under five sets of assumptions, at three starting salaries: what happens and the total repaid</caption>
+			<thead><tr><th scope="col">Assumptions</th>{scenarioSalaries.map((s) => <th scope="col" class="num">Starting on {money(s, 0)}</th>)}</tr></thead>
+			<tbody>
+				{scenarios.map((s) => (
+					<tr>
+						<th scope="row">{s.label}</th>
+						{s.results.map((r) => <td class="num">{money(r.totalRepaid, 0)} repaid; {outcome(r)}</td>)}
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>Pay that only keeps pace with RPI leaves the {money(SALARY, 0)} starter repaying {money(headKeepsPace.totalRepaid, 0)} rather than {money(head.totalRepaid, 0)}, with {money(headKeepsPace.writtenOffBalance, 0)} written off, and moves the salary at which the balance clears up to {firstClearedPace ? money(firstClearedPace.salary, 0) : `above ${money(TO, 0)}`}. A lower RPI cuts the interest and slows the threshold once the freeze ends, so more borrowers clear the loan and each repays less. The cap matters least: it changes the first year only.</p>
+
+	<h2>What the Student Loans Company and the Department for Education report</h2>
+	<p>The Student Loans Company's statistics for {sourceById['slc-2025-26'].name.match(/\d{4}-\d{2}/)?.[0]} put the Plan 2 balance, full-time and part-time, at {billions(plan2Balance)} at the end of March 2026, out of {billions(heBalance)} across all higher education income contingent loans. During that year {billions(plan2Interest)} of interest was added to full-time Plan 2 loans and {billions(plan2Repayments)} was repaid: the interest was {Math.round((plan2Interest / plan2Repayments) * 10) / 10} times the repayments. The average balance of borrowers entering repayment was {money(firstCohort, 0)} for the first Plan 2 cohort in 2016 and {money(balance, 0)} for the 2025 cohort; the 2026 figure, {money(cohort2026, 0)}, is provisional and includes the first Plan 5 borrowers.</p>
+	<p>The Department for Education's forecasts, published {longDate(sourceById['dfe-forecasts'].published)}, expect the government to subsidise {pct(subsidy)} of the Plan 2 full-time loans issued in 2025-26, up from {pct(subsidyBefore)} in the previous publication, which is its estimate of the share that will not be repaid once future repayments are discounted. For the Plan 5 borrowers who started in 2025/26, with a {money(plan5Balance, 0)} average balance at the point repayments fall due, a longer term and interest at RPI alone, it expects {pct(plan5RepayInFull)} of full-time undergraduates to repay in full. The forecasts use OBR earnings and RPI projections rather than the flat assumptions here, and the pages read do not state a salary at which a Plan 2 balance stops growing; the figures above are this page's.</p>
+
+	<h2>What the model leaves out</h2>
+	<ul>
+		<li>Breaks in employment, part-time years and pay below the threshold, each of which adds interest without repayments; the Department for Education's forecasts model earnings paths, this page a straight line.</li>
+		<li>Voluntary repayments, which reduce the balance but not the monthly deduction, and the interest charged during the course, which is already inside a balance at the point repayments fall due.</li>
+		<li>Future caps, which the Department for Education reviews monthly against market rates, and any change to the threshold, the rate or the term; the rules file carries the threshold for {following ? following.label : 'the next year'} with its status.</li>
+		<li>A second loan plan or a Postgraduate Loan, where a single deduction is split or two are taken.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{sources.map((s) => <li><a href={s.url} rel="noopener">{s.name}</a>, published {longDate(s.published)}</li>)}
+		<li>The data file this page reads: <a href="/data/student-loan-plan2.json">student-loan-plan2.json</a>, with each figure's source and, for the Student Loans Company tables, the file address and checksum.</li>
+	</Fragment>
+</Guide>
+
+<style>
+	.chart { margin: 1rem 0 1.5rem; }
+	.loan-chart { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+	.loan-chart .grid { stroke: var(--hairline); stroke-width: 1; }
+	.loan-chart .axis { stroke: var(--ink); stroke-width: 1; }
+	.loan-chart .tick { fill: var(--quiet); font-size: 12px; }
+	.loan-chart .mark { stroke: var(--threshold); stroke-width: 1; stroke-dasharray: 3 3; }
+	.loan-chart .mark-label { fill: var(--threshold); font-size: 11px; }
+	.loan-chart .line { fill: none; stroke-linejoin: round; }
+	.loan-chart .line.base { stroke: var(--ink); stroke-width: 2.5; }
+	.loan-chart .line.pace { stroke: var(--deduction); stroke-width: 1.5; stroke-dasharray: 4 3; }
+	figcaption { color: var(--quiet); font-size: 0.9rem; margin-top: 0.5rem; }
+	.legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-top: 0.4rem; }
+	.legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+	.swatch { display: inline-block; width: 1.4rem; height: 0; border-top: 2px solid var(--ink); }
+	.swatch.pace { border-color: var(--deduction); border-top-style: dashed; }
+	@media (max-width: 599px) { .loan-chart .mark-label { display: none; } }
+</style>

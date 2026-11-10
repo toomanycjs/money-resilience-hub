@@ -6,6 +6,7 @@
 import { bandsFor, defaultTaxCode, getYear, listYears, nextYear, pensionTaxAllowance, previousYear, resolve } from '@money-resilience-hub/rules';
 import { longDate, money, pct } from '@money-resilience-hub/calculators';
 import { BUILD_DATE, CURRENT_YEAR } from '../config/site';
+import plan2 from '../data/student-loan-plan2.json' with { type: 'json' };
 
 export interface GuideCalculator {
 	href: string;
@@ -108,6 +109,18 @@ const LIFETIME_ISA: GuideCalculator = {
 	title: 'Lifetime ISA withdrawal charge calculator',
 	desc: 'Enter the amount, the reason and the date, and see the charge, what you receive and how it compares with what you paid in.',
 };
+
+const PLAN2_LOAN: GuideCalculator = {
+	href: '/calculators/take-home-pay/',
+	title: 'Take-home pay calculator',
+	desc: "Enter your salary with a Plan 2 loan selected, and see this year's repayment on its own line, with the threshold and rate it uses.",
+};
+
+const plan2Row = (id: string) => (plan2.rows as { id: string; value: number | string }[]).find((r) => r.id === id)?.value;
+
+const plan2Balance = plan2Row('slc.averageBalanceCohort2025') as number;
+
+const plan2WriteOff = plan2Row('plan2.writeOffYears') as number;
 
 export const GUIDES: Guide[] = [
 	{
@@ -280,6 +293,16 @@ export const GUIDES: Guide[] = [
 		published: '2026-11-10',
 		reviewedOn: '2026-11-10',
 		calculator: LIFETIME_ISA,
+		draft: true,
+	},
+	{
+		slug: 'will-you-pay-off-your-plan-2-loan',
+		title: 'Will you ever pay off your Plan 2 student loan?',
+		h1: 'Will I ever pay off my Plan 2 student loan?',
+		description: `A ${money(plan2Balance, 0)} Plan 2 balance year by year: whether it clears before the ${plan2WriteOff}-year write-off, what is repaid in all, and what pay growth and RPI do to the answer.`,
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: PLAN2_LOAN,
 		draft: true,
 	},
 ];

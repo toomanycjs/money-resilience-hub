@@ -26,3 +26,4 @@ export { maternityPay, paternityPay, MATERNITY_TOUCHES, PATERNITY_TOUCHES, type 
 export { financeCostReliefRate } from './landlordTax.ts';
 export { selfAssessmentPayments, dayMonthAfter, type SelfAssessmentPayments } from './sideHustleTax.ts';
 export { makingTaxDigitalCheck, withInformationSources, type MtdCheck, type MtdPosition } from './makingTaxDigital.ts';
+export { studentLoanLifetime, lifetimeInterestRate, breakEvenSalary, taxYearAfter, type InterestRule, type LifetimeInput, type LifetimeResult, type LifetimeYear } from './studentLoanLifetime.ts';

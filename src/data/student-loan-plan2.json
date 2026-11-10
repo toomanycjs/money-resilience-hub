@@ -1,0 +1,90 @@
+{
+	"title": "Plan 2 student loans: the interest and write-off rules, and the Student Loans Company and Department for Education figures the lifetime model reads",
+	"retrieved": "2026-11-10",
+	"licence": "Open Government Licence v3.0 (gov.uk, Student Loans Company and Department for Education)",
+	"sources": [
+		{
+			"id": "gov-what-you-pay",
+			"name": "Repaying your student loan: how much you repay (gov.uk)",
+			"url": "https://www.gov.uk/repaying-your-student-loan/what-you-pay",
+			"published": "2024-10-18",
+			"note": "Read on the retrieved date. Gives the Plan 2 threshold of £29,385, the 9% rate and the Plan 2 interest bands: 4.1% at £29,385 or less, 4.1% plus up to 1.9% from £29,386 to £52,884, 6% at £52,885 or more."
+		},
+		{
+			"id": "gov-written-off",
+			"name": "Repaying your student loan: when your student loan gets written off or cancelled (gov.uk)",
+			"url": "https://www.gov.uk/repaying-your-student-loan/when-your-student-loan-gets-written-off-or-cancelled",
+			"published": "2024-10-18",
+			"note": "Plan 2 loans are written off 30 years after the April you were first due to repay."
+		},
+		{
+			"id": "gov-plan2-interest",
+			"name": "How interest is calculated: Plan 2 (gov.uk)",
+			"url": "https://www.gov.uk/guidance/how-interest-is-calculated-plan-2",
+			"published": "2026-04-06",
+			"note": "The rate is set each 1 September from the previous March's RPI. Interest is added monthly. After the course the rate is RPI at or below the lower threshold (£29,385), RPI plus 3% at or above the higher threshold (£52,885), and RPI plus the same share of 3% as pay's share of the gap between them. Interest is capped at 6% between 1 September 2026 and 31 August 2027. Gives the worked example of £40,000, and earlier years' rates."
+		},
+		{
+			"id": "gov-rates-announcement-2026",
+			"name": "Student Loans Interest Rates and Repayment Threshold Announcement, 10 August 2026 (gov.uk)",
+			"url": "https://www.gov.uk/government/news/student-loans-interest-rates-and-repayment-threshold-announcement--7",
+			"published": "2026-08-10",
+			"note": "RPI is 4.1% for 1 September 2026 to 31 August 2027. Plan 2 interest varies between RPI (4.1%) and RPI plus 3% (7.1%); as announced on 7 April 2026 the maximum is capped at 6% between 1 September 2026 and 31 August 2027."
+		},
+		{
+			"id": "gov-cap-mechanism",
+			"name": "Interest rate cap for Plan 2, Plan 5 and Postgraduate student loans (gov.uk)",
+			"url": "https://www.gov.uk/government/news/interest-rate-cap-for-plan-2-plan-5-and-postgraduate-student-loans",
+			"published": "2023-11-09",
+			"note": "From 1 December 2023 the maximum Plan 2 rate is reviewed each month against the prevailing market rate, a 12-month rolling average of two Bank of England effective interest rate series for unsecured personal loans, and capped where it would be higher."
+		},
+		{
+			"id": "dfe-methodology",
+			"name": "Student loan forecasts for England: methodology (Department for Education, Explore education statistics)",
+			"url": "https://explore-education-statistics.service.gov.uk/methodology/student-loan-forecasts-for-england",
+			"published": "2026-07-09",
+			"note": "The Plan 2 threshold is £29,385 for 2026-27 and stays there until the end of 2029-30, following the freeze announced at the 2025 Autumn Budget, returning to RPI increases from April 2030. The lower interest threshold is the repayment threshold; the upper one was £49,130 until 2024-25 and £51,245 in 2025-26 after an RPI increase. The forecasts use OBR earnings growth and RPI forecasts."
+		},
+		{
+			"id": "dfe-forecasts",
+			"name": "Student loan forecasts for England, financial year 2025-26 (Department for Education, Explore education statistics)",
+			"url": "https://explore-education-statistics.service.gov.uk/find-statistics/student-loan-forecasts-for-england/2025-26",
+			"published": "2026-07-09",
+			"note": "The government is forecast to subsidise 39% of the Plan 2 full-time higher education loan outlay issued in 2025-26 (32% in the 2024-25 publication). Headline: of full-time undergraduate students starting in 2025/26, who are on Plan 5, 55% are expected to repay their loan in full. Table 2.2 as described on the page: full-time borrowers enter repayment with an average £48,100. The pages read do not state a salary at which a Plan 2 balance stops growing."
+		},
+		{
+			"id": "slc-2025-26",
+			"name": "Student loans in England: financial year 2025-26 (Student Loans Company, national statistics)",
+			"url": "https://www.gov.uk/government/statistics/student-loans-in-england-2025-to-2026",
+			"file": "https://assets.publishing.service.gov.uk/media/6a44d1241a04d4dae8b8155e/slcsp012026.xlsx",
+			"published": "2026-06-18",
+			"sha256": "9e1e524997974aa3251bc138f07d97437cb551d7b3a1c944cad0be2bdd863dd1",
+			"note": "Table 1A: balance sheet by plan, amounts in £ million, England and EU domiciled borrowers, at 31 March 2026. Table 5A (iii): average loan balance by repayment cohort, rounded to the nearest £10, at 30 April 2026. The 2025 cohort is the last before Plan 5 borrowers began entering repayment in April 2026; the 2026 figure is provisional."
+		}
+	],
+	"rows": [
+		{ "id": "plan2.interest.rpi", "label": "RPI used for Plan 2 interest, 1 September 2026 to 31 August 2027", "value": 0.041, "unit": "rate", "source": "gov-rates-announcement-2026" },
+		{ "id": "plan2.interest.extraMax", "label": "Most added above RPI, at or above the upper interest threshold", "value": 0.03, "unit": "rate", "source": "gov-plan2-interest" },
+		{ "id": "plan2.interest.lowerIncome", "label": "Lower interest threshold (RPI only at or below it), 2026-27", "value": 29385, "unit": "pounds", "source": "gov-plan2-interest" },
+		{ "id": "plan2.interest.upperIncome", "label": "Upper interest threshold (RPI plus 3% at or above it), 2026-27", "value": 52885, "unit": "pounds", "source": "gov-plan2-interest" },
+		{ "id": "plan2.interest.cap", "label": "Cap on the Plan 2 rate", "value": 0.06, "unit": "rate", "source": "gov-rates-announcement-2026", "from": "2026-09-01", "to": "2027-08-31" },
+		{ "id": "plan2.interest.capYears", "label": "Model years from the first that the cap is applied to (the announced period runs 1 September 2026 to 31 August 2027)", "value": 1, "unit": "years", "source": "gov-rates-announcement-2026" },
+		{ "id": "plan2.writeOffYears", "label": "Years after the April repayments first fall due at which the balance is written off", "value": 30, "unit": "years", "source": "gov-written-off" },
+		{ "id": "plan2.threshold.frozenUntil", "label": "Last tax year of the Plan 2 threshold freeze at £29,385", "value": "2029-30", "unit": "tax year", "source": "dfe-methodology" },
+		{ "id": "plan2.threshold.afterFreeze", "label": "How the threshold moves once the freeze ends", "value": "RPI", "unit": "text", "source": "dfe-methodology" },
+		{ "id": "plan2.interest.upperIncome2025_26", "label": "Upper interest threshold, 2025-26", "value": 51245, "unit": "pounds", "source": "dfe-methodology" },
+		{ "id": "dfe.plan2FullTimeSubsidy2025_26", "label": "Share of Plan 2 full-time higher education loan outlay issued in 2025-26 the government is forecast to subsidise", "value": 0.39, "unit": "rate", "source": "dfe-forecasts" },
+		{ "id": "dfe.plan2FullTimeSubsidy2024_25", "label": "The same share in the 2024-25 publication", "value": 0.32, "unit": "rate", "source": "dfe-forecasts" },
+		{ "id": "dfe.plan5FullTimeBalanceAtSrdd", "label": "Average balance when repayments fall due, full-time borrowers starting in 2025/26 (Plan 5)", "value": 48100, "unit": "pounds", "source": "dfe-forecasts" },
+		{ "id": "dfe.plan5FullTimeRepayInFull", "label": "Share of full-time undergraduate students starting in 2025/26 (Plan 5) expected to repay their loan in full (headline figure)", "value": 0.55, "unit": "rate", "source": "dfe-forecasts" },
+		{ "id": "slc.plan2FullTimeBalance2025_26", "label": "Plan 2 full-time balance after adjustments, 31 March 2026, England and EU domiciled, £ million", "value": 220259.47, "unit": "million pounds", "source": "slc-2025-26", "cell": "Table 1A, 2025-26, Plan 2 Full-time, Balance after adjustments" },
+		{ "id": "slc.plan2PartTimeBalance2025_26", "label": "Plan 2 part-time balance after adjustments, 31 March 2026, England and EU domiciled, £ million", "value": 3917.38, "unit": "million pounds", "source": "slc-2025-26", "cell": "Table 1A, 2025-26, Plan 2 Part-time, Balance after adjustments" },
+		{ "id": "slc.plan2FullTimeLiable2025_26", "label": "Plan 2 full-time balance liable for repayment, England domiciled, 31 March 2026, £ million", "value": 183764.25, "unit": "million pounds", "source": "slc-2025-26", "cell": "Table 1A, 2025-26, Plan 2 Full-time, balance liable for repayment (England domicile)" },
+		{ "id": "slc.plan2FullTimeInterest2025_26", "label": "Interest added to Plan 2 full-time loans during 2025-26, £ million", "value": 9612.69, "unit": "million pounds", "source": "slc-2025-26", "cell": "Table 1A, 2025-26, Plan 2 Full-time, Amount of interest added" },
+		{ "id": "slc.plan2FullTimeRepayments2025_26", "label": "Net repayments posted to Plan 2 full-time loans during 2025-26, £ million", "value": 3128.52, "unit": "million pounds", "source": "slc-2025-26", "cell": "Table 1A, 2025-26, Plan 2 Full-time, Net repayments posted" },
+		{ "id": "slc.higherEducationBalance2025_26", "label": "Total higher education income contingent loan balance after adjustments, 31 March 2026, £ million", "value": 294583.75, "unit": "million pounds", "source": "slc-2025-26", "cell": "Table 1A, 2025-26, Total Higher Education, Balance after adjustments" },
+		{ "id": "slc.averageBalanceCohort2025", "label": "Average higher education loan balance of borrowers whose repayments first fell due in April 2025, at 30 April 2025", "value": 53000, "unit": "pounds", "source": "slc-2025-26", "cell": "Table 5A (iii), repayment cohort 2025, financial year 2024-25" },
+		{ "id": "slc.averageBalanceCohort2026", "label": "Average higher education loan balance of borrowers whose repayments first fell due in April 2026, at 30 April 2026 (provisional; includes the first Plan 5 borrowers)", "value": 47730, "unit": "pounds", "source": "slc-2025-26", "cell": "Table 5A (iii), repayment cohort 2026, financial year 2025-26" },
+		{ "id": "slc.averageBalanceCohort2016", "label": "Average higher education loan balance of borrowers whose repayments first fell due in April 2016, the first Plan 2 cohort, at 30 April 2016", "value": 24390, "unit": "pounds", "source": "slc-2025-26", "cell": "Table 5A (iii), repayment cohort 2016, financial year 2015-16" }
+	]
+}

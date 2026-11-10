@@ -1,0 +1,68 @@
+[
+  {
+    "id": "lifetime-plan2-interest-rate-examples",
+    "title": "gov.uk Plan 2 interest page: at £35,000, £40,000, £45,000 and £52,885 the rate is RPI 4.1% plus the pay's share of the £23,500 gap times 3%: 4.82%, 5.46%, 6.09% and 7.1%, the last two capped at 6% from 1 September 2026",
+    "fn": "lifetimeInterestRate",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/how-interest-is-calculated-plan-2", "https://www.gov.uk/repaying-your-student-loan/what-you-pay"],
+    "input": { "salaries": [35000, 40000, 45000, 52885, 29385, 20000], "lower": 29385, "upper": 52885, "rpi": 0.041, "extraMax": 0.03, "cap": 0.06 },
+    "expected": { "rate0": 0.04817, "rate1": 0.05455, "rate2": 0.06093, "rate3": 0.071, "rate4": 0.041, "rate5": 0.041, "capped0": 0.04817, "capped1": 0.05455, "capped2": 0.06, "capped3": 0.06 },
+    "tolerance": 0.00001,
+    "working": "£40,000 - £29,385 = £10,615. £52,885 - £29,385 = £23,500. 10,615 / 23,500 = 0.4517; x 3% = 1.355%. 4.1% + 1.355% = 5.455%, which the page shows as 5.46%. £35,000: 5,615 / 23,500 x 3% = 0.717%, 4.817%. £45,000: 15,615 / 23,500 x 3% = 1.993%, 6.093%, capped to 6%. At or above £52,885 the full 3% applies: 7.1%, capped to 6%. At or below £29,385 the rate is RPI alone."
+  },
+  {
+    "id": "lifetime-plan2-never-repays",
+    "title": "Plan 2, £50,000 owed, pay £25,000 below the £29,385 threshold for 30 years: nothing is repaid, interest compounds monthly at RPI 4.1% and £170,703.23 is written off",
+    "fn": "studentLoanLifetime",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/repaying-your-student-loan/what-you-pay", "https://www.gov.uk/guidance/how-interest-is-calculated-plan-2", "https://www.gov.uk/repaying-your-student-loan/when-your-student-loan-gets-written-off-or-cancelled"],
+    "input": { "plan": "plan2", "balance": 50000, "salary": 25000, "earningsGrowth": 0, "thresholdGrowth": 0, "thresholdFrozenYears": 4, "writeOffYears": 30, "interest": { "rpi": 0.041, "extraMax": 0.03, "lowerIncome": null, "upperIncome": 52885, "cap": { "rate": 0.06, "years": 1 } } },
+    "expected": { "yearsModelled": 30, "year1Rate": 0.041, "year1Repaid": 0, "year1Interest": 2088.97, "totalRepaid": 0, "totalInterest": 120703.23, "clearedInYear": "written off", "writtenOffBalance": 170703.23 },
+    "tolerance": 0.01,
+    "working": "Pay never exceeds the threshold, so the repayment is 9% of nothing. The rate is RPI only, 4.1%, below the cap. Interest is added monthly: 50,000 x (1 + 0.041 / 12)^12 = 52,088.97 after year one, so 2,088.97 of interest. After 30 years: 50,000 x (1 + 0.041 / 12)^360 = 170,703.23, all of it written off; the interest is 170,703.23 - 50,000 = 120,703.23."
+  },
+  {
+    "id": "lifetime-plan2-repays-in-full",
+    "title": "Plan 2, £5,000 owed at £60,000: £2,755 a year clears it in the second year, with £321.56 of interest, at 6% capped in year one and 7.1% in year two",
+    "fn": "studentLoanLifetime",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/repaying-your-student-loan/what-you-pay", "https://www.gov.uk/guidance/how-interest-is-calculated-plan-2", "https://www.gov.uk/government/news/student-loans-interest-rates-and-repayment-threshold-announcement--7"],
+    "input": { "plan": "plan2", "balance": 5000, "salary": 60000, "earningsGrowth": 0, "thresholdGrowth": 0, "thresholdFrozenYears": 4, "writeOffYears": 30, "interest": { "rpi": 0.041, "extraMax": 0.03, "lowerIncome": null, "upperIncome": 52885, "cap": { "rate": 0.06, "years": 1 } } },
+    "expected": { "yearsModelled": 2, "year1Rate": 0.06, "year1Repaid": 2755, "year1Interest": 231.35, "year1Closing": 2476.35, "year2Rate": 0.071, "totalRepaid": 5321.56, "totalInterest": 321.56, "clearedInYear": 2, "clearedInTaxYear": "2027-28", "writtenOffBalance": 0 },
+    "tolerance": 0.01,
+    "working": "£60,000 - £29,385 = £30,615; 9% = £2,755.35, rounded down to £2,755, so £229.58 a month. Pay is above £52,885 so the rate is RPI + 3% = 7.1%, capped at 6% in the first year: twelve months of interest at 0.5% on the falling balance come to £231.35 and the year ends at £2,476.35. In year two the cap has gone and the rate is 7.1%; the balance clears in the eleventh month, with £90.21 of interest. Total repaid 5,000 + 231.35 + 90.21 = 5,321.56."
+  },
+  {
+    "id": "lifetime-plan1-gov-monthly-example-scaled",
+    "title": "gov.uk monthly example scaled to a year: Plan 1 at £33,000 pays 9% of £6,100 = £549 a year; at a flat 4.1% that never catches £20,000 of interest, and £31,780.11 is written off after 25 years",
+    "fn": "studentLoanLifetime",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/repaying-your-student-loan/what-you-pay", "https://www.gov.uk/repaying-your-student-loan/when-your-student-loan-gets-written-off-or-cancelled"],
+    "input": { "plan": "plan1", "balance": 20000, "salary": 33000, "earningsGrowth": 0, "thresholdGrowth": 0, "thresholdFrozenYears": 0, "writeOffYears": 25, "interest": { "rpi": 0.041, "extraMax": 0, "lowerIncome": null, "upperIncome": null, "cap": null } },
+    "expected": { "yearsModelled": 25, "year1Rate": 0.041, "year1Repaid": 549, "year1Interest": 825.15, "year1Closing": 20276.15, "totalRepaid": 13725, "clearedInYear": "written off", "writtenOffBalance": 31780.11 },
+    "tolerance": 0.01,
+    "working": "gov.uk's example: £2,750 a month - £2,241 = £509; 9% = £45.81, so £45 a month. The same income over a year: £33,000 - £26,900 = £6,100; 9% = £549, which is the page's own method for a Self Assessment year (its £42,000 example gives £1,359 the same way), and is what the model uses; monthly rounding would give 12 x £45 = £540. Plan 1 is charged 4.1% whatever the income, so extraMax is zero. Interest in year one on a balance falling by £45.75 a month: £825.15, more than the £549 repaid, so the balance grows every year. 25 x 549 = 13,725 repaid in all; Plan 1 loans first paid after September 2006 are written off 25 years after the April repayments were first due."
+  },
+  {
+    "id": "lifetime-plan2-gov-interest-example-balance",
+    "title": "gov.uk Plan 2 interest example: £30,000 owed at £40,000 with no growth repays £955 a year at 5.455% and still owes £81,451.91 at write-off",
+    "fn": "studentLoanLifetime",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/guidance/how-interest-is-calculated-plan-2", "https://www.gov.uk/repaying-your-student-loan/what-you-pay", "https://www.gov.uk/repaying-your-student-loan/when-your-student-loan-gets-written-off-or-cancelled"],
+    "input": { "plan": "plan2", "balance": 30000, "salary": 40000, "earningsGrowth": 0, "thresholdGrowth": 0, "thresholdFrozenYears": 4, "writeOffYears": 30, "interest": { "rpi": 0.041, "extraMax": 0.03, "lowerIncome": null, "upperIncome": 52885, "cap": { "rate": 0.06, "years": 1 } } },
+    "expected": { "yearsModelled": 30, "year1Rate": 0.05455, "year1Repaid": 955, "year1Interest": 1653.83, "year1Closing": 30698.83, "year2Closing": 31436.76, "totalRepaid": 28650, "totalInterest": 80101.91, "clearedInYear": "written off", "writtenOffBalance": 81451.91 },
+    "tolerance": 0.01,
+    "working": "£40,000 - £29,385 = £10,615; 9% = £955.35, rounded down to £955, £79.58 a month. The rate is 4.1% + 10,615 / 23,500 x 3% = 5.455%, under the cap. Monthly interest at 5.455% / 12 on a balance that starts at £30,000 and is reduced by £79.58 each month comes to £1,653.83, so the balance ends year one at £30,698.83 and keeps growing. 30 years of £955 = £28,650 repaid; the written-off balance is 30,000 + 80,101.91 - 28,650 = 81,451.91."
+  },
+  {
+    "id": "lifetime-plan2-growth-frozen-threshold",
+    "title": "Plan 2, £53,000 owed at £35,000, pay up 6.1% a year, threshold frozen for four years then up 4.1%: the repayment reaches £1,238 in year five but £118,183.86 is still written off",
+    "fn": "studentLoanLifetime",
+    "taxYear": "2026-27",
+    "sources": ["https://www.gov.uk/repaying-your-student-loan/what-you-pay", "https://www.gov.uk/guidance/how-interest-is-calculated-plan-2", "https://explore-education-statistics.service.gov.uk/methodology/student-loan-forecasts-for-england"],
+    "input": { "plan": "plan2", "balance": 53000, "salary": 35000, "earningsGrowth": 0.061, "thresholdGrowth": 0.041, "thresholdFrozenYears": 4, "writeOffYears": 30, "interest": { "rpi": 0.041, "extraMax": 0.03, "lowerIncome": null, "upperIncome": 52885, "cap": { "rate": 0.06, "years": 1 } } },
+    "expected": { "yearsModelled": 30, "year1Rate": 0.04817, "year1Repaid": 505, "year1Interest": 2598.73, "year5Salary": 44353.67, "year5Threshold": 30589.78, "year5Repaid": 1238, "year6Threshold": 31843.97, "totalRepaid": 119137, "totalInterest": 184320.86, "clearedInYear": "written off", "writtenOffBalance": 118183.86 },
+    "tolerance": 0.01,
+    "working": "Year one: £35,000 - £29,385 = £5,615; 9% = £505.35, so £505; rate 4.1% + 5,615 / 23,500 x 3% = 4.817%. Pay grows 6.1% each April: year five pay is 35,000 x 1.061^4 = 44,353.67. The threshold stays at £29,385 through years one to four (2026-27 to 2029-30, the announced freeze) and rises 4.1% from year five: 29,385 x 1.041 = 30,589.78, then 31,843.97 in year six; the interest thresholds move with it. Year five: 44,353.67 - 30,589.78 = 13,763.89; 9% = 1,238.75, so £1,238. The repayments never match the interest and the balance left after 30 years is written off."
+  }
+]
