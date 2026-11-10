@@ -3,7 +3,7 @@
 // Titles and descriptions that carry a figure build it from the rules, so
 // they move when the rules do.
 
-import { bandsFor, defaultTaxCode, listYears, pensionTaxAllowance, resolve } from '@money-resilience-hub/rules';
+import { bandsFor, defaultTaxCode, listYears, nextYear, pensionTaxAllowance, resolve } from '@money-resilience-hub/rules';
 import { longDate, money } from '@money-resilience-hub/calculators';
 import { BUILD_DATE, CURRENT_YEAR } from '../config/site';
 
@@ -43,6 +43,11 @@ const STATE_PENSION: GuideCalculator = {
 	title: 'State Pension tax calculator',
 	desc: 'Enter your State Pension and other income, and see the tax with and without the Pension Tax Allowance.',
 };
+const SIDE_HUSTLE: GuideCalculator = {
+	href: '/calculators/side-hustle-tax/',
+	title: 'Side hustle tax calculator',
+	desc: 'Enter what the side hustle brought in, its costs and your other income, and see the tax, Class 4 and what Self Assessment asks for and when.',
+};
 
 const PUBLISHED = '2026-11-09';
 
@@ -59,6 +64,12 @@ const scottishBands = bandsFor(year, 'scotland').length;
 /** The first tax year that has a Pension Tax Allowance, with its maximum. */
 const ptaYear = listYears().find((y) => y.pensionTaxAllowance) ?? null;
 const pta = ptaYear ? pensionTaxAllowance(0, ptaYear, ptaYear.starts) : null;
+
+/** The trading allowance now and in the next tax year, where the rules file has one. */
+const tradingAllowance = resolve(year.incomeTax.tradingAllowance, 'incomeTax.tradingAllowance', asAt).value;
+const following = nextYear(year.taxYear);
+const nextTradingAllowance = following ? resolve(following.incomeTax.tradingAllowance, 'incomeTax.tradingAllowance', following.starts).value : null;
+const tradingAllowanceVerb = nextTradingAllowance === tradingAllowance * 3 ? 'triples' : nextTradingAllowance === tradingAllowance * 2 ? 'doubles' : 'changes';
 
 export const GUIDES: Guide[] = [
 	{
@@ -128,6 +139,20 @@ export const GUIDES: Guide[] = [
 		calculator: TAKE_HOME,
 		draft: true,
 		publishOn: '2026-11-16',
+	},
+	{
+		slug: 'side-hustles-after-the-trading-allowance-triples',
+		title: `Side hustles after the trading allowance ${tradingAllowanceVerb}`,
+		h1: 'What does the higher trading allowance mean for a side hustle?',
+		description:
+			following && nextTradingAllowance !== null
+				? `The trading allowance is ${money(tradingAllowance, 0)} in ${year.label} and ${money(nextTradingAllowance, 0)} from ${longDate(following.starts)}. Three side hustles worked for both years: tax, Class 4, what is due and when.`
+				: `The trading allowance of ${money(tradingAllowance, 0)} in ${year.label} and what follows it. Three side hustles worked through the rules: tax, Class 4, what is due and when.`,
+		published: PUBLISHED,
+		reviewedOn: PUBLISHED,
+		calculator: SIDE_HUSTLE,
+		draft: true,
+		publishOn: '2026-12-14',
 	},
 ];
 
