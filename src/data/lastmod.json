@@ -1,5 +1,5 @@
 {
-	"generated": "2026-11-09",
+	"generated": "2026-11-10",
 	"pages": {
 		"/about/": "2026-11-09",
 		"/budget/2026-autumn/": "2026-11-09",
@@ -17,18 +17,19 @@
 		"/calculators/savings-tax/": "2026-11-09",
 		"/calculators/side-hustle-tax/": "2026-11-09",
 		"/calculators/state-pension-tax/": "2026-11-09",
-		"/calculators/take-home-pay/": "2026-11-09",
+		"/calculators/take-home-pay/": "2026-11-10",
 		"/corrections/": "2026-11-09",
 		"/editorial-policy/": "2026-11-09",
 		"/guides/100000-personal-allowance-trap/": "2026-11-09",
-		"/guides/": "2026-11-09",
+		"/guides/": "2026-11-10",
+		"/guides/marginal-rate-at-every-salary/": "2026-11-10",
 		"/guides/pension-tax-allowance/": "2026-11-09",
-		"/guides/scottish-income-tax/": "2026-11-09",
+		"/guides/scottish-income-tax/": "2026-11-10",
 		"/guides/tax-codes-explained/": "2026-11-09",
 		"/guides/which-student-loan-plan/": "2026-11-09",
 		"/guides/why-your-payslip-differs/": "2026-11-09",
 		"/hourly/": "2026-11-09",
-		"/": "2026-11-09",
+		"/": "2026-11-10",
 		"/methodology/": "2026-11-08",
 		"/monthly/": "2026-11-09",
 		"/privacy/": "2026-11-09",
@@ -37,6 +38,7 @@
 		"/salary/": "2026-11-09"
 	},
 	"templates": {
+		"/drafts/*/": "2026-11-10",
 		"/hourly/*/": "2026-11-09",
 		"/monthly/*/": "2026-11-09",
 		"/rates/*/": "2026-11-09",
