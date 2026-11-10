@@ -60,11 +60,18 @@ const SIDE_HUSTLE: GuideCalculator = {
 	desc: 'Enter what the side hustle brought in, its costs and your other income, and see the tax, Class 4 and what Self Assessment asks for and when.',
 };
 
+const LIFETIME_ISA: GuideCalculator = {
+	href: '/calculators/lifetime-isa-penalty/',
+	title: 'Lifetime ISA withdrawal charge calculator',
+	desc: 'Enter the amount, the reason and the date, and see the charge, what you receive and how it compares with what you paid in.',
+};
+
 const PUBLISHED = '2026-11-09';
 
 const year = CURRENT_YEAR;
 const asAt = BUILD_DATE;
 const pa = resolve(year.incomeTax.personalAllowance, 'incomeTax.personalAllowance', asAt).value;
+const lisaCap = resolve(year.isa!.lifetimeIsa!.propertyCap, 'isa.lifetimeIsa.propertyCap', asAt).value;
 const taperStart = resolve(year.incomeTax.taperStart, 'incomeTax.taperStart', asAt).value;
 const taperRate = resolve(year.incomeTax.taperRate, 'incomeTax.taperRate', asAt).value;
 const taperEnd = taperStart + pa / taperRate;
@@ -223,6 +230,16 @@ export const GUIDES: Guide[] = [
 		published: '2026-11-10',
 		reviewedOn: '2026-11-10',
 		calculator: SIDE_HUSTLE,
+		draft: true,
+	},
+	{
+		slug: 'where-the-lifetime-isa-cap-bites',
+		title: 'Where the Lifetime ISA cap bites',
+		h1: `Where do home sales go over the ${money(lisaCap, 0)} Lifetime ISA cap?`,
+		description: `The share of home sales in England and Wales above the ${money(lisaCap, 0)} Lifetime ISA cap, by district and region since 2017, and HMRC's count of charged withdrawals.`,
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: LIFETIME_ISA,
 		draft: true,
 	},
 ];

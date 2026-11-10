@@ -1,0 +1,314 @@
+---
+// Where the Lifetime ISA property price cap bites: the share of residential
+// sales in England and Wales above the cap, by year, region and district,
+// from HM Land Registry Price Paid Data; HMRC's count of Lifetime ISA
+// withdrawals for a home and of charged withdrawals; and the charge on a
+// withdrawal for a first home just over the cap, from the rules engine.
+// Every figure is read from src/data/lifetime-isa-cap.json, which records
+// its sources, or computed from the rules file.
+import { getYear, leastSettled, lifetimeIsaPenalty, resolve } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import data from '../../data/lifetime-isa-cap.json' with { type: 'json' };
+import Guide from '../../layouts/Guide.astro';
+
+interface YearRow {
+	year: string;
+	sales: number;
+	aboveCap: number;
+	from: string;
+	to: string;
+	complete: boolean;
+}
+interface RegionRow {
+	region: string;
+	years: Record<string, { sales: number; aboveCap: number }>;
+}
+interface DistrictRow {
+	district: string;
+	region: string;
+	sales2025: number;
+	aboveCap2025: number;
+	sales2017: number | null;
+	aboveCap2017: number | null;
+}
+interface LisaRow {
+	taxYear: string;
+	homePurchaseIndividuals: number;
+	homePurchaseValue: number;
+	homePurchaseAverage: number;
+	chargedIndividuals: number;
+	chargedValue: number;
+	chargesCollected: number;
+	chargedAverage: number;
+}
+const years = data.years as YearRow[];
+const regions = data.regions as RegionRow[];
+const districts = data.districts as DistrictRow[];
+const lisaRows = data.lisa.rows as LisaRow[];
+const retrieved = data.retrieved as string;
+
+/** A share to one decimal place. */
+const pct1 = (v: number) => `${(v * 100).toFixed(1)}%`;
+const count = (n: number) => n.toLocaleString('en-GB');
+const millions = (n: number) => `£${(n / 1e6).toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} million`;
+const label = (y: string) => `${y.slice(0, 4)}/${y.slice(5)}`;
+
+// The cap and the charges from the rules file, checked against the data file.
+const year = getYear(CURRENT_YEAR.taxYear);
+const asAt = BUILD_DATE;
+const lisa = year.isa!.lifetimeIsa!;
+const cap = resolve(lisa.propertyCap, 'isa.lifetimeIsa.propertyCap', asAt).value;
+if (cap !== data.cap) throw new Error(`lifetime-isa-cap.json was built with a cap of ${data.cap}; the rules file gives ${cap}`);
+const fullCharge = resolve(lisa.withdrawalCharge, 'isa.lifetimeIsa.withdrawalCharge', asAt).value;
+const overCapLeaf = lisa.firstHomeOverCapCharge;
+const overCapFrom = overCapLeaf.effectiveFrom as string;
+const dayBefore = new Date(`${overCapFrom}T00:00:00Z`);
+dayBefore.setUTCDate(dayBefore.getUTCDate() - 1);
+const beforeDate = dayBefore.toISOString().slice(0, 10);
+const status = leastSettled([lisa.propertyCap.status, lisa.withdrawalCharge.status, overCapLeaf.status]);
+
+// The worked example: HMRC's average withdrawal for a home purchase in the
+// latest year, taken out for a first home costing one pound over the cap, the
+// day before the reduced charge began and the day it began; and the same
+// withdrawal for a home exactly at the cap.
+const latestLisa = lisaRows[lisaRows.length - 1];
+const example = latestLisa.homePurchaseAverage;
+const justOver = cap + 1;
+const before = lifetimeIsaPenalty({ amount: example, reason: 'first-home', homePrice: justOver, date: beforeDate });
+const after = lifetimeIsaPenalty({ amount: example, reason: 'first-home', homePrice: justOver, date: overCapFrom });
+const atCap = lifetimeIsaPenalty({ amount: example, reason: 'first-home', homePrice: cap, date: overCapFrom });
+const exampleLines = [
+	{ label: `Home at ${money(cap, 0)}, any date`, result: atCap },
+	{ label: `Home at ${money(justOver, 0)}, ${longDate(beforeDate)}`, result: before },
+	{ label: `Home at ${money(justOver, 0)}, ${longDate(overCapFrom)}`, result: after },
+];
+
+// Years.
+const share = (r: { sales: number; aboveCap: number }) => r.aboveCap / r.sales;
+const y2017 = years.find((r) => r.year === '2017')!;
+const y2025 = years.find((r) => r.year === '2025')!;
+const complete = years.filter((r) => r.complete);
+const latestComplete = complete[complete.length - 1];
+const partial = years.find((r) => !r.complete) ?? null;
+const peak = complete.reduce((a, b) => (share(b) > share(a) ? b : a));
+const falls = complete.filter((r, i) => i > 0 && share(r) < share(complete[i - 1]));
+const jumps = complete.slice(1).map((r, i) => ({ from: complete[i], to: r, delta: share(r) - share(complete[i]) }));
+const biggest = jumps.reduce((a, b) => (b.delta > a.delta ? b : a));
+const beforeJump = biggest.from;
+const biggestJump = biggest.to;
+const list = (items: string[]) => (items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`);
+
+// Regions and districts in the latest complete year, against 2017.
+const regionShare = (r: RegionRow, y: string) => share(r.years[y]);
+const london = regions.find((r) => r.region === 'London')!;
+const lowestRegion = regions[regions.length - 1];
+const majority2017 = regions.filter((r) => regionShare(r, '2017') > 0.5);
+const doubled = regions.filter((r) => regionShare(r, '2025') >= 2 * regionShare(r, '2017'));
+const notDoubled = regions.filter((r) => !doubled.includes(r));
+const top = districts[0];
+const topTable = districts.slice(0, 20);
+const comparable = districts.filter((r) => r.sales2017 !== null);
+const half = (y: 2017 | 2025) => comparable.filter((r) => (y === 2025 ? r.aboveCap2025 / r.sales2025 : (r.aboveCap2017 as number) / (r.sales2017 as number)) >= 0.5).length;
+const quarter = (y: 2017 | 2025) => comparable.filter((r) => (y === 2025 ? r.aboveCap2025 / r.sales2025 : (r.aboveCap2017 as number) / (r.sales2017 as number)) >= 0.25).length;
+const outsideLondonTop = districts.find((r) => r.region !== 'London')!;
+// The largest rise, among districts with at least the median number of sales
+// in both years, so a handful of sales cannot produce it.
+const middle = (ns: number[]) => [...ns].sort((a, b) => a - b)[Math.floor(ns.length / 2)];
+const median2025 = middle(comparable.map((r) => r.sales2025));
+const median2017 = middle(comparable.map((r) => r.sales2017 as number));
+const sizeable = comparable.filter((r) => r.sales2025 >= median2025 && (r.sales2017 as number) >= median2017);
+const smallest = districts.reduce((a, b) => (b.sales2025 < a.sales2025 ? b : a));
+const smallestTop = topTable.reduce((a, b) => (b.sales2025 < a.sales2025 ? b : a));
+const noComparison = districts.filter((r) => r.sales2017 === null).map((r) => r.district).sort();
+const biggestRise = sizeable.reduce((a, b) => (b.aboveCap2025 / b.sales2025 - (b.aboveCap2017 as number) / (b.sales2017 as number) > a.aboveCap2025 / a.sales2025 - (a.aboveCap2017 as number) / (a.sales2017 as number) ? b : a));
+const d17 = (r: DistrictRow) => (r.sales2017 ? (r.aboveCap2017 as number) / r.sales2017 : null);
+
+// HMRC: withdrawals for a home and charged withdrawals.
+const firstLisa = lisaRows[0];
+const chargedPerHome = latestLisa.chargedIndividuals / latestLisa.homePurchaseIndividuals;
+
+// Chart: the share above the cap by year, England and Wales and London.
+const W = 800;
+const H = 320;
+const L = 52;
+const R = 16;
+const T = 16;
+const B = 40;
+const x0 = Number(years[0].year);
+const x1 = Number(years[years.length - 1].year);
+const x = (y: number) => L + ((y - x0) / (x1 - x0)) * (W - L - R);
+const shareMax = Math.ceil(Math.max(...regions.map((r) => Math.max(...years.map((y) => regionShare(r, y.year))))) * 10) / 10;
+const yS = (v: number) => T + (1 - v / shareMax) * (H - T - B);
+const ticks = Array.from({ length: Math.round(shareMax / 0.1) + 1 }, (_, i) => i * 0.1);
+const polyline = (pts: { x: number; y: number }[]) => pts.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join('');
+const ewPts = years.map((r) => ({ x: x(Number(r.year)), y: yS(share(r)), complete: r.complete }));
+const ewSolid = ewPts.filter((p) => p.complete);
+const ewDashed = ewPts.slice(ewSolid.length - 1);
+const londonPts = years.map((r) => ({ x: x(Number(r.year)), y: yS(regionShare(london, r.year)), complete: r.complete }));
+const londonSolid = londonPts.filter((p) => p.complete);
+const londonDashed = londonPts.slice(londonSolid.length - 1);
+const sources = data.sources as { name: string; url: string; published: string; updated?: string }[];
+const pages = sources.filter((s) => !/complete yearly CSV/.test(s.name));
+---
+
+<Guide
+	slug="where-the-lifetime-isa-cap-bites"
+	taxYears={[year.taxYear]}
+	status={status}
+	related={[
+		{ title: 'Lifetime ISA withdrawal charge calculator', href: '/calculators/lifetime-isa-penalty/', desc: 'The charge on your own withdrawal, by reason and date, with each rule sourced.' },
+		{ title: 'Budget 2026: what changed', href: '/budget/2026-autumn/', desc: `The reduced charge for a first home over the cap, from ${longDate(overCapFrom)}, with the other measures.` },
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'The Lifetime ISA cap, charges and bonus, with their sources and the date each was checked.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>In {y2025.year}, {pct1(share(y2025))} of residential sales in England and Wales were for more than {money(cap, 0)}, the Lifetime ISA property price cap: {count(y2025.aboveCap)} of {count(y2025.sales)} sales. In {y2017.year}, the year the Lifetime ISA opened with the same cap, it was {pct1(share(y2017))}. The cap bites hardest in {top.district}, where {pct1(top.aboveCap2025 / top.sales2025)} of {y2025.year} sales were above it, and in {london.region} as a whole ({pct1(regionShare(london, '2025'))}); in the {lowestRegion.region} it was {pct1(regionShare(lowestRegion, '2025'))}. HMRC counts {count(latestLisa.chargedIndividuals)} people who made a charged withdrawal from a Lifetime ISA in {label(latestLisa.taxYear)}, against {count(latestLisa.homePurchaseIndividuals)} who withdrew for a home purchase.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>The share of sales above the cap, {years[0].year} to {years[years.length - 1].year}</h2>
+		<figure class="chart">
+			<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Share of residential sales above ${money(cap, 0)}, ${years[0].year} to ${years[years.length - 1].year}: England and Wales from ${pct1(share(y2017))} to ${pct1(share(latestComplete))}, London from ${pct1(regionShare(london, '2017'))} to ${pct1(regionShare(london, '2025'))}.`} class="story-chart">
+				{ticks.map((t) => (
+					<>
+						<line x1={L} x2={W - R} y1={yS(t)} y2={yS(t)} class="grid" />
+						<text x={L - 8} y={yS(t) + 4} class="tick" text-anchor="end">{Math.round(t * 100)}%</text>
+					</>
+				))}
+				{years.map((r) => <text x={x(Number(r.year))} y={H - B + 22} class="tick" text-anchor="middle">{r.year}</text>)}
+				<path d={polyline(londonSolid)} class="line real" />
+				{partial && <path d={polyline(londonDashed)} class="line real projected" />}
+				<path d={polyline(ewSolid)} class="line main" />
+				{partial && <path d={polyline(ewDashed)} class="line main projected" />}
+				<line x1={L} x2={W - R} y1={H - B} y2={H - B} class="axis" />
+			</svg>
+			<figcaption>
+				Residential sales (detached, semi-detached, terraced and flats; standard price paid entries) with a price above {money(cap, 0)}, as a share of all such sales in the calendar year. {partial ? `Dashed: ${partial.year} covers ${longDate(partial.from)} to ${longDate(partial.to)} and will be added to.` : ''} Source: HM Land Registry Price Paid Data, retrieved {longDate(retrieved)}.
+				<span class="legend"><span><i class="swatch main"></i>England and Wales</span><span><i class="swatch real"></i>London</span></span>
+			</figcaption>
+		</figure>
+		<p>The cap has been {money(cap, 0)} since the Lifetime ISA opened in April {y2017.year}, and the Budget that cut the charge for a home over it left the cap where it was. Prices moved. The share of sales above the cap went from {pct1(share(y2017))} in {y2017.year} to {pct1(share(latestComplete))} in {latestComplete.year}, {(share(latestComplete) / share(y2017)).toFixed(1)} times as much. The biggest single-year move was {beforeJump.year} to {biggestJump.year}, from {pct1(share(beforeJump))} to {pct1(share(biggestJump))}; {falls.length === 0 ? 'the share rose in every year' : `it fell only in ${list(falls.map((r) => r.year))}`}, and the highest complete year is {peak.year}.{partial ? ` The sales lodged so far for ${partial.year}, ${longDate(partial.from)} to ${longDate(partial.to)}, show ${pct1(share(partial))}; that figure will change as later registrations are added.` : ''}</p>
+	</Fragment>
+
+	<h2>The districts where most sales are over the cap</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>The {topTable.length} local authority districts with the highest share of {y2025.year} residential sales above {money(cap, 0)}, with the {y2017.year} share. Districts as at 2025.</caption>
+			<thead><tr><th scope="col">District</th><th scope="col">Region</th><th scope="col" class="num">Sales {y2025.year}</th><th scope="col" class="num">Above the cap {y2025.year}</th><th scope="col" class="num">Above the cap {y2017.year}</th></tr></thead>
+			<tbody>
+				{topTable.map((r) => (
+					<tr>
+						<th scope="row">{r.district}</th>
+						<td>{r.region}</td>
+						<td class="num">{count(r.sales2025)}</td>
+						<td class="num">{pct1(r.aboveCap2025 / r.sales2025)}</td>
+						<td class="num">{d17(r) === null ? 'Not comparable' : pct1(d17(r) as number)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>Of the {count(comparable.length)} districts with figures for both years, {half(2025)} had half or more of their {y2025.year} sales above the cap, against {half(2017)} in {y2017.year}; {quarter(2025)} had a quarter or more, against {quarter(2017)}. The highest share outside London is {outsideLondonTop.district}, at {pct1(outsideLondonTop.aboveCap2025 / outsideLondonTop.sales2025)}. Among districts with at least the median number of sales in both years, the largest rise is in {biggestRise.district}, from {pct1(d17(biggestRise) as number)} to {pct1(biggestRise.aboveCap2025 / biggestRise.sales2025)}. All {count(districts.length)} districts are in the data file under Sources.</p>
+
+	<h2>By region</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>Residential sales above {money(cap, 0)} as a share of all residential sales, by region of England and for Wales.{partial ? ` The ${partial.year} column runs to ${longDate(partial.to)}.` : ''}</caption>
+			<thead><tr><th scope="col">Region</th><th scope="col" class="num">Sales {y2025.year}</th><th scope="col" class="num">Above the cap {y2025.year}</th><th scope="col" class="num">Above the cap {y2017.year}</th>{partial && <th scope="col" class="num">Above the cap {partial.year} so far</th>}</tr></thead>
+			<tbody>
+				{regions.map((r) => (
+					<tr>
+						<th scope="row">{r.region}</th>
+						<td class="num">{count(r.years['2025'].sales)}</td>
+						<td class="num">{pct1(regionShare(r, '2025'))}</td>
+						<td class="num">{pct1(regionShare(r, '2017'))}</td>
+						{partial && <td class="num">{pct1(regionShare(r, partial.year))}</td>}
+					</tr>
+				))}
+				<tr>
+					<th scope="row">England and Wales</th>
+					<td class="num">{count(y2025.sales)}</td>
+					<td class="num">{pct1(share(y2025))}</td>
+					<td class="num">{pct1(share(y2017))}</td>
+					{partial && <td class="num">{pct1(share(partial))}</td>}
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<p>In {y2017.year} the only region where more than half of sales were above the cap was {list(majority2017.map((r) => r.region))}. By {y2025.year} the share was {pct1(regionShare(regions[1], '2025'))} in the {regions[1].region} and {pct1(regionShare(regions[2], '2025'))} in the {regions[2].region}, and it had at least doubled in {doubled.length} of the {regions.length} regions; the exceptions are {list(notDoubled.map((r) => `${r.region} (${pct1(regionShare(r, '2017'))} to ${pct1(regionShare(r, '2025'))})`))}.</p>
+
+	<h2>What HMRC counts</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>Lifetime ISA withdrawals by tax year: people withdrawing for a home purchase, people making a charged withdrawal, and the charges collected. HMRC rounds people to the nearest 50 and values to the nearest £1,000.</caption>
+			<thead><tr><th scope="col">Tax year</th><th scope="col" class="num">Withdrew for a home</th><th scope="col" class="num">Average home withdrawal</th><th scope="col" class="num">Charged withdrawals</th><th scope="col" class="num">Charges collected</th></tr></thead>
+			<tbody>
+				{lisaRows.map((r) => (
+					<tr>
+						<th scope="row">{label(r.taxYear)}</th>
+						<td class="num">{count(r.homePurchaseIndividuals)}</td>
+						<td class="num">{money(r.homePurchaseAverage, 0)}</td>
+						<td class="num">{count(r.chargedIndividuals)}</td>
+						<td class="num">{millions(r.chargesCollected)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>HMRC's tables do not say why a charged withdrawal was made: a first home over the cap and any other unlisted withdrawal count the same. In {label(latestLisa.taxYear)}, {count(latestLisa.chargedIndividuals)} people paid the charge, {chargedPerHome.toFixed(1)} for every one who withdrew for a home, and the charges came to {millions(latestLisa.chargesCollected)}. In {label(firstLisa.taxYear)}, the first year HMRC still reports, {count(firstLisa.chargedIndividuals)} people paid it and {count(firstLisa.homePurchaseIndividuals)} withdrew for a home.</p>
+
+	<h2>The charge on a home just over the cap</h2>
+	<p>The charge is a share of the whole withdrawal, bonus included, and it does not depend on how far over the cap the home is. The table runs HMRC's average withdrawal for a home purchase in {label(latestLisa.taxYear)}, {money(example, 0)}, through the rules file.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>A {money(example, 0)} withdrawal towards a first home: at the cap, and one pound over it the day before and the day the reduced charge began.</caption>
+			<thead><tr><th scope="col">Home and date</th><th scope="col" class="num">Charge rate</th><th scope="col" class="num">Charge</th><th scope="col" class="num">Received</th></tr></thead>
+			<tbody>
+				{exampleLines.map((e) => (
+					<tr>
+						<th scope="row">{e.label}</th>
+						<td class="num">{pct(e.result.facts.rate as number)}</td>
+						<td class="num">{money(e.result.facts.charge as number)}</td>
+						<td class="num">{money(e.result.facts.received as number)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>{after.comparison?.sentence} The {pct(fullCharge)} charge still applies to a withdrawal for any reason other than a first home, age 60 or terminal illness. A buyer whose home is at or under {money(cap, 0)} pays nothing; one pound over, and the charge is {money(after.facts.charge as number)} on this withdrawal. If the pot grew only from the bonus, the reduced charge leaves {after.lines.find((l) => l.id === 'vs-paid-in')?.arithmetic.replace(/^./, (c) => c.toLowerCase())} At the old rate it was {before.lines.find((l) => l.id === 'vs-paid-in')?.arithmetic.replace(/^./, (c) => c.toLowerCase())}</p>
+
+	<h2>How to read it</h2>
+	<ul>
+		<li>Price Paid Data records sales in England and Wales that were lodged with HM Land Registry for registration and were sold for value. It leaves out sales not lodged, transfers not for value, right to buy sales at a discount, transfers of a share in a property, gifts and compulsory purchases, and leases of seven years or less. Scotland and Northern Ireland are not covered.</li>
+		<li>The counts here use only standard entries (category A) for detached, semi-detached and terraced houses and flats. Category B entries (repossessions, buy-to-lets identifiable by a mortgage, transfers to companies and other property types) are left out. A sale at exactly {money(cap, 0)} is at the cap, not above it.</li>
+		<li>It is not a measure of first-time buyer purchases. Every buyer is in the count, movers and investors included, and the data does not say which sales were first homes or which buyers held a Lifetime ISA.</li>
+		<li>The latest months are provisional. Land Registry adds sales to a month in later releases as registrations arrive, so {partial ? `${partial.year}, which runs to ${longDate(partial.to)} in the file read on ${longDate(retrieved)},` : 'the most recent year'} will change. Earlier years can be revised too; the data file records each file's checksum.</li>
+		<li>Districts are the ones named in each sale record. A {y2017.year} share is shown only where the district existed then; the {noComparison.length} created by reorganisations since ({list(noComparison)}) have none. Shares for districts with few sales move a lot from year to year: {smallestTop.district} had {count(smallestTop.sales2025)} in {y2025.year} and {smallest.district} {count(smallest.sales2025)}. Regions come from the ONS lookups under Sources, with Wales as one region.</li>
+		<li>HMRC's figures are by tax year, Land Registry's by calendar year, and HMRC counts people rather than sales: a couple buying together with two Lifetime ISAs is two withdrawals.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{pages.map((s) => <li><a href={s.url} rel="noopener">{s.name}</a>, published {longDate(s.published)}{s.updated ? `, updated ${longDate(s.updated)}` : ''}</li>)}
+		<li>{data.attribution}</li>
+		<li>{data.onsAttribution}</li>
+		<li>The combined data file this page reads: <a href="/data/lifetime-isa-cap.json">lifetime-isa-cap.json</a>, with the yearly files' addresses, sizes and checksums, the filters applied and every district.</li>
+	</Fragment>
+</Guide>
+
+<style>
+	.chart { margin: 1rem 0 1.5rem; }
+	.story-chart { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+	.story-chart .grid { stroke: var(--hairline); stroke-width: 1; }
+	.story-chart .axis { stroke: var(--ink); stroke-width: 1; }
+	.story-chart .tick { fill: var(--quiet); font-size: 12px; }
+	.story-chart .line { fill: none; stroke-linejoin: round; }
+	.story-chart .line.main { stroke: var(--ink); stroke-width: 2.5; }
+	.story-chart .line.projected { stroke-dasharray: 5 4; }
+	.story-chart .line.real { stroke: var(--threshold); stroke-width: 2; }
+	figcaption { color: var(--quiet); font-size: 0.9rem; margin-top: 0.5rem; }
+	.legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-top: 0.4rem; }
+	.legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+	.swatch { display: inline-block; width: 1.4rem; height: 0; border-top: 2px solid var(--ink); }
+	.swatch.real { border-color: var(--threshold); }
+</style>
