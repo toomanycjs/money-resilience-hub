@@ -1,0 +1,29 @@
+{
+	"title": "Salary sacrifice reform for pension contributions from 6 April 2029",
+	"retrieved": "2026-11-10",
+	"licence": "Open Government Licence v3.0 (HMRC)",
+	"sources": [
+		{
+			"name": "HMRC policy paper: Salary sacrifice reform for pension contributions effective from 6 April 2029",
+			"url": "https://www.gov.uk/government/publications/salary-sacrifice-reform-for-pension-contributions-effective-from-6-april-2029/salary-sacrifice-reform-for-pension-contributions",
+			"published": "2025-12-04",
+			"note": "Announced at Budget 2025. Primary legislation is to be introduced; the design and operation of the limit is to be set out in secondary legislation."
+		}
+	],
+	"rules": {
+		"contributionLimit": {
+			"value": 2000,
+			"status": "announced",
+			"effectiveFrom": "2029-04-06",
+			"note": "Salary or bonuses sacrificed for employer pension contributions above this limit in a tax year become earnings for Class 1 National Insurance, employee and employer. Income tax relief is unchanged."
+		}
+	},
+	"statedImpacts": {
+		"employeesUsingSalarySacrifice": 7700000,
+		"employeesSacrificingAboveLimit": 3300000,
+		"employeesWithinLimit": 4300000,
+		"forgoneNationalInsurance2016to17GbpBillion": 2.8,
+		"forgoneNationalInsuranceLatestGbpBillion": 5.8,
+		"note": "HMRC's own estimates in the policy paper's summary of impacts; the latest forgone figure is for the most recent year the paper gives."
+	}
+}

@@ -1,0 +1,187 @@
+---
+// Salary sacrifice now and from April 2029: the National Insurance saving a
+// sacrificed pension contribution gives today, and what the £2,000 limit
+// announced for 6 April 2029 takes back, for the employee and the employer.
+// The limit, its date and status come from src/data/salary-sacrifice-2029.json
+// (HMRC's policy paper); every pound figure is computed by the engine.
+import { STATUS_LABEL, employerNationalInsurance, getYear, leastSettled, listYears, nationalInsurance, resolve, takeHome, type Status } from '@money-resilience-hub/rules';
+import { longDate, money, pct } from '@money-resilience-hub/calculators';
+import { CURRENT_YEAR } from '../../config/site';
+import reform from '../../data/salary-sacrifice-2029.json' with { type: 'json' };
+import Guide from '../../layouts/Guide.astro';
+import { guideLink } from '../../lib/guides';
+import { liveAmounts } from '../../lib/pages';
+
+const limit = reform.rules.contributionLimit;
+const cap = limit.value as number;
+const from = limit.effectiveFrom as string;
+const limitStatus = limit.status as Status;
+const impacts = reform.statedImpacts;
+const paper = reform.sources[0];
+
+// The latest year in the rules file stands in for 2029/30: its personal
+// allowance and National Insurance thresholds are legislated to stay where
+// they are until April 2031, and its rates are the ones in force now.
+const year = listYears().at(-1)!;
+const asAt = year.starts;
+const status = leastSettled([limitStatus, year.nationalInsurance.employee.mainRate.status, year.nationalInsurance.employer.rate.status, year.incomeTax.personalAllowance.status]);
+const employeeMain = resolve(year.nationalInsurance.employee.mainRate, 'nationalInsurance.employee.mainRate', asAt).value;
+const employeeUpper = resolve(year.nationalInsurance.employee.upperRate, 'nationalInsurance.employee.upperRate', asAt).value;
+const employerRate = resolve(year.nationalInsurance.employer.rate, 'nationalInsurance.employer.rate', asAt).value;
+const uel = resolve(year.nationalInsurance.employee.upperEarningsLimit, 'nationalInsurance.employee.upperEarningsLimit', asAt).value;
+const live = liveAmounts('salary');
+
+interface Case {
+	gross: number;
+	percent: number;
+	sacrificed: number;
+	excess: number;
+	takeHomeNoPension: number;
+	takeHomeNow: number;
+	employeeNiSavingNow: number;
+	employerNiSavingNow: number;
+	taxSavingNow: number;
+	employeeNiBack: number;
+	employerNiBack: number;
+	takeHomeAfter: number;
+	costPerPoundNow: number;
+	costPerPoundAfter: number;
+}
+const run = (gross: number, percent: number): Case => {
+	const none = takeHome({ gross, nation: 'england-ni', taxYear: year.taxYear, asAt }, { withMarginal: false });
+	const now = takeHome({ gross, nation: 'england-ni', pension: { type: 'salary-sacrifice', percent }, taxYear: year.taxYear, asAt }, { withMarginal: false });
+	const sacrificed = now.pension!.gross;
+	const excess = Math.max(0, sacrificed - cap);
+	// From April 2029 the excess is earnings for National Insurance again, employee and employer.
+	const pay = now.payAfterSacrifice;
+	const employeeNiBack = Math.round((nationalInsurance(pay + excess, year, asAt).total - nationalInsurance(pay, year, asAt).total) * 100) / 100;
+	const employerNiBack = Math.round((employerNationalInsurance(pay + excess, year, asAt).total - employerNationalInsurance(pay, year, asAt).total) * 100) / 100;
+	const employerNiSavingNow = Math.round((employerNationalInsurance(gross, year, asAt).total - employerNationalInsurance(pay, year, asAt).total) * 100) / 100;
+	const takeHomeAfter = Math.round((now.takeHome - employeeNiBack) * 100) / 100;
+	return {
+		gross,
+		percent,
+		sacrificed,
+		excess,
+		takeHomeNoPension: none.takeHome,
+		takeHomeNow: now.takeHome,
+		employeeNiSavingNow: now.pension!.niSaving,
+		employerNiSavingNow,
+		taxSavingNow: now.pension!.taxSaving,
+		employeeNiBack,
+		employerNiBack,
+		takeHomeAfter,
+		costPerPoundNow: (none.takeHome - now.takeHome) / sacrificed,
+		costPerPoundAfter: (none.takeHome - takeHomeAfter) / sacrificed,
+	};
+};
+const salaries = [30000, 55000, 100000];
+const percents = [5, 10];
+const cases = salaries.flatMap((g) => percents.map((p) => run(g, p)));
+const touched = cases.filter((c) => c.excess > 0);
+const untouched = cases.filter((c) => c.excess === 0);
+const salaryAtCap = (percent: number) => cap / (percent / 100);
+const billions = (v: number) => `${money(v, 1).replace(/\.0$/, '')} billion`;
+const pence = (v: number) => `${Math.round(v * 100)}p`;
+const signed = (v: number) => (v === 0 ? 'None' : `${v > 0 ? '+' : '−'}${money(Math.abs(v), 0)}`);
+
+const sources = [
+	{ title: `${paper.name}, published ${longDate(paper.published)}`, href: paper.url },
+	{ title: 'Salary sacrifice for employers', href: 'https://www.gov.uk/guidance/salary-sacrifice-and-the-effects-on-paye' },
+	{ title: 'National Insurance rates and categories', href: 'https://www.gov.uk/national-insurance-rates-letters' },
+];
+---
+
+<Guide
+	slug="salary-sacrifice-now-and-from-april-2029"
+	taxYears={[year.taxYear]}
+	status={status}
+	related={[
+		{ title: 'Pension contribution calculator', href: '/calculators/pension-contributions/', desc: 'The same contribution under relief at source, net pay and salary sacrifice, for your own salary.' },
+		guideLink('100000-personal-allowance-trap', 'Where a sacrificed contribution also restores the personal allowance.'),
+		{ title: `Rates and allowances for ${year.label}`, href: `/rates/${year.taxYear}/`, desc: 'The National Insurance thresholds and rates these figures use, with their sources.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>A pension contribution made by salary sacrifice carries no National Insurance, for the employee or the employer. From {longDate(from)} only the first {money(cap, 0)} sacrificed in a tax year keeps that treatment; the rest is charged National Insurance as if it were pay. On {money(salaries[1], 0)} with {pct(percents[1] / 100)} sacrificed, the employee's National Insurance saving today is {money(cases[3].employeeNiSavingNow, 0)} a year and the employer's {money(cases[3].employerNiSavingNow, 0)}; from April 2029 the employee gives back {money(cases[3].employeeNiBack, 0)} and the employer {money(cases[3].employerNiBack, 0)}. Income tax relief does not change. The limit is {STATUS_LABEL[limitStatus].toLowerCase()}, not yet law.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>What salary sacrifice does now</h2>
+		<p>The employee gives up part of their salary and the employer pays that amount into the pension instead. Because the sacrificed pay is never paid, it is outside income tax and outside National Insurance for both sides. The employee's take-home therefore falls by less than the contribution: on {money(cases[0].gross, 0)} with {pct(cases[0].percent / 100)} sacrificed, {money(cases[0].sacrificed, 0)} goes into the pension and take-home falls by {money(cases[0].takeHomeNoPension - cases[0].takeHomeNow, 0)}, which is {pence(cases[0].costPerPoundNow)} for each pound saved. The employer saves {pct(employerRate)} of the sacrificed amount in its own National Insurance, {money(cases[0].employerNiSavingNow, 0)} here, which it may or may not pass on.</p>
+		<p>HMRC's paper says {(impacts.employeesUsingSalarySacrifice / 1e6).toFixed(1)} million employees use salary sacrifice for pensions and {(impacts.employeesSacrificingAboveLimit / 1e6).toFixed(1)} million of them sacrifice more than {money(cap, 0)} a year. It puts the National Insurance forgone at {billions(impacts.forgoneNationalInsurance2016to17GbpBillion)} in 2016/17 and {billions(impacts.forgoneNationalInsuranceLatestGbpBillion)} in the latest year it gives.</p>
+	</Fragment>
+
+	<h2>What changes on {longDate(from)}</h2>
+	<p>Salary or bonus sacrificed for employer pension contributions above a {money(cap, 0)} limit in a tax year is to be treated as earnings for Class 1 National Insurance, so the employee pays {pct(employeeMain)} on it up to the upper earnings limit of {money(uel, 0)} and {pct(employeeUpper)} above, and the employer pays {pct(employerRate)}. The first {money(cap, 0)} keeps the exemption. Income tax relief is untouched, and a contribution paid by net pay or relief at source is not affected because those never saved National Insurance. HMRC says the design of the limit is to be set in secondary legislation, so how it applies to bonuses and to more than one employment is not yet known.</p>
+	<p>At {pct(percents[0] / 100)} the limit is reached at a salary of {money(salaryAtCap(percents[0]), 0)}; at {pct(percents[1] / 100)}, at {money(salaryAtCap(percents[1]), 0)}. Below those salaries nothing changes.</p>
+
+	<h2>Six cases, before and after</h2>
+	<p>England, Wales or Northern Ireland, standard tax code, no student loan, the employee's own contribution only, under the {year.label} thresholds and rates. The personal allowance and the National Insurance thresholds are legislated to stay at these levels until April 2031, so the 2029/30 figures assume the rates in force now continue; the rules file has no 2029/30 entry yet.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>Salary sacrifice pension contributions: the National Insurance saving now and the amount charged from {longDate(from)}</caption>
+			<thead>
+				<tr>
+					<th scope="col">Salary</th>
+					<th scope="col" class="num">Sacrificed</th>
+					<th scope="col" class="num">Above the limit</th>
+					<th scope="col" class="num">Employee NI saved now</th>
+					<th scope="col" class="num">Employer NI saved now</th>
+					<th scope="col" class="num">Employee NI charged from April 2029</th>
+					<th scope="col" class="num">Employer NI charged from April 2029</th>
+					<th scope="col" class="num">Take-home now</th>
+					<th scope="col" class="num">Take-home from April 2029</th>
+				</tr>
+			</thead>
+			<tbody>
+				{cases.map((c) => (
+					<tr>
+						<th scope="row">{live.includes(c.gross) ? <a href={`/salary/${c.gross}/`}>{money(c.gross, 0)}</a> : money(c.gross, 0)}, {pct(c.percent / 100)}</th>
+						<td class="num">{money(c.sacrificed, 0)}</td>
+						<td class="num">{c.excess ? money(c.excess, 0) : 'None'}</td>
+						<td class="num">{money(c.employeeNiSavingNow, 0)}</td>
+						<td class="num">{money(c.employerNiSavingNow, 0)}</td>
+						<td class="num">{c.employeeNiBack ? money(c.employeeNiBack, 0) : 'None'}</td>
+						<td class="num">{c.employerNiBack ? money(c.employerNiBack, 0) : 'None'}</td>
+						<td class="num">{money(c.takeHomeNow, 0)}</td>
+						<td class="num">{money(c.takeHomeAfter, 0)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>{untouched.length === 1 ? 'One of the six cases sacrifices' : `${untouched.length} of the six cases sacrifice`} {money(cap, 0)} or less and {untouched.length === 1 ? 'is' : 'are'} not affected. In the others the employee's National Insurance rises by {pct(employeeMain)} of the excess where pay after sacrifice is below {money(uel, 0)} and by {pct(employeeUpper)} where it is above, which is why the {money(salaries[2], 0)} cases give back less per pound than the {money(salaries[1], 0)} ones: {touched.map((c) => `${money(c.gross, 0)} at ${pct(c.percent / 100)}, ${money(c.employeeNiBack, 0)} on ${money(c.excess, 0)}`).join('; ')}.</p>
+
+	<h2>The cost of each pound saved</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>Take-home given up for each pound that reaches the pension, by salary sacrifice, now and from {longDate(from)}</caption>
+			<thead><tr><th scope="col">Salary</th><th scope="col" class="num">Now</th><th scope="col" class="num">From April 2029</th><th scope="col" class="num">Change in take-home a year</th></tr></thead>
+			<tbody>
+				{cases.map((c) => (
+					<tr>
+						<th scope="row">{money(c.gross, 0)}, {pct(c.percent / 100)}</th>
+						<td class="num">{pence(c.costPerPoundNow)}</td>
+						<td class="num">{pence(c.costPerPoundAfter)}</td>
+						<td class="num">{signed(c.takeHomeAfter - c.takeHomeNow)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>Even where the limit bites, a sacrificed contribution still costs less in take-home than its face value, because income tax relief at the employee's rate remains. What the limit removes is the National Insurance part of the saving on the excess, and the employer's part in full on the same amount.</p>
+
+	<h2>What this leaves out</h2>
+	<ul>
+		<li>The employer's response. An employer that passes on its own National Insurance saving today, in full or in part, may change that; the figures here show the employee's and the employer's positions separately.</li>
+		<li>Bonuses sacrificed, more than one employment and the treatment of contributions already agreed: HMRC says these details are for secondary legislation.</li>
+		<li>Scotland, where income tax relief differs above the allowance; National Insurance is the same across the UK.</li>
+		<li>Salary sacrifice is not allowed where it would take pay below the minimum wage, and the sacrificed pay is also outside the earnings used for some statutory payments and benefits.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{sources.map((s) => <li><a href={s.href} rel="noopener">{s.title}</a></li>)}
+		<li>The limit, its date and HMRC's stated impacts as recorded for this page: <a href="/data/salary-sacrifice-2029.json">salary-sacrifice-2029.json</a>.</li>
+	</Fragment>
+</Guide>

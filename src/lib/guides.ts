@@ -225,6 +225,16 @@ export const GUIDES: Guide[] = [
 		calculator: SIDE_HUSTLE,
 		draft: true,
 	},
+	{
+		slug: 'salary-sacrifice-now-and-from-april-2029',
+		title: 'Salary sacrifice now, and from April 2029',
+		h1: 'What does the salary sacrifice limit change from April 2029?',
+		description: 'The National Insurance a sacrificed pension contribution saves today, for employee and employer, and what the limit announced for April 2029 takes back.',
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: TAKE_HOME,
+		draft: true,
+	},
 ];
 
 // The build's own limits, checked here so a rules change that lengthens a
