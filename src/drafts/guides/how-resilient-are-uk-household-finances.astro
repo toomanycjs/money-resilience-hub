@@ -1,0 +1,360 @@
+---
+// How resilient are UK household finances: low financial resilience, low
+// savings, financial difficulty and cash savings from the FCA's Financial
+// Lives 2024 survey, by age, nation and region, household income and housing
+// tenure, with the trend since the 2017 survey. Every figure is read from
+// src/data/financial-lives-2024.json, built from the FCA's published chart
+// data (the file records each source, its date and checksum). The one
+// take-home figure is computed by the rules engine.
+import { getYear, leastSettled, takeHome } from '@money-resilience-hub/rules';
+import { longDate, money } from '@money-resilience-hub/calculators';
+import { BUILD_DATE, CURRENT_YEAR } from '../../config/site';
+import data from '../../data/financial-lives-2024.json' with { type: 'json' };
+import Guide from '../../layouts/Guide.astro';
+import { liveAmounts } from '../../lib/pages';
+
+interface GroupRow {
+	dimension: string;
+	group: string;
+	share: number;
+	changeSince2022?: number;
+	significant?: boolean;
+}
+interface WaveRow {
+	label: string;
+	values: Record<string, number | null>;
+}
+interface AssetsRow {
+	group: string;
+	bands: Record<string, number>;
+	medianBand: string;
+	nilOrUnder1k: number;
+	tenKOrMore: number;
+}
+interface CashRow {
+	group: string;
+	withCashSavings: number;
+	withInvestments: number;
+	medianCashSavingsBand: string;
+	medianInvestmentsBand: string;
+}
+
+const m = data.measures;
+const survey = data.survey;
+const head = data.headline;
+const waves = survey.waves;
+const latest = waves[waves.length - 1];
+const first = waves[0];
+const retrieved = data.retrieved as string;
+
+/** A share as a whole percentage, as the FCA publishes it. */
+const pct0 = (v: number) => `${Math.round(v * 100)}%`;
+/** A change in percentage points, with the FCA's sign. */
+const pp = (v: number | undefined) => {
+	if (v === undefined || Math.round(v * 100) === 0) return 'no change';
+	const n = Math.round(Math.abs(v) * 100);
+	return `${v < 0 ? '−' : '+'}${n} pp`;
+};
+const millions = (n: number) => `${n.toLocaleString('en-GB', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} million`;
+/** "£15k - <£30k" as "£15k to under £30k"; "£50k+" as "£50k or more". */
+const bandLabel = (s: string) => s.replace(/^Less than (.*)$/, 'Under $1').replace(/^(.*) - <(.*)$/, '$1 to under $2').replace(/\+$/, ' or more');
+const cut = (rows: GroupRow[], dimension: string) => rows.filter((r) => r.dimension === dimension);
+const find = (rows: GroupRow[], group: string) => rows.find((r) => r.group === group);
+const all = (rows: GroupRow[]) => find(rows, 'All UK adults') as GroupRow;
+const at = (rows: GroupRow[], group: string) => pct0(find(rows, group)?.share ?? 0);
+
+const lfr = m.lowFinancialResilienceByGroup as GroupRow[];
+const lfrArea = m.lowFinancialResilienceByArea as GroupRow[];
+const lowSavings = m.lowSavingsByGroup as GroupRow[];
+const lowSavingsArea = m.lowSavingsByArea as GroupRow[];
+const difficulty = m.inFinancialDifficultyByGroup as GroupRow[];
+const difficultyArea = m.inFinancialDifficultyByArea as GroupRow[];
+const burdened = m.heavilyBurdenedByGroup as GroupRow[];
+const burdenedArea = m.heavilyBurdenedByArea as GroupRow[];
+const under1k = m.assetsUnder1kByGroup as GroupRow[];
+const tenKPlus = m.assets10kPlusByGroup as GroupRow[];
+const assetsByAge = m.investibleAssetsByAge as AssetsRow[];
+const cashByAge = m.cashSavingsByAge as CashRow[];
+const lfrWaves = (m.lowFinancialResilienceByWave as WaveRow[])[0];
+const componentWaves = m.componentsByWave as WaveRow[];
+const coverWaves = m.coverLivingExpensesByWave as WaveRow[];
+const assetWaves = m.investibleAssetsByWave as WaveRow[];
+
+const lfrAll = all(lfr);
+const byAge = cut(lfr, 'Age');
+const peakAge = byAge.reduce((a, b) => (b.share > a.share ? b : a));
+const lowestAge = byAge.reduce((a, b) => (b.share < a.share ? b : a));
+const significantAges = byAge.filter((r) => r.significant);
+const aboveAll = byAge.filter((r) => r.share > lfrAll.share);
+const belowAll = byAge.filter((r) => r.share < lfrAll.share);
+const under1kAll = all(under1k);
+const underAWeek = coverWaves.find((w) => w.label === 'Less than a week') as WaveRow;
+const sixMonths = coverWaves.find((w) => w.label === '6 months or longer') as WaveRow;
+const firstWave = String(first.wave);
+const lastWave = String(latest.wave);
+const prevWave = String(waves[waves.length - 2].wave);
+const burdenPeak = componentWaves.find((c) => c.label === 'Heavily burdened') as WaveRow;
+const burdenPeakWave = Object.entries(burdenPeak.values).reduce((a, b) => ((b[1] ?? 0) > (a[1] ?? 0) ? b : a))[0];
+
+const nations = cut(lfrArea, 'Nation');
+const regions = cut(lfrArea, 'English Region');
+const highestRegion = regions[0];
+const lowestRegion = regions[regions.length - 1];
+const significantAreas = [...nations, ...regions].filter((r) => r.significant);
+const incomeGroups = cut(lfr, 'Household income');
+const tenureGroups = cut(lfr, 'Housing tenure');
+const renting = find(lfr, 'Renting') as GroupRow;
+const outright = find(lfr, 'Own outright') as GroupRow;
+const lowestIncome = incomeGroups[0];
+const highestIncome = incomeGroups[incomeGroups.length - 1];
+const assetsAll = assetsByAge.find((r) => r.group === 'All UK adults') as AssetsRow;
+const cashAll = cashByAge.find((r) => r.group === 'All UK adults') as CashRow;
+const ageAssets = assetsByAge.filter((r) => /^\d/.test(r.group));
+const ageCash = cashByAge.filter((r) => /^\d/.test(r.group));
+const nilBand = assetWaves.find((w) => w.label === 'Nil') as WaveRow;
+const under1kBand = assetWaves.find((w) => w.label.startsWith('£1 to')) as WaveRow;
+
+// The survey's top income band, after income tax and National Insurance for
+// one PAYE earner in the current tax year, from the rules engine.
+const year = getYear(CURRENT_YEAR.taxYear);
+const topBand = data.incomeBands[data.incomeBands.length - 1];
+const topBandFrom = topBand.from as number;
+const assetsThreshold = data.assetThresholds.low;
+const assetsHigh = data.assetThresholds.high;
+const topBandNet = takeHome({ gross: topBandFrom, nation: 'england-ni', taxYear: year.taxYear, asAt: BUILD_DATE }, { withMarginal: false }).takeHome;
+const status = leastSettled([year.incomeTax.personalAllowance.status, year.incomeTax.bands['england-ni'][0].status, year.nationalInsurance.employee.mainRate.status]);
+const live = liveAmounts('salary');
+const salaryLink = (amount: number) => (live.includes(amount) ? `/salary/${amount}/` : null);
+
+// Chart 1: low financial resilience by age band, as bars, with the all-adults share as a rule.
+const W = 800;
+const H = 320;
+const L = 48;
+const R = 16;
+const T = 24;
+const B = 40;
+const barMax = Math.ceil(Math.max(...byAge.map((r) => r.share)) * 10) / 10;
+const yBar = (v: number) => T + (1 - v / barMax) * (H - T - B);
+const slot = (W - L - R) / byAge.length;
+const barW = slot * 0.62;
+const barTicks = Array.from({ length: Math.round(barMax / 0.1) + 1 }, (_, i) => i / 10);
+
+// Chart 2: low financial resilience and its three components, by survey wave.
+const waveYears = waves.map((w) => w.wave);
+const x0 = waveYears[0];
+const x1 = waveYears[waveYears.length - 1];
+const x = (y: number) => L + ((y - x0) / (x1 - x0)) * (W - L - R);
+const lineMax = Math.ceil(Math.max(...[lfrWaves, ...componentWaves].flatMap((s) => Object.values(s.values).map((v) => v ?? 0))) * 10) / 10;
+const yLine = (v: number) => T + (1 - v / lineMax) * (H - T - B);
+const lineTicks = Array.from({ length: Math.round(lineMax / 0.1) + 1 }, (_, i) => i / 10);
+const polyline = (s: WaveRow) => waveYears.map((y, i) => `${i ? 'L' : 'M'}${x(y).toFixed(1)},${yLine(s.values[String(y)] ?? 0).toFixed(1)}`).join('');
+const seriesClass: Record<string, string> = { 'Heavily burdened': 'burden', 'Low savings': 'savings', 'In financial difficulty': 'difficulty' };
+---
+
+<Guide
+	slug="how-resilient-are-uk-household-finances"
+	taxYears={[year.taxYear]}
+	status={status}
+	related={[
+		{ title: 'Take-home pay calculator', href: '/calculators/take-home-pay/', desc: 'Gross pay to take-home, line by line, for any salary.' },
+		{ title: 'Salary pages', href: '/salary/', desc: 'Take-home pay at each salary, with the thresholds that apply to it.' },
+		{ title: 'Savings interest tax calculator', href: '/calculators/savings-tax/', desc: 'How much interest is tax free, and the tax on the rest.' },
+	]}
+>
+	<Fragment slot="answer">
+		<p>In the FCA's Financial Lives {latest.wave} survey, {pct0(lfrAll.share)} of UK adults ({millions(head.lowFinancialResilienceMillions)}) had low financial resilience: they were in financial difficulty, heavily burdened by their bills and credit, or had very limited savings. {pct0(assetsAll.nilOrUnder1k)} had no cash savings or investments at all, or under {money(assetsThreshold, 0)} of the two together, and {pct0(underAWeek.values[lastWave] ?? 0)} said their household could cover its living expenses for less than a week if it lost its main income. Fieldwork ran from {longDate(survey.fieldworkFrom)} to {longDate(survey.fieldworkTo)}, with {survey.respondents.toLocaleString('en-GB')} adults taking part.</p>
+	</Fragment>
+
+	<Fragment slot="first">
+		<h2>Low financial resilience by age</h2>
+		<figure class="chart">
+			<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Share of UK adults with low financial resilience in ${latest.wave} by age band, from ${at(lfr, lowestAge.group)} for ${lowestAge.group} to ${at(lfr, peakAge.group)} for ${peakAge.group}.`} class="story-chart">
+				{barTicks.map((t) => (
+					<>
+						<line x1={L} x2={W - R} y1={yBar(t)} y2={yBar(t)} class="grid" />
+						<text x={L - 8} y={yBar(t) + 4} class="tick" text-anchor="end">{pct0(t)}</text>
+					</>
+				))}
+				{byAge.map((r, i) => (
+					<>
+						<rect x={L + i * slot + (slot - barW) / 2} y={yBar(r.share)} width={barW} height={H - B - yBar(r.share)} class="bar" />
+						<text x={L + i * slot + slot / 2} y={yBar(r.share) - 6} class="value" text-anchor="middle">{pct0(r.share)}</text>
+						<text x={L + i * slot + slot / 2} y={H - B + 22} class="tick" text-anchor="middle">{r.group}</text>
+					</>
+				))}
+				<line x1={L} x2={W - R} y1={yBar(lfrAll.share)} y2={yBar(lfrAll.share)} class="rule" />
+				<text x={W - R} y={yBar(lfrAll.share) - 6} class="tick" text-anchor="end">All adults {pct0(lfrAll.share)}</text>
+				<line x1={L} x2={W - R} y1={H - B} y2={H - B} class="axis" />
+			</svg>
+			<figcaption>Share of UK adults with low financial resilience in {survey.peakMonth}, by age band. Dashed: all UK adults. Source: FCA Financial Lives {latest.wave} survey, Vulnerability and financial resilience chart data, slide 47, retrieved {longDate(retrieved)}.</figcaption>
+		</figure>
+		<p>The share peaks at {pct0(peakAge.share)} among {peakAge.group} year olds and falls to {pct0(lowestAge.share)} at {lowestAge.group}. The bands from {aboveAll[0].group} to {aboveAll[aboveAll.length - 1].group} sit above the all-adult figure and those from {belowAll[0].group} up sit below it. {significantAges.length ? <>Since {prevWave}, the FCA marks only {significantAges.map((r) => `${r.group} (${pp(r.changeSince2022)})`).join(' and ')} as a statistically significant change.</> : <>None of the changes by age since {prevWave} is statistically significant.</>}</p>
+	</Fragment>
+
+	<h2>What the FCA counts as low financial resilience</h2>
+	<p>The FCA's main report defines it: <q>{data.definitions.lowFinancialResilience}</q> In {survey.peakMonth}, {pct0(head.heavilyBurdenedShare)} of adults ({millions(head.heavilyBurdenedMillions)}) were heavily burdened, {pct0(head.lowSavingsShare)} ({millions(head.lowSavingsMillions)}) had low savings and {pct0(head.inFinancialDifficultyShare)} ({millions(head.inFinancialDifficultyMillions)}) were in financial difficulty. Many meet more than one test, so the three add to more than the headline.</p>
+	<figure class="chart">
+		<svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Low financial resilience and its three components by survey wave, ${first.wave} to ${latest.wave}: low financial resilience from ${pct0(lfrWaves.values[firstWave] ?? 0)} to ${pct0(lfrWaves.values[lastWave] ?? 0)}.`} class="story-chart">
+			{lineTicks.map((t) => (
+				<>
+					<line x1={L} x2={W - R} y1={yLine(t)} y2={yLine(t)} class="grid" />
+					<text x={L - 8} y={yLine(t) + 4} class="tick" text-anchor="end">{pct0(t)}</text>
+				</>
+			))}
+			{waveYears.map((y) => <text x={x(y)} y={H - B + 22} class="tick" text-anchor="middle">{y}</text>)}
+			{componentWaves.map((s) => (
+				<path d={polyline(s)} class={`line ${seriesClass[s.label] ?? 'other'}`} />
+			))}
+			<path d={polyline(lfrWaves)} class="line main" />
+			{waveYears.map((y) => <circle cx={x(y)} cy={yLine(lfrWaves.values[String(y)] ?? 0)} r="4" class="dot" />)}
+			<line x1={L} x2={W - R} y1={H - B} y2={H - B} class="axis" />
+		</svg>
+		<figcaption>
+			Share of UK adults with low financial resilience, and with each of its three components, in the {waves.map((w) => w.label).join(', ')} surveys. Source: FCA Financial Lives {latest.wave} survey, Vulnerability and financial resilience chart data, slides 44 and 49, retrieved {longDate(retrieved)}.
+			<span class="legend"><span><i class="swatch main"></i>Low financial resilience</span><span><i class="swatch savings"></i>Low savings</span><span><i class="swatch burden"></i>Heavily burdened</span><span><i class="swatch difficulty"></i>In financial difficulty</span></span>
+		</figcaption>
+	</figure>
+	<p>The headline was {pct0(lfrWaves.values[firstWave] ?? 0)} in {first.label} and {pct0(lfrWaves.values[lastWave] ?? 0)} in {latest.label}. The heavy burden measure moved most, from {pct0(burdenPeak.values[firstWave] ?? 0)} in {first.wave} to {pct0(burdenPeak.values[burdenPeakWave] ?? 0)} in {burdenPeakWave} and {pct0(burdenPeak.values[lastWave] ?? 0)} in {latest.wave}.</p>
+
+	<h2>By nation and English region</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>Share of adults with low financial resilience and with each component, {survey.peakMonth}, by nation and English region, with the change in the headline since the {prevWave} survey. Source: FCA Financial Lives {latest.wave} survey, Vulnerability and financial resilience chart data, slides 48, 52, 58 and 63.</caption>
+			<thead><tr><th scope="col">Area</th><th scope="col" class="num">Low financial resilience</th><th scope="col" class="num">Since {prevWave}</th><th scope="col" class="num">Low savings</th><th scope="col" class="num">Heavily burdened</th><th scope="col" class="num">In financial difficulty</th></tr></thead>
+			<tbody>
+				{[lfrAll, ...nations, ...regions].map((r) => (
+					<tr>
+						<th scope="row">{r.group}</th>
+						<td class="num">{pct0(r.share)}</td>
+						<td class="num">{pp(r.changeSince2022)}{r.significant ? '*' : ''}</td>
+						<td class="num">{at(lowSavingsArea, r.group)}</td>
+						<td class="num">{at(burdenedArea, r.group)}</td>
+						<td class="num">{at(difficultyArea, r.group)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>The regional shares run from {pct0(lowestRegion.share)} in the {lowestRegion.group} to {pct0(highestRegion.share)} in the {highestRegion.group}, and the nations from {pct0(nations[nations.length - 1].share)} in {nations[nations.length - 1].group} to {pct0(nations[0].share)} in {nations[0].group}. {significantAreas.length ? <>The FCA marks {significantAreas.map((r) => r.group).join(' and ')} as a statistically significant change since {prevWave}.</> : <>None of the changes since {prevWave} by area is statistically significant.</>}</p>
+
+	<h2>By household income and housing tenure</h2>
+	<div class="table-wrap">
+		<table>
+			<caption>Share of adults with low financial resilience and each component, and with little or with substantial investible assets, {survey.peakMonth}, by annual household income before tax. Source: FCA Financial Lives {latest.wave} survey chart data, Vulnerability and financial resilience slides 47, 51, 57 and 62; Cash savings slides 38 and 39.</caption>
+			<thead><tr><th scope="col">Household income</th><th scope="col" class="num">Low financial resilience</th><th scope="col" class="num">Low savings</th><th scope="col" class="num">Heavily burdened</th><th scope="col" class="num">In financial difficulty</th><th scope="col" class="num">No investible assets or under {money(assetsThreshold, 0)}</th><th scope="col" class="num">{money(assetsHigh, 0)} or more</th></tr></thead>
+			<tbody>
+				{[lfrAll, ...incomeGroups].map((r) => (
+					<tr>
+						<th scope="row">{r.group === 'All UK adults' ? r.group : bandLabel(r.group)}</th>
+						<td class="num">{pct0(r.share)}</td>
+						<td class="num">{at(lowSavings, r.group)}</td>
+						<td class="num">{at(burdened, r.group)}</td>
+						<td class="num">{at(difficulty, r.group)}</td>
+						<td class="num">{at(under1k, r.group)}</td>
+						<td class="num">{at(tenKPlus, r.group)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<div class="table-wrap">
+		<table>
+			<caption>The same measures by housing tenure, {survey.peakMonth}. Source: as the table above.</caption>
+			<thead><tr><th scope="col">Housing tenure</th><th scope="col" class="num">Low financial resilience</th><th scope="col" class="num">Low savings</th><th scope="col" class="num">Heavily burdened</th><th scope="col" class="num">In financial difficulty</th><th scope="col" class="num">No investible assets or under {money(assetsThreshold, 0)}</th><th scope="col" class="num">{money(assetsHigh, 0)} or more</th></tr></thead>
+			<tbody>
+				{[lfrAll, ...tenureGroups].map((r) => (
+					<tr>
+						<th scope="row">{r.group === 'Mortgage' ? 'Own with a mortgage' : r.group}</th>
+						<td class="num">{pct0(r.share)}</td>
+						<td class="num">{at(lowSavings, r.group)}</td>
+						<td class="num">{at(burdened, r.group)}</td>
+						<td class="num">{at(difficulty, r.group)}</td>
+						<td class="num">{at(under1k, r.group)}</td>
+						<td class="num">{at(tenKPlus, r.group)}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>Income and tenure separate adults far more than age or region do: {pct0(lowestIncome.share)} in households on {bandLabel(lowestIncome.group).toLowerCase()} a year against {pct0(highestIncome.share)} on {bandLabel(highestIncome.group)}, and {pct0(renting.share)} of renters against {pct0(outright.share)} of outright owners. The bands are household income before tax, so they do not map onto one payslip: for a single PAYE earner in {year.label}, {money(topBandFrom, 0)} is {money(topBandNet, 0)} after income tax and National Insurance{salaryLink(topBandFrom) ? <> (<a href={salaryLink(topBandFrom)!}>the working</a>)</> : ''}.</p>
+
+	<h2>Cash savings</h2>
+	<p>{pct0(cashAll.withCashSavings)} of adults had some cash savings, including money kept as savings in a current account; among them the median was {cashAll.medianCashSavingsBand.replace(' - <', ' to under ')}. The FCA's distribution uses investible assets, cash savings plus investments: {pct0(nilBand.values[lastWave] ?? 0)} had nothing, a further {pct0(under1kBand.values[lastWave] ?? 0)} under {money(assetsThreshold, 0)}, and {pct0(assetsAll.tenKOrMore)} {money(assetsHigh, 0)} or more.</p>
+	<div class="table-wrap">
+		<table>
+			<caption>Cash savings and investible assets by age band, {survey.peakMonth}. Shares exclude adults who did not know or preferred not to say. Source: FCA Financial Lives {latest.wave} survey, Cash savings chart data, slides 37 and 41.</caption>
+			<thead><tr><th scope="col">Age band</th><th scope="col" class="num">Have cash savings</th><th scope="col" class="num">Median cash savings (of those with any)</th><th scope="col" class="num">No investible assets or under {money(assetsThreshold, 0)}</th><th scope="col" class="num">{money(assetsHigh, 0)} or more</th><th scope="col" class="num">Median investible assets</th></tr></thead>
+			<tbody>
+				{[cashAll, ...ageCash].map((c) => {
+					const a = (c.group === 'All UK adults' ? assetsAll : ageAssets.find((r) => r.group === c.group)) as AssetsRow;
+					return (
+						<tr>
+							<th scope="row">{c.group}</th>
+							<td class="num">{pct0(c.withCashSavings)}</td>
+							<td class="num">{c.medianCashSavingsBand.replace(' - <', ' to under ')}</td>
+							<td class="num">{pct0(a.nilOrUnder1k)}</td>
+							<td class="num">{pct0(a.tenKOrMore)}</td>
+							<td class="num">{a.medianBand.replace(' to <', ' to under ')}</td>
+						</tr>
+					);
+				})}
+			</tbody>
+		</table>
+	</div>
+	<div class="table-wrap">
+		<table>
+			<caption>How long the household could cover living expenses if it lost its main source of income, without borrowing or help from friends or family, by survey. Shares exclude those who preferred not to say. Source: FCA Financial Lives {latest.wave} survey, Vulnerability and financial resilience chart data, slide 53.</caption>
+			<thead><tr><th scope="col">Could cover living expenses for</th>{waves.map((w) => <th scope="col" class="num">{w.label}</th>)}</tr></thead>
+			<tbody>
+				{coverWaves.map((c) => (
+					<tr>
+						<th scope="row">{c.label}</th>
+						{waves.map((w) => <td class="num">{c.values[String(w.wave)] === null ? '' : pct0(c.values[String(w.wave)] as number)}</td>)}
+					</tr>
+				))}
+			</tbody>
+		</table>
+	</div>
+	<p>The share answering less than a week went from {pct0(underAWeek.values[firstWave] ?? 0)} in {first.wave} to {pct0(underAWeek.values[lastWave] ?? 0)} in {latest.wave}; six months or longer from {pct0(sixMonths.values[firstWave] ?? 0)} to {pct0(sixMonths.values[lastWave] ?? 0)}.</p>
+
+	<h2>How to read it</h2>
+	<ul>
+		<li>Financial Lives surveys individual adults aged {survey.minimumAge} and over, not households. Every figure is a share of respondents, weighted to represent UK adults; the counts in millions are the FCA's weighted estimates.</li>
+		<li>The {latest.wave} survey had {survey.respondents.toLocaleString('en-GB')} respondents, drawn by random sampling of addresses. Fieldwork ran from {longDate(survey.fieldworkFrom)} to {longDate(survey.fieldworkTo)}; just under {pct0(survey.peakMonthShare)} took part in {survey.peakMonth}, so the FCA dates the results to that month. Earlier waves: {waves.slice(0, -1).map((w) => `${w.label}, ${w.respondents.toLocaleString('en-GB')} respondents, ${longDate(w.fieldworkFrom)} to ${longDate(w.fieldworkTo)}`).join('; ')}.</li>
+		<li>Low savings is a composite: {data.definitions.lowSavings.replace(/^Adults are considered to have low savings if they have one or more of: /, 'one or more of ')}</li>
+		<li>Heavily burdened means answering <q>a heavy burden</q> to the question on keeping up with domestic bills and credit commitments. In financial difficulty means having missed payments on credit or domestic bills in three or more of the last six months.</li>
+		<li>Investible assets leave out property and pensions. The asset shares and the median amounts exclude the {pct0(head.investibleAssetsDontKnowShare)} of respondents who did not know or preferred not to say. The chart data gives the all-adult share with nothing or under {money(assetsThreshold, 0)} as {pct0(assetsAll.nilOrUnder1k)} on one slide and {pct0(under1kAll.share)} on another; each table uses its slide as published.</li>
+		<li>Changes since {prevWave} are in percentage points. An asterisk in the area table marks a change the FCA reports as statistically significant.</li>
+		<li>Household income is the respondent's answer to <q>What is your total annual household income from all sources (including benefits) before tax and other deductions?</q>, grouped into four bands.</li>
+	</ul>
+
+	<Fragment slot="sources">
+		{(data.sources as { name: string; url: string; published: string }[]).map((s) => <li><a href={s.url} rel="noopener">{s.name}</a>, published {longDate(s.published)}</li>)}
+		<li>The combined data file this page reads: <a href="/data/financial-lives-2024.json">financial-lives-2024.json</a>, with each source's file address, checksum and the licence terms found.</li>
+	</Fragment>
+</Guide>
+
+<style>
+	.chart { margin: 1rem 0 1.5rem; }
+	.story-chart { width: 100%; height: auto; display: block; font-family: var(--font-body); }
+	.story-chart .grid { stroke: var(--hairline); stroke-width: 1; }
+	.story-chart .axis { stroke: var(--ink); stroke-width: 1; }
+	.story-chart .tick { fill: var(--quiet); font-size: 12px; }
+	.story-chart .value { fill: var(--ink); font-size: 13px; font-weight: 600; }
+	.story-chart .bar { fill: var(--ink); }
+	.story-chart .rule { stroke: var(--threshold); stroke-width: 2; stroke-dasharray: 5 4; }
+	.story-chart .line { fill: none; stroke-linejoin: round; }
+	.story-chart .line.main { stroke: var(--ink); stroke-width: 2.5; }
+	.story-chart .dot { fill: var(--ink); }
+	.story-chart .line.savings { stroke: var(--threshold); stroke-width: 2; }
+	.story-chart .line.burden { stroke: var(--deduction); stroke-width: 2; }
+	.story-chart .line.difficulty { stroke: var(--quiet); stroke-width: 2; stroke-dasharray: 5 4; }
+	.story-chart .line.other { stroke: var(--quiet); stroke-width: 2; }
+	figcaption { color: var(--quiet); font-size: 0.9rem; margin-top: 0.5rem; }
+	.legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; margin-top: 0.4rem; }
+	.legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+	.swatch { display: inline-block; width: 1.4rem; height: 0; border-top: 2px solid var(--ink); }
+	.swatch.savings { border-color: var(--threshold); }
+	.swatch.burden { border-color: var(--deduction); }
+	.swatch.difficulty { border-color: var(--quiet); border-top-style: dashed; }
+</style>

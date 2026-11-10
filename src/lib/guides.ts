@@ -305,6 +305,16 @@ export const GUIDES: Guide[] = [
 		calculator: PLAN2_LOAN,
 		draft: true,
 	},
+	{
+		slug: 'how-resilient-are-uk-household-finances',
+		title: 'How resilient are UK household finances? FCA survey data',
+		h1: 'How resilient are UK household finances?',
+		description: "UK adults with low financial resilience and with little or no savings in the FCA's Financial Lives 2024 survey, by age, region, household income and tenure.",
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
+		calculator: TAKE_HOME,
+		draft: true,
+	},
 ];
 
 // The build's own limits, checked here so a rules change that lengthens a
