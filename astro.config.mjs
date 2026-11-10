@@ -11,7 +11,7 @@ export default defineConfig({
 	site: 'https://www.moneyresiliencehub.co.uk',
 	trailingSlash: 'always',
 	build: { inlineStylesheets: 'auto' },
-	integrations: [mdx(), sitemaps(), linkCheck(), indexNow({ key: 'a7c3f0e1b94d4e2f8c6a5b1d3e7f9a0c' })],
+	integrations: [mdx(), sitemaps(), linkCheck(), indexNow({ key: 'b4409f9af2dc573f9bc07bcb8a18a82c' })],
 	vite: {
 		// Every script is a file of its own: the Content-Security-Policy in vercel.json allows no inline script.
 		build: { assetsInlineLimit: 0 },
