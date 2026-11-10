@@ -65,6 +65,7 @@ const PUBLISHED = '2026-11-09';
 const year = CURRENT_YEAR;
 const asAt = BUILD_DATE;
 const pa = resolve(year.incomeTax.personalAllowance, 'incomeTax.personalAllowance', asAt).value;
+const lisaCap = resolve(year.isa!.lifetimeIsa!.propertyCap, 'isa.lifetimeIsa.propertyCap', asAt).value;
 const taperStart = resolve(year.incomeTax.taperStart, 'incomeTax.taperStart', asAt).value;
 const taperRate = resolve(year.incomeTax.taperRate, 'incomeTax.taperRate', asAt).value;
 const taperEnd = taperStart + pa / taperRate;
