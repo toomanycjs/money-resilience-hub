@@ -22,5 +22,8 @@ export const ADS_ENABLED = false;
 /** Hosts allowed to serve scripts: Google Analytics. The consent platform and ad stack join it when ads start. */
 export const SCRIPT_ALLOWLIST: string[] = ['www.googletagmanager.com'];
 
+/** Bing Webmaster Tools ownership check (meta tag method), for the account that holds the owner's other sites. Removing it unverifies the site. */
+export const BING_SITE_VERIFICATION = '6ADC61B2DC0B938974AAE3809EA74C79';
+
 export const CONTACT_EMAIL = 'hello@moneyresiliencehub.co.uk';
 export const REPO_URL = 'https://github.com/toomanycjs/money-resilience-hub';
