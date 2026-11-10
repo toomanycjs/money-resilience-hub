@@ -211,7 +211,7 @@ export const GUIDES: Guide[] = [
 		title: `Landlords: mortgage interest and the ${propertyYear.starts.slice(0, 4)} rate rise`,
 		h1: `How does mortgage interest relief work, and what changes in ${propertyMonth}?`,
 		description: `How finance cost relief works, one landlord's tax in ${propertyYearBefore.label} and ${propertyYear.label}, and what property rates of ${propertyRates[0]}, ${propertyRates[1]} and ${propertyRates[2]} do to the reduction.`,
-		published: PUBLISHED,
+		published: '2026-11-10',
 		reviewedOn: '2026-11-10',
 		calculator: LANDLORD,
 		draft: true,
@@ -225,8 +225,8 @@ export const GUIDES: Guide[] = [
 			following && nextTradingAllowance !== null
 				? `The trading allowance is ${money(tradingAllowance, 0)} in ${year.label} and ${money(nextTradingAllowance, 0)} from ${longDate(following.starts)}. Three side hustles worked for both years: tax, Class 4, what is due and when.`
 				: `The trading allowance of ${money(tradingAllowance, 0)} in ${year.label} and what follows it. Three side hustles worked through the rules: tax, Class 4, what is due and when.`,
-		published: PUBLISHED,
-		reviewedOn: PUBLISHED,
+		published: '2026-11-10',
+		reviewedOn: '2026-11-10',
 		calculator: SIDE_HUSTLE,
 		draft: true,
 		publishOn: '2026-12-14',
