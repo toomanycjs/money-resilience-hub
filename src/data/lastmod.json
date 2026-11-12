@@ -1,5 +1,5 @@
 {
-	"generated": "2026-11-10",
+	"generated": "2026-11-12",
 	"pages": {
 		"/about/": "2026-11-09",
 		"/budget/2026-autumn/": "2026-11-09",
@@ -26,16 +26,17 @@
 		"/guides/pension-tax-allowance/": "2026-11-09",
 		"/guides/scottish-income-tax/": "2026-11-10",
 		"/guides/tax-codes-explained/": "2026-11-09",
+		"/guides/what-each-job-takes-home/": "2026-11-12",
 		"/guides/which-student-loan-plan/": "2026-11-09",
 		"/guides/why-your-payslip-differs/": "2026-11-09",
 		"/hourly/": "2026-11-09",
-		"/": "2026-11-10",
+		"/": "2026-11-12",
 		"/methodology/": "2026-11-08",
 		"/monthly/": "2026-11-09",
 		"/privacy/": "2026-11-09",
 		"/rates/": "2026-11-09",
 		"/rates/scotland-2027-28/": "2026-11-09",
-		"/salary/": "2026-11-09"
+		"/salary/": "2026-11-12"
 	},
 	"templates": {
 		"/drafts/*/": "2026-11-10",
