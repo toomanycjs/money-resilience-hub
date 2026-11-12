@@ -319,10 +319,9 @@ export const GUIDES: Guide[] = [
 		title: 'What each job takes home: UK pay by occupation, 2026',
 		h1: 'What does each job actually take home?',
 		description: 'Median full-time pay by occupation group and industry from the ONS earnings survey 2026, run through the 2026/27 rules: take-home a month and effective rate.',
-		published: '2026-11-10',
-		reviewedOn: '2026-11-10',
+		published: '2026-11-12',
+		reviewedOn: '2026-11-12',
 		calculator: TAKE_HOME,
-		draft: true,
 	},
 	{
 		slug: 'where-does-your-salary-rank',
